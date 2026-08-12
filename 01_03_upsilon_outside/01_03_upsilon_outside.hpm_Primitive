@@ -1,0 +1,52 @@
+<HPLMapTrack_Primitive ID="ACCAAF55B9C5D02C78DD98E1EB20756A11B12815" Version="1.00">
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects>
+            <Plane ID="301990427" Name="Plane_72" CreStamp="0" ModStamp="1396513080" WorldPos="16.2425 251.114 -127.235" Rotation="0 4.71239 0" Scale="1 1 1" Material="static_objects/station/floor/pplant_floor_tileable.mat" StartCorner="0 0 0" EndCorner="0.75 0 2" CastShadows="true" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0.25 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4329 301990427" Corner1UV="0.25 2" Corner2UV="0.25 0" Corner3UV="1 0" Corner4UV="1 2" />
+            <Plane ID="301990428" Name="Plane_70" CreStamp="0" ModStamp="1396513080" WorldPos="16.2425 251.114 -127.485" Rotation="0 4.71239 0" Scale="1 1 1" Material="static_objects/station/floor/pplant_floor_tileable.mat" StartCorner="0 0 0" EndCorner="0.25 0 2.25" CastShadows="true" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4336 301990428" Corner1UV="0 2.25" Corner2UV="0 0" Corner3UV="0.25 0" Corner4UV="0.25 2.25" />
+            <Plane ID="301990429" Name="Plane_68" CreStamp="0" ModStamp="1396513080" WorldPos="14.2425 251.114 -130.485" Rotation="0 4.71239 0" Scale="1 1 1" Material="static_objects/station/floor/pplant_floor_tileable.mat" StartCorner="0 0 0" EndCorner="0.75 0 4.75" CastShadows="true" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.5 0.5 0.5" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4750 301990429" Corner1UV="0 2.375" Corner2UV="0 0" Corner3UV="0.375 0" Corner4UV="0.375 2.375" />
+            <Plane ID="301990430" Name="Plane_74" CreStamp="0" ModStamp="1396513080" WorldPos="16.2425 251.114 -129.735" Rotation="0 4.71239 0" Scale="1 1 1" Material="static_objects/station/floor/pplant_floor_tileable.mat" StartCorner="0 0 0" EndCorner="0.25 0 2.25" CastShadows="true" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0.75 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4285 301990430" Corner1UV="0.75 2.25" Corner2UV="0.75 0" Corner3UV="1 0" Corner4UV="1 2.25" />
+            <Plane ID="301990431" Name="Plane_71" CreStamp="0" ModStamp="1396513080" WorldPos="8.24251 251.114 -130.485" Rotation="0 4.71239 0" Scale="1 1 1" Material="static_objects/station/floor/pplant_floor_tileable.mat" StartCorner="0 0 0" EndCorner="4 0 4" CastShadows="true" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.5 0.5 0.5" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4247 301990431" Corner1UV="0 2" Corner2UV="0 0" Corner3UV="2 0" Corner4UV="2 2" />
+            <Plane ID="301990432" Name="Plane_66" CreStamp="0" ModStamp="1396513080" WorldPos="9.49251 251.114 -130.485" Rotation="0 4.71239 0" Scale="1 1 1" Material="static_objects/station/floor/pplant_floor_tileable.mat" StartCorner="0 0 0" EndCorner="4 0 1.25" CastShadows="true" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.5 0.5 0.5" TileOffset="0 0 0.38" TextureAngle="0" AlignToWorldCoords="false" UID="18 4246 301990432" Corner1UV="0 1.005" Corner2UV="0 0.38" Corner3UV="2 0.38" Corner4UV="2 1.005" />
+            <Plane ID="301990433" Name="Plane_67" CreStamp="0" ModStamp="1396513080" WorldPos="14.2425 251.114 -127.235" Rotation="0 4.71239 0" Scale="1 1 1" Material="static_objects/station/floor/pplant_floor_tileable.mat" StartCorner="0 0 0" EndCorner="0.75 0 4.75" CastShadows="true" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.5 0.5 0.5" TileOffset="0.625 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4244 301990433" Corner1UV="0.625 2.375" Corner2UV="0.625 0" Corner3UV="1 0" Corner4UV="1 2.375" />
+            <Plane ID="301990434" Name="Plane_73" CreStamp="0" ModStamp="1396513080" WorldPos="16.2425 251.114 -130.485" Rotation="0 4.71239 0" Scale="1 1 1" Material="static_objects/station/floor/pplant_floor_tileable.mat" StartCorner="0 0 0" EndCorner="0.75 0 2" CastShadows="true" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4319 301990434" Corner1UV="0 2" Corner2UV="0 0" Corner3UV="0.75 0" Corner4UV="0.75 2" />
+            <Plane ID="301990435" Name="Plane_59" CreStamp="0" ModStamp="1396513080" WorldPos="18.2425 251.114 -134.485" Rotation="0 4.71239 0" Scale="1 1 1" Material="static_objects/station/floor/pplant_floor_tileable.mat" StartCorner="0 0 0" EndCorner="4 0 12" CastShadows="true" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.5 0.5 0.5" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4299 301990435" Corner1UV="0 6" Corner2UV="0 0" Corner3UV="2 0" Corner4UV="2 6" />
+            <Plane ID="301990436" Name="Plane_65" CreStamp="0" ModStamp="1396513080" WorldPos="20.2425 251.114 -126.485" Rotation="0 4.71239 0" Scale="1 1 1" Material="static_objects/station/floor/pplant_floor_tileable.mat" StartCorner="0 0 0" EndCorner="4 0 14" CastShadows="true" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.5 0.5 0.5" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4281 301990436" Corner1UV="0 7" Corner2UV="0 0" Corner3UV="2 0" Corner4UV="2 7" />
+            <Plane ID="301990437" Name="Plane_69" CreStamp="0" ModStamp="1396513080" WorldPos="20.2425 251.114 -130.485" Rotation="0 4.71239 0" Scale="1 1 1" Material="static_objects/station/floor/pplant_floor_tileable.mat" StartCorner="0 0 0" EndCorner="4 0 4" CastShadows="true" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.5 0.5 0.5" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4312 301990437" Corner1UV="0 2" Corner2UV="0 0" Corner3UV="2 0" Corner4UV="2 2" />
+            <Plane ID="301990438" Name="Plane_114" CreStamp="0" ModStamp="1396513080" WorldPos="20.3659 250.435 -124.485" Rotation="3.57629e-006 3.1416 -1.5708" Scale="1 1 1" Material="textures/technical/advanced_black.mat" StartCorner="0 0 0" EndCorner="1.544 0 10" CastShadows="false" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4304 301990438" Corner1UV="0 10" Corner2UV="0 0" Corner3UV="1.544 0" Corner4UV="1.544 10" />
+            <Plane ID="301990439" Name="Plane_121" CreStamp="0" ModStamp="1396513080" WorldPos="21.2425 250.614 -131.985" Rotation="-1.04719 3.1416 -1.5708" Scale="1 1 1" Material="textures/technical/advanced_black.mat" StartCorner="0 0 0" EndCorner="1.544 0 3" CastShadows="false" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="18 4258 301990439" Corner1UV="0 3" Corner2UV="0 0" Corner3UV="1.544 0" Corner4UV="1.544 3" />
+        </Objects>
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELSPC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="MR B@MR_B">
+        <Objects />
+    </Section>
+    <Section Name="Marcus@MARCUS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IAN-DESKTOP">
+        <Objects />
+    </Section>
+    <Section Name="Rasmus Gunnarsson@KLOSSENR">
+        <Objects />
+    </Section>
+</HPLMapTrack_Primitive>

@@ -1,0 +1,40 @@
+<HPLMapTrack_FogArea ID="ACCAAF55B9C5D02C78DD98E1EB20756A11B12815" Version="1.00">
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects>
+            <FogArea ID="301990440" Name="FogArea_1FogArea_1_(Conflict_Added)" CreStamp="0" ModStamp="1396513080" WorldPos="20.7707 252.283 -122.837" Rotation="-0 4.08285 -0" Scale="1.92468 1.59593 2.17633" Color="0 0 0 1" Brightness="1" Start="0" End="1.5" FalloffExp="1" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="false" NoiseStrength="0" NoiseSize="1" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="18 4673 301990440" />
+        </Objects>
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELSPC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="MR B@MR_B">
+        <Objects />
+    </Section>
+    <Section Name="Marcus@MARCUS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IAN-DESKTOP">
+        <Objects />
+    </Section>
+    <Section Name="Rasmus Gunnarsson@KLOSSENR">
+        <Objects />
+    </Section>
+</HPLMapTrack_FogArea>
