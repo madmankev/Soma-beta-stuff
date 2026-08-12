@@ -2730,7 +2730,6 @@ class cScrMap : iScrMap
 			else if (Sequence_DoStepAndWait(1))
 			{
 				TimerConfigTrainForAfterCrash("");
-				Map_AddTimer("TrainCrashOverMusic", 8.0f, "Timer_Music_TrainCrashFinale");
 			}
 			
 			Sequence_End();
@@ -3086,7 +3085,7 @@ class cScrMap : iScrMap
 				
 			Dialog_StartConversation("Catherine", asEntity);
 			Dialog_Begin("");
-				Dialog_AddBranchAndSubject("LambdaTransmissionLink", "", "Subject_TransmissionLinkCut");
+				Dialog_AddBranchAndSubject("LambdaTransmissionLink");
 			Dialog_End();
 		}
 		

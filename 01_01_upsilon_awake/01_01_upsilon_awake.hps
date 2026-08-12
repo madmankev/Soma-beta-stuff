@@ -2132,7 +2132,6 @@ class cScrMap : iScrMap
 		cLux_AddTodoMessage("SOUND: We hear the robot moving around again..");
 		
 		Area_MoveLinearTo("RunningSoundSource_TechRoom","RunningSoundSource_TechRoomTarget",2.2f,5.0f);
-		Map_AddTimer("RunningSoundSource_TechRoom", 0.2f, "TimerTempStopFootSteps");
 		
 		return false;
 	}
@@ -3227,6 +3226,14 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
+	void TimerHatchFloodDropCable(const tString &in asTimer)
+	{
+		Entity_SetActive("HangingCable_1", true);
+		Prop_SetStaticPhysics("HangingCable_1", false);
+	}
+
+	//-------------------------------------------------------
+
 	void HatchClimb_1_OnPlayerInteract(const tString &in asEntity)
 	{
 		////////////////////////

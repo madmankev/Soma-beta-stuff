@@ -5686,7 +5686,7 @@
                     <Var Name="IsOccluder" Value="false" />
                     <Var Name="UpdateBonesWhenCulled" Value="false" />
                     <Var Name="CallbackFunc" Value="" />
-                    <Var Name="ConnectionStateChangeCallback" Value="OnChangeFactoryButton" />
+                    <Var Name="ConnectionStateChangeCallback" Value="" />
                     <Var Name="PlayerLookAtCallback" Value="" />
                     <Var Name="PlayerLookAtCallbackAutoRemove" Value="false" />
                     <Var Name="PlayerLookAtCheckCenterOfScreen" Value="true" />
@@ -10433,8 +10433,8 @@
                     <Var Name="PlayerInteractCallback" Value="" />
                     <Var Name="PlayerInteractCallbackAutoRemove" Value="false" />
                     <Var Name="RecieveMessageCallback" Value="" />
-                    <Var Name="CC_Entities" Value="player" />
-                    <Var Name="CC_Funcs" Value="Trigger_CollideDuringOpening" />
+                    <Var Name="CC_Entities" Value="" />
+                    <Var Name="CC_Funcs" Value="" />
                     <Var Name="ConnectedEntity" Value="" />
                     <Var Name="ConnectedEntityInvertState" Value="false" />
                     <Var Name="ConnectedEntityStatesUsed" Value="0" />
@@ -11309,8 +11309,8 @@
                     <Var Name="PlayerInteractCallback" Value="" />
                     <Var Name="PlayerInteractCallbackAutoRemove" Value="false" />
                     <Var Name="RecieveMessageCallback" Value="" />
-                    <Var Name="CC_Entities" Value="player" />
-                    <Var Name="CC_Funcs" Value="Trigger_CollideDuringOpening" />
+                    <Var Name="CC_Entities" Value="" />
+                    <Var Name="CC_Funcs" Value="" />
                     <Var Name="ConnectedEntity" Value="" />
                     <Var Name="ConnectedEntityInvertState" Value="false" />
                     <Var Name="ConnectedEntityStatesUsed" Value="0" />
@@ -17230,7 +17230,7 @@
                     <Var Name="EffectsActive" Value="true" />
                     <Var Name="ColorMul" Value="1 1 1 1" />
                     <Var Name="ConnectionStateChangeCallback" Value="" />
-                    <Var Name="PlayerLookAtCallback" Value="LookAtTurtle" />
+                    <Var Name="PlayerLookAtCallback" Value="" />
                     <Var Name="PlayerLookAtCallbackAutoRemove" Value="false" />
                     <Var Name="PlayerLookAtCheckCenterOfScreen" Value="false" />
                     <Var Name="PlayerLookAtCheckRayIntersection" Value="true" />
@@ -34704,7 +34704,7 @@
                     <Var Name="ExtraConnectionLightUseOnColor" Value="true" />
                     <Var Name="ExtraConnectionLightUseSpec" Value="false" />
                     <Var Name="ExtraConnectionLightType" Value="Add" />
-                    <Var Name="OnGuiFunction" Value="OnGuiZeppelinB" />
+                    <Var Name="OnGuiFunction" Value="" />
                     <Var Name="EnterCallback" Value="" />
                     <Var Name="LeaveCallback" Value="" />
                     <Var Name="ShowMouse" Value="true" />
@@ -34768,7 +34768,7 @@
                     <Var Name="ExtraConnectionLightUseOnColor" Value="true" />
                     <Var Name="ExtraConnectionLightUseSpec" Value="false" />
                     <Var Name="ExtraConnectionLightType" Value="Add" />
-                    <Var Name="OnGuiFunction" Value="OnGuiZeppelinA" />
+                    <Var Name="OnGuiFunction" Value="" />
                     <Var Name="EnterCallback" Value="" />
                     <Var Name="LeaveCallback" Value="" />
                     <Var Name="ShowMouse" Value="true" />

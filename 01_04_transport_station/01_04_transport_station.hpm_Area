@@ -1383,7 +1383,7 @@
                     <Var Name="ParentAttachUseRotation" Value="true" />
                     <Var Name="ParentAttachBody" Value="" />
                     <Var Name="ParentAttachLocked" Value="false" />
-                    <Var Name="PlayerLookAtCallback" Value="OnTriggerSimonTrainComment" />
+                    <Var Name="PlayerLookAtCallback" Value="" />
                     <Var Name="PlayerLookAtCallbackAutoRemove" Value="true" />
                     <Var Name="PlayerLookAtCheckCenterOfScreen" Value="true" />
                     <Var Name="PlayerLookAtCheckRayIntersection" Value="true" />

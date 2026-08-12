@@ -1497,8 +1497,8 @@
                     <Var Name="BlocksLineOfSight" Value="false" />
                     <Var Name="EventInstanceTag" Value="" />
                     <Var Name="UserVar" Value="" />
-                    <Var Name="CC_Entities" Value="EscapePodDoor" />
-                    <Var Name="CC_Funcs" Value="CollisionEscapePodDoorOpen" />
+                    <Var Name="CC_Entities" Value="" />
+                    <Var Name="CC_Funcs" Value="" />
                     <Var Name="ParentAttachEntity" Value="" />
                     <Var Name="ParentAttachUseRotation" Value="true" />
                     <Var Name="ParentAttachBody" Value="" />
@@ -1573,7 +1573,7 @@
                     <Var Name="CrouchOnExit" Value="false" />
                     <Var Name="InitToCamera" Value="false" />
                     <Var Name="UsePlayerEyeline" Value="false" />
-                    <Var Name="CallbackFunc" Value="OnLeavePodAnimation" />
+                    <Var Name="CallbackFunc" Value="" />
                 </UserVariables>
             </Area>
             <Area ID="268440116" Name="EscapePodClimbAnim_3" CreStamp="0" ModStamp="1400865269" WorldPos="26.6252 129.319 -71.2078" Rotation="-0.556392 0.671482 3.20931e-008" Scale="0.25 0.25 0.5" Active="true" Mesh="" UID="16 4354 268440116" AreaType="CameraAnimation">
@@ -1635,8 +1635,8 @@
                     <Var Name="BlocksLineOfSight" Value="false" />
                     <Var Name="EventInstanceTag" Value="" />
                     <Var Name="UserVar" Value="" />
-                    <Var Name="CC_Entities" Value="EscapePodDoor" />
-                    <Var Name="CC_Funcs" Value="CollisionEscapePodDoorOpen" />
+                    <Var Name="CC_Entities" Value="" />
+                    <Var Name="CC_Funcs" Value="" />
                     <Var Name="ParentAttachEntity" Value="" />
                     <Var Name="ParentAttachUseRotation" Value="true" />
                     <Var Name="ParentAttachBody" Value="" />
@@ -2133,7 +2133,7 @@
                     <Var Name="ParentAttachUseRotation" Value="true" />
                     <Var Name="ParentAttachBody" Value="" />
                     <Var Name="ParentAttachLocked" Value="false" />
-                    <Var Name="PlayerLookAtCallback" Value="LookAtChipBoxes" />
+                    <Var Name="PlayerLookAtCallback" Value="" />
                     <Var Name="PlayerLookAtCallbackAutoRemove" Value="false" />
                     <Var Name="PlayerLookAtCheckCenterOfScreen" Value="true" />
                     <Var Name="PlayerLookAtCheckRayIntersection" Value="true" />
@@ -3882,7 +3882,7 @@
                     <Var Name="ParentAttachUseRotation" Value="true" />
                     <Var Name="ParentAttachBody" Value="" />
                     <Var Name="ParentAttachLocked" Value="false" />
-                    <Var Name="PlayerLookAtCallback" Value="LookAtRay" />
+                    <Var Name="PlayerLookAtCallback" Value="" />
                     <Var Name="PlayerLookAtCallbackAutoRemove" Value="false" />
                     <Var Name="PlayerLookAtCheckCenterOfScreen" Value="true" />
                     <Var Name="PlayerLookAtCheckRayIntersection" Value="true" />

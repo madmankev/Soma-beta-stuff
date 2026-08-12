@@ -1450,7 +1450,6 @@ class cScrMap : iScrMap
 
 		Map_AddTimer("CrewQuarterLadderSoundTimer", 4, "TimerAcivateLadderArea");
 		
-		Map_AddTimer("timer_flesher_ladder",5.0f,"TimerFlesherLadder");
 	}
 
 	//-------------------------------------------------------
@@ -3029,7 +3028,7 @@ class cScrMap : iScrMap
 		{
 			Voice_SetSource("Catherine", "CathContactSpeaker_Lamp_Electrics", 3, 10, true, 10);
 			
-			Voice_Play("19_EnterElectricsA",-1,"SubjectEnterElectricsOver");
+			Voice_Play("19_EnterElectricsA", -1);
 			
 			Lamp_SetFlickerActive("CathContactSpeaker_Lamp_Electrics", true);
 		}
@@ -3074,6 +3073,13 @@ class cScrMap : iScrMap
 	
 	//-----------------------------------------------------------------
 		
+	void SubjectCatherineElectricsOver(const tString&in asScene, const tString&in asSubject)
+	{
+		SequenceStates_Resume("SequenceCatherineElectricsTalk");
+	}
+
+	//-----------------------------------------------------------------
+
 	///////////////////////////////////////////////////////
 	// 3I PLAYER FINDS AND ENTER VENTILATION ENTRANCE
 	///////////////////////////////////////////////////////

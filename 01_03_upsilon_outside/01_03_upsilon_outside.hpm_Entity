@@ -14602,7 +14602,7 @@
                     <Var Name="PlayerLookAtCheckRayIntersection" Value="true" />
                     <Var Name="PlayerLookAtMaxDistance" Value="-1" />
                     <Var Name="PlayerLookAtCallbackDelay" Value="0" />
-                    <Var Name="PlayerInteractCallback" Value="InteractPullCommRoomLever" />
+                    <Var Name="PlayerInteractCallback" Value="" />
                     <Var Name="PlayerInteractCallbackAutoRemove" Value="false" />
                     <Var Name="RecieveMessageCallback" Value="" />
                     <Var Name="CC_Entities" Value="" />
@@ -19351,7 +19351,7 @@
                     <Var Name="IsOccluder" Value="false" />
                     <Var Name="UpdateBonesWhenCulled" Value="false" />
                     <Var Name="CallbackFunc" Value="" />
-                    <Var Name="ConnectionStateChangeCallback" Value="StateValveWater" />
+                    <Var Name="ConnectionStateChangeCallback" Value="" />
                     <Var Name="PlayerLookAtCallback" Value="" />
                     <Var Name="PlayerLookAtCallbackAutoRemove" Value="false" />
                     <Var Name="PlayerLookAtCheckCenterOfScreen" Value="true" />
