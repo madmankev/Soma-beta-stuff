@@ -1,0 +1,36 @@
+<HPLMapTrack_FogArea ID="46A1B5A2266B2D6AA252F4724F194D04319C7FB" Version="1.00">
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects>
+            <FogArea ID="268436860" Name="FogArea_1" CreStamp="0" ModStamp="0" WorldPos="-4.5 3 -192.5" Rotation="0 0 0" Scale="16 10 279.25" Color="0 0 0 1" Brightness="1" Start="8" End="76" FalloffExp="1" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="false" Underwater="false" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="16 1543 268436860" />
+        </Objects>
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="Aaron@AARON-PC">
+        <Objects>
+            <FogArea ID="318768784" Name="FogArea_3" CreStamp="1415305880" ModStamp="1415367937" WorldPos="9.28827 0.590386 49.8746" Rotation="0 0 0" Scale="14.653 9.44403 73.7328" Color="0.144531 0.0656319 0.0270996 0.292969" Brightness="0.5" Start="0" End="16" FalloffExp="2" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="false" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="19 1621 318768784" />
+        </Objects>
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="Peter@PETER-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+</HPLMapTrack_FogArea>

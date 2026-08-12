@@ -1,0 +1,26 @@
+<HPLMapTrack_StaticObjectBatches ID="46A1B5A2266B2D6AA252F4724F194D04319C7FB" Version="1.00">
+    <StaticObjectBatches>
+        <Combo ID="1" Color="0.0711997 0.321665 0.966552 1" ObjIds="" />
+        <Combo ID="2" Color="0.343394 0.230934 0.538408 1" ObjIds="" />
+        <Combo ID="3" Color="0.693359 0.215321 0.262003 1" ObjIds="" />
+        <Combo ID="4" Color="0.208441 0.907224 0.357372 1" ObjIds="" />
+        <Combo ID="5" Color="0.286599 0.88464 0.904843 1" ObjIds="" />
+        <Combo ID="6" Color="0.822382 0.11362 0.924253 1" ObjIds="" />
+        <Combo ID="7" Color="0.909482 0.460768 0.525101 1" ObjIds="" />
+        <Combo ID="8" Color="0.149876 0.354625 0.0580462 1" ObjIds="" />
+        <Combo ID="9" Color="0.64745 0.742668 0.922819 1" ObjIds="" />
+        <Combo ID="10" Color="0.112033 0.727378 0.116214 1" ObjIds="" />
+        <Combo ID="11" Color="0.584887 0.596606 0.851558 1" ObjIds="" />
+        <Combo ID="12" Color="0.890988 0.0115665 0.480239 1" ObjIds="" />
+        <Combo ID="13" Color="0.242653 0.536882 0.656514 1" ObjIds="" />
+        <Combo ID="14" Color="0.560076 0.944304 0.0301828 1" ObjIds="" />
+        <Combo ID="15" Color="0.515946 0.74105 0.7893 1" ObjIds="" />
+        <Combo ID="16" Color="0.305948 0.0974761 0.560686 1" ObjIds="" />
+        <Combo ID="17" Color="0.394757 0.687063 0.871975 1" ObjIds="" />
+        <Combo ID="18" Color="0.368328 0.706229 0.391034 1" ObjIds="" />
+        <Combo ID="19" Color="0.37083 0.590533 0.419752 1" ObjIds="" />
+        <Combo ID="20" Color="0.466842 0.207251 0.720237 1" ObjIds="" />
+        <Combo ID="21" Color="0.514634 0.340526 0.6545 1" ObjIds="" />
+        <Combo ID="23" Color="0 1 0.507813 1" ObjIds="" />
+    </StaticObjectBatches>
+</HPLMapTrack_StaticObjectBatches>

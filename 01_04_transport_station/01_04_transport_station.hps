@@ -1,0 +1,5309 @@
+#include "interfaces/Map_Interface.hps"
+#include "helpers/helper_props.hps"
+#include "helpers/helper_ai.hps"
+#include "helpers/helper_map.hps"
+#include "helpers/helper_areas.hps"
+#include "helpers/helper_world_effects.hps"
+#include "helpers/helper_player.hps"
+#include "helpers/helper_entity.hps"
+#include "helpers/helper_sequences.hps"
+#include "helpers/helper_audio.hps"
+#include "helpers/helper_game.hps"
+#include "helpers/helper_imgui.hps"
+#include "helpers/helper_custom_depth_imgui.hps"
+#include "helpers/helper_custom_depth.hps"
+#include "helpers/helper_effects.hps"
+#include "helpers/helper_modules.hps"
+#include "inputhandler_types.hps"
+#include "custom_depth/helper_custom_depth_audio.hps"
+
+enum eStatusScreenMsg
+{
+	eStatusScreenMsg_OK,
+	eStatusScreenMsg_DEPART,
+	eStatusScreenMsg_JOURNEY,
+	eStatusScreenMsg_WARNING,
+	eStatusScreenMsg_FAILURE
+}
+
+enum eStationType
+{
+	eStationType_Invalid,
+	eStationType_Current,
+	eStationType_Valid,
+	eStationType_Abyssal
+}
+
+enum eCargoTerminalState
+{
+	eCargoTerminalState_MainMenu = -1,
+	eCargoTerminalState_Inventory,
+	eCargoTerminalState_CometMemo,
+	eCargoTerminalState_Video,
+}
+
+enum ePowerState
+{
+	ePowerState_NoPower,
+	ePowerState_Bad,
+	ePowerState_Good,
+}
+
+enum eSlideShowSlide
+{
+	eSlideShowSlide_None,
+	eSlideShowSlide_Intro,
+	eSlideShowSlide_SpaceGun,
+	eSlideShowSlide_Pathos2,
+	eSlideShowSlide_Team,
+	eSlideShowSlide_Science_1,
+	eSlideShowSlide_Science_2,
+	eSlideShowSlide_Science_3,
+	eSlideShowSlide_SelectedStation,
+}
+
+//------------------------------------------------------------
+
+float gfScienceSlideTime_1 = 4;
+float gfScienceSlideTime_2 = 4;
+
+//------------------------------------------------------------
+
+class cScrMap : iScrMap
+{
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// ==============
+	// VARIABLE CREATION
+	// ==============
+	//{///////////////////////////////////////
+
+	//------------------------------------------------------------
+	
+	//AIRLOCK ROOM
+	int mlValveCount;			//Count how many of the valves has been turned (3 when done)
+	tString msInteractCallback; //Save the name of callback to restore in timer, to avoid rappid clicking.
+	
+	//PLAYER
+	bool mbPlayerGotLight;		//True if player picked up the light
+	bool mbPlayerIsSitting;		//True if player is sitting in the train chair.
+	
+	//TURNING ON LIGHTS/POWER
+	bool mbCableConnected;		//True if the power cable is connected to cabinet
+	int mlLightValveCount;		//Count at what "power level" the player moved the valve.
+	int mlTrackLight;			//Counter for the lights in the pipe going along the side of the station platform.
+	ePowerState mPowerState_General = ePowerState_NoPower; // Keeps track of if the stability of the power.
+	ePowerState mPowerState_Platform = ePowerState_NoPower; // Keeps track of if the stability of the power.
+	
+	//TRAIN DOORS
+	tString msCartDoor;			//Which cart door to "animate" when close.
+	int mlCartDoorStep;			//Steps through the areas to move the door to during "animation".
+	
+	//TRAIN CHAIR
+	int mlTrainChairRotPos;		//-3, 0 or 3 as rotation speed for chair when sitting down.
+	tString msTrainChairCam;	//What of the 3 possible sitting down camera anmations to use (depending on player location relative to chair).
+	tString msTrainChairName;	//The name of the chair the player interacted with to sit down.
+
+	//TRAIN POWER
+	bool mbTrainIsActivated;	//Checking if train has been activated, if true, the screen rotates down.
+	
+	//TRAIN SCREEN(s)
+	bool mbTrainScreenIsDown;	//Checking if screen is down and should be rotated back up when leaving chair.
+	int mlTrainRideMsg;			//Status message to display.
+	
+	//LEVEL FOG
+	cColor mvLevelFogColor;		//Saving the level for color so that it can be set when lights are on.
+	
+	//} END VARIABLE CREATION
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// ==============
+	// MAIN CALLBACKS
+	// ==============
+	//{///////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	void Setup()
+	{
+		///////////////////////////////
+		// Setup presets
+		{
+			// When outside and underwater
+			Map_Preset_SetupColorGrading("Outside2.1", "textures/colorgrading/grading_default.dds");
+			Map_Preset_SetupFog("Outside2.1", true, 2, 30, 0.4, cColor(2.0 / 255.0, 7.0 / 255.0, 9.0 / 255.0,1), 1.0, true, true);
+			Map_Preset_SetupDepthOfField("Outside2.1", true, 0.05, 12.0, 0.1);
+			Map_Preset_SetupBloom("Outside2.1", 160, 0.00001, 0.5, cColor(0.3, 0.3, 0.3, 1.0));
+			Map_Preset_SetupSecondaryFog("Outside2.1", true, 0, 70, 0.15, cColor(0, 0, 0, 1));
+		}
+	}
+	
+	//-------------------------------------------------------
+	
+	////////////////////////////
+	// Run first time starting map
+	void OnStart()
+	{
+		//------------------------------------------------------------
+	
+		/////////////////////////////////////////
+		// VARIABLE INIT
+		/////////////////////////////////////////
+
+		//------------------------------------------------------------
+		//AIRLOCK ROOM
+		mlValveCount = 0;
+		msInteractCallback = "";
+		
+		//PLAYER
+		mbPlayerGotLight = false;
+		mbPlayerIsSitting = false;
+		
+		//TURNING ON LIGHTS/POWER
+		mbCableConnected = false;
+		mlLightValveCount = 0;
+		mlTrackLight = 0;
+		
+		Lamp_SetLit("TrainWarningLamp",false,false);
+		
+		//TRAIN DOORS
+		msCartDoor = "";
+		mlCartDoorStep = 1;
+		
+		//TRAIN CHAIR
+		mlTrainChairRotPos = -3;
+		msTrainChairCam = "AnimateSitTrainChair";
+		msTrainChairName = "";
+		
+		//TRAIN POWER
+		mbTrainIsActivated = false;
+		
+		//TRAIN SCREEN(S)
+		mbTrainScreenIsDown = false;
+		mlTrainRideMsg = eStatusScreenMsg_OK;
+		
+		//LEVEL FOG 
+		mvLevelFogColor = cLux_GetCurrentMap().GetWorld().GetFogColor();
+		
+		//////////////////////////////////////////
+		// Player setup
+		Player_SetAmbientLight_Indoors();
+		Tool_PickUp("CathTool", false, false);
+		
+		PlayerHands_SetHandModel_Diving();
+		
+		if (cScript_GetGlobalVarBool("PlayerActivatedFlashlight")==false)
+			Player_SetFlashlightOnOffCallback("Flashlight_FirstTime");
+						
+		/////////////////////////////////////////
+		// ENTITY INIT
+		/////////////////////////////////////////
+		
+		//Occluder setup
+		Entity_SetIsOccluder("technical_occluder_1", true);
+		Entity_SetIsOccluder("technical_occluder_2", true);
+		Entity_SetIsOccluder("technical_occluder_3", true);
+		
+		//Button init - turn off pump button at start & end
+		Entity_SetEffectBaseColor("button_reactor_2", cColor(0,0,0,0));
+		
+		//Lamp init - turn off all lights
+		Lamp_SetLit("lamp_room_*", false, false);
+		Lamp_SetLit("lamp_tunnel_orange_*", false, false);
+		Lamp_SetLit("maintenance_hatch_lamp_*", false, false);
+		Lamp_SetLit("maintenance_shaft_lamp_*", false, false);
+		Lamp_SetLit("lamp_stairs_nopower_*", false, false);
+		Lamp_SetLit("amy_room_lamp_*", false, false);
+		
+		//Light init - turn off warning rotation ligth
+		Light_FadeTo("warning_lamp_room_1_rot_SpotLight_*", cColor(-1,-1,-1,-1), 0, 0);
+		
+		//Liquid init - add particles to the liquid area
+		//ParticleSystem_CreateAtEntityExt("underwater_part", "loop_waterdust_liquidarea.ps", "LiquidArea_1", true, cColor(0.104,0.232,0.273,1), 1.f, false, 0, 0, 0, 0);
+
+		
+		//Entity init - no interaction until power active in station.
+		Entity_SetActive("Area_Transport1_Door*", false);
+		Entity_SetInteractionDisabled("hatch_tunnel_maintenance_*", true);
+		
+		//Entity init - no interaction with level entrance door
+		Entity_SetInteractionDisabled("LevelExit", true);
+		
+		//Entity init - no broken glass on train until crash
+		Entity_SetActive("train_broken_glass_*", false);
+		
+		//No interaction before sitting down in train.
+		Entity_SetInteractionDisabled("AreaLeaveChair", true);
+		Terminal_SetGuiActive("TrainTerminal", false);
+		
+		//No panel illumination before power to train.
+		Entity_SetEffectsActive("TrainTerminal", false, false);
+		Entity_SetEffectsActive("StatusTerminal", false, false);
+		Entity_SetEffectsActive("01_05_transporter_passenger_starter_panel_1", false, false);
+		Entity_SetEffectsActive("TrainSwitch_1", false, false);
+		Entity_SetEffectsActive("TrainSwitch_2", false, false);
+		Entity_SetEffectsActive("TrainSwitch_3", false, false);
+		
+		//No interaction until crash
+		Entity_SetInteractionDisabled("LeverEmergency", true);
+		
+		//Particle init - make these particles invisible
+		ParticleSystem_SetVisible("fog_ps_*", false);
+		ParticleSystem_SetVisible("steam_ps_*", false);
+		ParticleSystem_SetActive("particles_flood_airlock_*", false);
+		
+		/////////////////////////////////////////
+		// AUDIO
+		/////////////////////////////////////////
+
+		Sound_PreloadCoreUWSounds();
+		Sound_PreloadCoreSounds();
+		Sound_PreloadCoreUWInteractions();
+		Sound_PreloadCoreInteractions();			
+		Sound_PreloadGroup("01_04_transport_station", true);
+		Player_SetClothing("default");
+		Player_SetFootWear("default");
+		
+		//Airlock sound
+		//Sound_CreateAtEntity("Pump_Idle_Loop_Underwater", "Entities_OceanBottom/airlock/uw/pump/idle_loop", "Pump_SoundSource", 1.0f, false, 1.0f);
+		//Sound_CreateAtEntity("Pump_Idle_Loop_Air", "Entities_OceanBottom/airlock/air/pump/idle_loop", "AirlockEndPumpSoundSource", 1.0f, false, 1.0f);
+		
+		//Level fade
+		//Sound_SetGlobalVolume(0.0f, eSoundEntryType_All);
+		//Map_AddTimer("FadeUp", 0.1f, "LevelAudioFades");
+		//cLux_AddTodoMessage("SOUND - TEMPORARY FADE HERE FOR NICE INTRO - NEED TO LOOK AT CONSISTENCY WHEN LEVEL STREAMING ACTIVE");
+				
+		//------------------------------------------------------------
+		
+		/////////////////////////////////////////
+		// EFFECTS INIT
+		/////////////////////////////////////////
+		
+		// No water effects at end tunnel until flower is drained
+		ParticleSystem_SetActive("End_tunnel_leak_*", false);
+		ParticleSystem_SetActive("End_tunnel_leakimpact_*", false);
+		Entity_SetActive("water_tunnel_end_leak_stream_*", false);
+		
+		//------------------------------------------------------------
+		
+		//Darken fog color.
+		cLux_GetCurrentMap().GetWorld().SetFogColor(cColor(0.034,0.039,0.05,0.196));
+		
+		//Needed otherwise setting to true later will not work
+		Map_SetEnvironmentParticlesActive(false);
+		
+		/////////////////////////////////////////
+		// SCENES
+		/////////////////////////////////////////
+		
+		SetupGetPowerOn();
+		SetupCrash();
+		
+		OnUseCathTool("", "AirlockPanelArea_1"); //Level start with airlock at start drained.
+		
+		/////////////////////////////////////////
+		// DEBUG
+		/////////////////////////////////////////
+		
+		if(cLux_ScriptDebugOn())
+		{
+			//Preload();
+		//Map_SetPreloadPriority(eWorldStreamPriority_VeryHigh);
+			
+			LightSwitchLightsOn("*lamp_room*");
+			
+			mbTrainIsActivated = false;
+			
+			//To be able to solve power puzzle directly.
+			Entity_SetActive("Area_Transport1_Door*", true);
+			Prop_SetStaticPhysics("01_05_transporter_passenger_door1", true);
+			Entity_SetInteractionDisabled("01_05_transporter_passenger_door1", true);
+			PhysicsSlideDoor_SetLocked("01_05_transporter_passenger_door1", false, false);
+			
+			//To test emergency escape
+			//Entity_SetInteractionDisabled("LeverEmergency", false);
+			
+			//Test radio and status directly from start
+			//Terminal_SetGuiActive("01_05_transporter_passenger_radio_1", true);
+			
+			mlJourneyCrashPoint = 1;
+		}
+		
+		cScript_SetGlobalVarBool("TalkedToCathInLambda", false);
+	}
+	
+	//-------------------------------------------------------
+
+	////////////////////////////
+	// Run when entering map
+	void OnEnter()
+	{
+		GetBase().SetDisplayNameEntry("01-04-transport-station");
+				
+		//Effect_Fade_In(2);
+		Map_AddTimer("SimonOnEnterLevel", 3, "Timer_PlayVoice");
+	}
+
+	//-------------------------------------------------------
+
+	////////////////////////////
+	// Run when leaving map
+	void OnLeave()
+	{
+	}
+	
+	//-------------------------------------------------------
+	
+	void Update(float afTimeStep)
+	{
+		//cLux_AddDebugMessage("Update! "+Voice_SceneInvolvingCharacterIsActive("Player"));
+	}
+
+	//-------------------------------------------------------
+	
+	void OnAction(int alAction, bool abPressed)
+	{
+		if(abPressed==false) return;
+
+		if(alAction == eAction_Test1)
+		{		
+			SetPowerState_General(ePowerState_Bad);
+		}
+		
+		if(alAction == eAction_Test2)
+		{		
+			SetPowerState_General(ePowerState_Good);
+		}
+		
+		if (alAction == eAction_Test3)
+		{
+			SetPowerState_Platform(ePowerState_Bad);
+		}
+		
+		if (alAction == eAction_Test4)
+		{
+			SetPowerState_Platform(ePowerState_Good);
+		}
+		
+		if (alAction == eAction_Test5)
+		{
+			SetPowerState_Platform(ePowerState_NoPower);
+		}
+		
+		if (alAction == eAction_Test6)
+		{
+			OnEnterFinalAirlock("", "", 1);
+		}
+		
+		if (alAction == eAction_Test7)
+		{
+			Terminal_SetGuiActive("Airlock2GUI", true);
+			Entity_SetActive("Airlock2GUI", true);
+		}
+		
+		if (alAction == eAction_Test8)
+		{
+			//Terminal_SetGuiActive("TrainTerminal", true);
+			//Terminal_SetOnGuiFunction("TrainTerminal", "OnGUISlideshow");
+			msPickedStation="Station08";
+			StartSlideshow();
+		}
+		if (alAction == eAction_Test9)
+		{
+			Terminal_FadeImGuiStateFloat("TrainTerminal", "SlideFade", 0, 0.3);
+			mfSlideTime=0; 
+			mCurrentSlide=eSlideShowSlide_Team;
+		}
+	}
+		
+	void OnAnalogInput(int alAnalogId, const cVector3f &in avAmount)
+	{
+		StationGui_UpdateMouseWheel(alAnalogId, avAmount);
+	}
+		
+	cSequenceStatesData mSequenceTestMonitor;
+	void SequenceTestMonitor(const tString &in asX)
+	{
+		Sequence_Begin("SequenceTestMonitor", mSequenceTestMonitor);
+
+		if(Sequence_DoStepAndWait(1.0f))
+		{
+			Player_Teleport("Player_StandingInTrain");
+		}
+		else if (Sequence_DoStepAndWait(0.5f))
+		{
+			Entity_CallEntityInteract("01_05_transporter_passenger_chair_1");
+		}
+		else if (Sequence_DoStepAndWait(2.0f))
+		{
+			MovingButton_SetSwitchedOn("TrainSwitch_1",true,true);
+			MovingButton_SetSwitchedOn("TrainSwitch_2",true,true);
+			MovingButton_SetSwitchedOn("TrainSwitch_3",true,true);
+			MovingButton_SetSwitchedOn("01_05_transporter_passenger_start_button_1",true,true);
+		}
+		else if (Sequence_DoStepAndWait(0.5f))
+		{
+			msPickedStation="Station03";
+		}
+		else if (Sequence_DoStepAndWait(1.5f))
+		{
+			msPickedStation="Station03";
+			mbDeparting=true;
+			ImGui_Exit();
+			Entity_SetInteractionDisabled("TrainTerminal", true);
+			SequenceBeginJourney("");
+		}
+		
+		Sequence_End();
+	}
+	
+	//} END MAIN CALLBACKS
+	
+	//-------------------------------------------------------
+
+	/////////////////////////////////////////
+	// ==============
+	// MAIN FUNCTIONS
+	// ==============
+	//{///////////////////////////////////////
+
+	//-------------------------------------------------------
+	
+		void Flashlight_FirstTime(bool abLit)
+		{	
+			cLux_AddDebugMessage("You discovered the flashlight!");
+			
+			/////////////////////////////////////
+			// Player discovers their flashlight here... activate!
+			//Player_SetFlashlightDisabled(false);
+			
+			Hint_ShowInfo("Hints","HintFlashlight");
+			Timer_PlayFlashlightDiscoveryLine("Timer_PlayFlashlightDiscoveryLine");
+			
+			cScript_SetGlobalVarBool("PlayerActivatedFlashlight", true);
+			
+			Player_SetFlashlightOnOffCallback("");
+		}
+		
+		void Timer_PlayFlashlightDiscoveryLine(const tString &in asTimer)
+		{
+			if (Voice_CharacterIsSpeaking("Player"))
+			{
+				Map_AddTimer(asTimer, 1, "Timer_PlayFlashlightDiscoveryLine");
+				return;
+			}
+			
+			if (Player_GetUnderwater())
+			{
+				Voice_Play("GetFlashlightUnderwater");
+				cLux_AddTodoMessage("SOUND/DIALOG: Underwater flashlight reveal");
+			}
+			else
+			{
+				Voice_Play("GetFlashlight");
+				cLux_AddTodoMessage("SOUND/DIALOG: Out of water flashlight reveal");
+			}
+		}
+	
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Generic timers
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		void TimerEnableInteraction(const tString &in asTimer)
+		{
+			Entity_SetInteractionDisabled(asTimer, false);
+		}
+
+		//-------------------------------------------------------
+		
+		//void TimerSwitchMovingButtonOn(const tString &in asTimer)
+		//{
+		//	MovingButton_SetSwitchedOn(asTimer, true, true);
+		//}
+
+		//-------------------------------------------------------
+		
+		void TimerSwitchMovingButtonOff(const tString &in asTimer)
+		{
+			MovingButton_SetSwitchedOn(asTimer, false, true);
+		}
+
+		//-------------------------------------------------------
+		
+		void TimerStopPlayerInteraction(const tString &in asTimer)
+		{
+			if (Entity_IsInteractedWith(asTimer))
+			{
+				Player_ChangeStateToNormal();
+				Player_SetLookSpeedMul(0);
+				Player_FadeLookSpeedMulTo(1, 1);
+			}
+		}
+
+		//-------------------------------------------------------
+		
+		void TimerSetLampLit(const tString &in asTimer)
+		{
+			Lamp_SetLit(asTimer, true, true);
+		}
+		
+		//------------------------------------------------------------
+		
+		void TimerSetLampUnlit(const tString &in asTimer)
+		{
+			Lamp_SetLit(asTimer, false, true);
+		}
+		
+		//------------------------------------------------------------
+		
+		void TimerSetLampUnlitNoEffects(const tString &in asTimer)
+		{
+			Lamp_SetLit(asTimer, false, false);
+		}
+
+		//-------------------------------------------------------
+		
+		void TimerSetTerminalGuiInactive(const tString &in asTimer)
+		{
+			Terminal_SetGuiActive(asTimer, false, 0.25);
+		}
+
+		//-------------------------------------------------------
+		
+		void Timer_PlayVoice(const tString &in asTimer)
+		{
+			Voice_Play(asTimer);
+		}
+		
+		//} End Generic timers
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Omnitool
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+	
+		bool CanUseCathTool(const tString &in asTool, const tString &in asEntity)
+		{
+			return asEntity=="AirlockPanelArea_1" || asEntity=="AirlockPanelArea_2" ||asEntity=="OmniToolSlot_Area";
+		}
+		
+		//------------------------------------------------------------
+		
+		bool OnUseCathTool(const tString &in asTool, const tString &in asEntity)
+		{
+			// Use omnitool in the first airlock
+			if (asEntity=="AirlockPanelArea_1")
+			{
+				Entity_SetActive("AirlockPanelArea_1", false);
+				Entity_SetActive("AirlockToolArea_1", false);
+				Button_SetSwitchedOn("AirlockPanel_1", true, true);
+				SequencePumpOutWater("pumping_water_not_iron");
+				return false;
+			}
+			
+			if (asEntity=="AirlockPanelArea_2")
+			{
+				Entity_SetActive("AirlockPanelArea_2", false);
+				Entity_SetActive("AirlockToolArea_2", false);
+				Button_SetSwitchedOn("AirlockPanel_2", true, true);
+				StateFillAirLock("AirlockPanel_2", 1);
+				return false;
+			}
+			
+			// Use omnitool in the train
+			if (asEntity=="OmniToolSlot_Area")
+			{
+				CathTool_Insert("CathTool", "cath_terminal_landingpad_1");
+				Entity_AttachToEntity("CathTool", "01_05_transporter_passenger_1", "", false, false);
+				Terminal_SetGuiActive("01_05_transporter_passenger_good_to_go_display_1", true, 1);
+				return true;
+			}
+			return false;
+		}
+		
+		//} End omnitool
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Power states
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		void SetPowerState_General(ePowerState aState)
+		{
+			cLux_AddDebugMessage("General lighting state set: "+aState);
+				
+			// No power
+			if (aState == ePowerState_NoPower)
+			{
+			    Lamp_SetLit("lamp_tunnel_orange_*", false, false);
+			    Lamp_SetLit("lowpower_lamp_*", true, false);
+			    Lamp_SetLit("maintenance_shaft_lamp_*", false, false);
+				Entity_SetInteractionDisabled("hatch_tunnel_maintenance_*", true);
+				//Entity_SetActive("Lamp_PowerState_NoPower_*", true);
+				//Entity_SetActive("Lamp_PowerState_Low_*", false);
+				//Entity_SetActive("Lamp_PowerState_High_*", false);
+				
+				//-----------------------------------------------------------
+				//Audio
+				cLux_AddDebugMessage("Tunnel Ambient Areas switched to NO POWER");
+				
+				//Turn on Dark Areas
+				Entity_SetActive("AMB_StartingTunnel_DARK", true);
+				Entity_SetActive("AMB_Station_DARK", true);
+				Entity_SetActive("AMB_SideTunnel_DARK", true);
+				Entity_SetActive("AMB_VentSpace_Lower_DARK", true);
+				Entity_SetActive("AMB_VentSpace_UpperRight_DARK", true);
+				Entity_SetActive("AMB_VentSpace_UpperLeft_DARK", true);
+				Entity_SetActive("AMB_SideTunnel_Cave_DARK", true);
+				
+				//Turn off Light Areas
+				Entity_SetActive("AMB_StartingTunnel_LIGHT", false);
+				Entity_SetActive("AMB_Station_LIGHT", false);
+				Entity_SetActive("AMB_SideTunnel_LIGHT", false);
+				Entity_SetActive("AMB_VentSpace_Lower_LIGHT", false);
+				Entity_SetActive("AMB_VentSpace_UpperRight_LIGHT", false);
+				Entity_SetActive("AMB_VentSpace_UpperLeft_LIGHT", false);
+				Entity_SetActive("AMB_SideTunnel_Cave_LIGHT", false);
+				//-----------------------------------------------------------
+			}
+			
+			// Low power
+			else if (aState == ePowerState_Bad)
+			{
+				
+				cLux_AddDebugMessage("Tunnel lights to turn on here - BAD");
+				
+			    Lamp_SetLit("lamp_tunnel_orange_*", true, false);
+				Lamp_SetFlickerActive("lamp_tunnel_orange_*", true);
+				Lamp_SetLit("amy_room_lamp_*", true, false);
+				Lamp_SetFlickerActive("amy_room_lamp_*", true);
+				Lamp_SetLit("lowpower_lamp_*", false, false);
+				Lamp_SetLit("lamp_stairs_nopower_*", false, false);
+				Entity_PlayAnimation("amy_setpiece", "Fitting", 0.1f, true, false);
+				Entity_SetInteractionDisabled("hatch_tunnel_maintenance_*", true);
+				//Entity_SetActive("Lamp_PowerState_NoPower_*", false);
+				//Entity_SetActive("Lamp_PowerState_Low_*", true);
+				//Entity_SetActive("Lamp_PowerState_High_*", false);
+			}
+			
+			// Stable power
+			else if (aState == ePowerState_Good)
+			{
+				cLux_AddDebugMessage("Tunnel lights to turn on here");
+				
+				Lamp_SetLit("lamp_tunnel_orange_*", true, false);
+				Lamp_SetFlickerActive("lamp_tunnel_orange_*", false);
+				Lamp_SetLit("lowpower_lamp_*", false, false);
+				Lamp_SetLit("maintenance_hatch_lamp_*", true, false);
+				Lamp_SetLit("lamp_stairs_nopower_*", false, false);
+				Lamp_SetLit("maintenance_shaft_lamp_*", true, false);
+				Lamp_SetLit("amy_room_lamp_*", true, false);
+				Lamp_SetFlickerActive("amy_room_lamp_*", false);
+				Sound_Stop("amy_setpiece_AnimEvent", 1.0f);
+				Entity_PlayAnimation("amy_setpiece", "Death", 0.1f, false, false);
+				Entity_SetInteractionDisabled("hatch_tunnel_maintenance_*", false);
+				//Entity_SetActive("Lamp_PowerState_NoPower_*", false);
+				//Entity_SetActive("Lamp_PowerState_Low_*", false);
+				//Entity_SetActive("Lamp_PowerState_High_*", true);
+			}
+			
+			mPowerState_General = aState;
+		}
+
+		//-------------------------------------------------------
+		
+		void SetPowerState_Platform(ePowerState aState)
+		{
+			ePowerState state = aState;
+			
+			// No power
+			if (state == ePowerState_NoPower)
+			{
+				//Lamps
+				Lamp_SetLit("screen_board_1", false, false);
+				if (mbPlatformFlowerDrained==false)
+					Lamp_SetLit("screen_board_2", false, false);
+				Lamp_SetLit("lamp_room_1_*", false, false);
+				Lamp_SetLit("lamp_room_2_*", false, false);
+				Lamp_SetLit("lamp_room_3_*", false, false);
+				Lamp_SetLit("wall_lamp_room_3_*", false, false);
+				Lamp_SetLit("cart_lamp_room_3_*", false, false);
+				Lamp_SetLit("TrainDoorLamps", false, false);
+				Lamp_SetLit("lamp_cargo_train_*", false, false);
+				
+				Lamp_SetLit("PowerBoxEmergencyLight", true, false);
+				
+				Lamp_SetFlickerActive("screen_board_*", true);
+				Lamp_SetFlickerActive("lamp_room_3_3", false);
+				Lamp_SetFlickerActive("lamp_cargo_train_1", false);
+				
+				//Train ents
+				Terminal_SetGuiActive("StatusTerminal", false, 0.5);
+				Entity_SetEffectsActive("TrainTerminal", false, false);
+				Entity_SetEffectsActive("01_05_transporter_passenger_starter_panel_1", false, false);
+				Entity_SetEffectsActive("TrainSwitch_1", false, false);
+				Entity_SetEffectsActive("TrainSwitch_2", false, false);
+				Entity_SetEffectsActive("TrainSwitch_3", false, false);
+				
+				Entity_SetActive("Area_Transport1_Door*", false);
+				Prop_SetStaticPhysics("01_05_transporter_passenger_door1", false);
+				Entity_SetInteractionDisabled("01_05_transporter_passenger_door1", false);
+				PhysicsSlideDoor_SetLocked("01_05_transporter_passenger_door1", true, false);
+				
+				//Effects
+				ParticleSystem_SetVisible("fog_ps_*", false);
+				ParticleSystem_SetVisible("steam_ps_*", false);
+				Map_FadeFogColor(cColor(0.034,0.039,0.05,0.196), 0);
+				
+				//Audio
+				cLux_AddDebugMessage("Platform Ambient Areas switched to NO POWER");
+				
+				//Turn ON Dark Areas
+				Entity_SetActive("AMB_StartingTunnel_DARK", true);
+				
+				//Turn OFF Light Areas
+				Entity_SetActive("AMB_StartingTunnel_LIGHT", false);
+			}
+			
+			// Low power, or if platform flower has been drained
+			else if (state == ePowerState_Bad || mbPlatformFlowerDrained)
+			{
+				state = ePowerState_Bad; // force it to be bad
+				
+				//Turn buzzing sound for lights in tunnel
+				Sound_Play("tunnel_lightbuzz_1", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_2", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_3", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_4", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_5", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_6", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_7", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_8", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_9", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_10", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_11", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_12", 1.0f, false);
+				
+				//Lamps
+				Lamp_SetLit("screen_board_1", false, false);
+				if (mbPlatformFlowerDrained==false)
+					Lamp_SetLit("screen_board_2", false, false);
+				Lamp_SetLit("lamp_room_1_*", false, false);
+				Lamp_SetLit("lamp_room_2_*", false, false);
+				Lamp_SetLit("lamp_room_3_*", false, false);
+				Lamp_SetLit("lamp_room_3_3", true, false);
+				Lamp_SetLit("wall_lamp_room_3_*", false, false);
+				Lamp_SetLit("cart_lamp_room_3_*", true, false);
+				Lamp_SetLit("TrainDoorLamps", true, false);
+				Lamp_SetLit("lamp_cargo_train_*", true, false);
+				
+				Lamp_SetLit("PowerBoxEmergencyLight", false, false);
+				
+				Lamp_SetFlickerActive("screen_board_*", true);
+				Lamp_SetFlickerActive("lamp_room_3_3", true);
+				Lamp_SetFlickerActive("lamp_cargo_train_1", true);
+				
+				//Train ents
+				Terminal_SetGuiActive("StatusTerminal", true, 0.5);
+				Entity_SetEffectsActive("TrainTerminal", true, false);
+				Entity_SetEffectsActive("01_05_transporter_passenger_starter_panel_1", true, false);
+				Entity_SetEffectsActive("TrainSwitch_1", true, false);
+				Entity_SetEffectsActive("TrainSwitch_2", true, false);
+				Entity_SetEffectsActive("TrainSwitch_3", true, false);
+				
+				Entity_SetActive("Area_Transport1_Door*", true);
+				Prop_SetStaticPhysics("01_05_transporter_passenger_door1", true);
+				Entity_SetInteractionDisabled("01_05_transporter_passenger_door1", true);
+				PhysicsSlideDoor_SetLocked("01_05_transporter_passenger_door1", false, false);
+				
+				//Effects
+				ParticleSystem_SetVisible("fog_ps_*", false);
+				ParticleSystem_SetVisible("fog_ps_5", true);
+				ParticleSystem_SetVisible("steam_ps_*", false);
+				ParticleSystem_SetVisible("steam_ps_1", true);
+				ParticleSystem_SetVisible("steam_ps_2", true);
+				Map_FadeFogColor(mvLevelFogColor, 0);
+			}
+			
+			// Stable power
+			else if (state == ePowerState_Good)
+			{
+				//Turn buzzing sound for lights in tunnel
+				Sound_Play("tunnel_lightbuzz_1", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_2", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_3", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_4", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_5", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_6", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_7", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_8", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_9", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_10", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_11", 1.0f, false);
+				Sound_Play("tunnel_lightbuzz_12", 1.0f, false);
+				
+				//Lamps
+				Lamp_SetLit("screen_board_1", true, false);
+				if (mbPlatformFlowerDrained==false)
+					Lamp_SetLit("screen_board_2", true, false);
+				Lamp_SetLit("lamp_room_1_*", true, false);
+				Lamp_SetLit("lamp_room_2_*", true, false);
+				Lamp_SetLit("lamp_room_3_*", true, false);
+				Lamp_SetLit("wall_lamp_room_3_*", true, false);
+				Lamp_SetLit("cart_lamp_room_3_*", true, false);
+				Lamp_SetLit("TrainDoorLamps", true, false);
+				Lamp_SetLit("lamp_cargo_train_*", true, false);
+				
+				Lamp_SetLit("PowerBoxEmergencyLight", false, false);
+				
+				Lamp_SetFlickerActive("screen_board_*", false);
+				Lamp_SetFlickerActive("lamp_room_3_3", false);
+				Lamp_SetFlickerActive("lamp_cargo_train_1", false);
+				
+				//Train ents
+				Terminal_SetGuiActive("StatusTerminal", true, 0.5);
+				Entity_SetEffectsActive("TrainTerminal", true, false);
+				Entity_SetEffectsActive("01_05_transporter_passenger_starter_panel_1", true, false);
+				Entity_SetEffectsActive("TrainSwitch_1", true, false);
+				Entity_SetEffectsActive("TrainSwitch_2", true, false);
+				Entity_SetEffectsActive("TrainSwitch_3", true, false);
+				
+				Entity_SetActive("Area_Transport1_Door*", true);
+				Prop_SetStaticPhysics("01_05_transporter_passenger_door1", true);
+				Entity_SetInteractionDisabled("01_05_transporter_passenger_door1", true);
+				PhysicsSlideDoor_SetLocked("01_05_transporter_passenger_door1", false, false);
+				
+				//Effects
+				ParticleSystem_SetVisible("fog_ps_*", true);
+				ParticleSystem_SetVisible("steam_ps_*", true);
+				Map_FadeFogColor(mvLevelFogColor, 0);
+			}
+			
+			cLux_AddDebugMessage("Platform lighting state set: "+state);
+			mPowerState_Platform = state;
+		}
+		
+		//} End power states
+	
+	//} END MAIN FUNCTIONS
+	
+	//-------------------------------------------------------
+
+	/////////////////////////////////////////
+	// ==============
+	// SCENE 1 *ENTER TRAIN STATION*
+	// ==============
+	//{///////////////////////////////////////
+
+	//-------------------------------------------------------
+	
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 1 Event A *Flush Airlock*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+	
+		/**
+		 * Interact on the entrace to the station, only hints about water
+		 * */
+		void InteractEntranceToStation(const tString &in asEntity)
+		{
+			cLux_AddTodoMessage("SOUND: Locked door.");
+			//TODO MAKE NICE EVENT.
+			Entity_SetInteractionDisabled(asEntity, true);
+			Map_AddTimer(asEntity, 1, "TimerEnableInteraction");
+		}
+		
+		//------------------------------------------------------------
+			
+		bool OnTriggerSimonEntryComment(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			return false;
+		}
+		
+		//------------------------------------------------------------
+			
+		/**
+		 * Pumping out water and opening the entrance to the station
+		 **/
+		cSequenceStatesData mSequencePumpOutWater;
+		void SequencePumpOutWater(const tString &in asX)
+		{
+			Sequence_Begin("SequencePumpOutWater", mSequencePumpOutWater);
+
+			if(Sequence_DoStepAndWait(2.6))
+			{
+				////////////////////////////
+				////Door begins to open sound
+				Map_AddTimer("FadeUp", 6.0f, "LevelAudioFades");
+				Sound_CreateAtEntity("airlock_start_open", "01_04_transport_station/SFX/airlock/start/open", "Player", 0.0f, false);
+				Sound_CreateAtEntity("airlock_start_wind", "01_04_transport_station/SFX/airlock/start/wind", "Player", 0.0f, false);
+				
+				///////////////////////////
+				////Activate first corridor sound spots
+				Entity_SetActive("start_corridor_water_leak", true);
+			}
+			
+			
+			else if(Sequence_DoStepAndWait(1))
+			{
+				Entity_SetActive("StationEntrance", false);
+				SlideDoor_SetClosed("StationEntranceDoor", false);
+				
+				// Light tunnel up a bit
+				float fAmb = 0.3f;
+				float fFadeTime = 1.25f;
+				for(int i=1; i<=13; ++i)
+				{
+					fFadeTime += 0.25f;
+					
+					cColor lightColor(fAmb,0);
+					
+					if(i<=3)
+						lightColor.r += 0.2f;
+					if(i<=6)
+						fAmb -= 0.015f;					
+						
+					Light_FadeTo("TunnelAmbLight_" + i, lightColor, 5, fFadeTime);
+				}
+			}
+			else
+			{
+				Entity_SetActive("LiquidArea_1", false);
+			}
+			
+			Sequence_End();
+		}
+		
+		//------------------------------------------------------------
+		
+		
+		bool ExitedAirlock(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			Music_Play("01_04_enteringstation", 0.45f, false, eMusicPrio_BigEvent);
+			//Lamp_SetLit("lamp_stairs_nopower_*", true, false);
+			Lamp_SetFlickerActive("lamp_stairs_nopower_*", true);
+			Map_AddTimer("FlickerStairLamps", 1.5f, "TurnOnStairLamps");
+			return false;
+		}
+		
+		void TurnOnStairLamps(const tString &in)
+        {
+		    cLux_AddDebugMessage("lamps should stop flickering");
+            Lamp_SetFlickerActive("lamp_stairs_nopower_*", false);
+        } 
+		
+		//-------------------------------------------------------
+		//} EVENT
+	
+	//} END SCENE 1
+	
+	//--------------------------------------------
+	
+	////////////////////////////////
+	// ACTIVATE FLASHLIGHT
+	////////////////////////////////
+	
+	//---------------------------------------------
+	
+	bool CollideActivateFlashlight(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (cScript_GetGlobalVarBool("PlayerActivatedFlashlight") == true) return false;
+		if (alState != 1) return true;
+		
+		Player_SetFlashlightActive(true,false);
+		
+		return false;
+	}
+	
+	//---------------------------------------------
+
+	/////////////////////////////////////////
+	// ==============
+	// SCENE 2 *GET POWER ON*
+	// ==============
+	//{///////////////////////////////////////
+
+	//-------------------------------------------------------
+		
+		//Trigger to stop tunnel sparks when in airlock/starting passage as sound leaks through
+		bool TunnelSparkFlickerTrigger(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			Light_SetFlickerActive("TunnelSpark_1", true);
+			cLux_AddDebugMessage("tunnel spark light active");
+			if (alState==1)
+			{
+				cLux_AddDebugMessage("tunnel spark light inactive");
+				Light_SetFlickerActive("TunnelSpark_1", false);
+			}
+			return true;
+		}
+	
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 2 General
+		//{///////////////////////////////////////
+
+		//------------------------------------------------------------
+		
+		bool mbAmyRobotActivated = false;
+
+		//------------------------------------------------------------
+		
+		void SetupGetPowerOn()
+		{
+			StickyArea_AttachBody("AmyStickyArea","AmyCable_Body_11");
+			//Map_AddTimer("hatch_tunnel_maintenance_2", 1, "TimerSwitchMovingButtonOn");
+			
+			Map_AddTimer("AmyBreatheOut", 1, "TimerAmyBreathe");
+		}
+		
+		//------------------------------------------------------------
+		
+		bool CanUsePowerChip(const tString &in asTool, const tString &in asEntity)
+		{
+			return asEntity == "PowerChipUseArea";
+		}
+		
+		//------------------------------------------------------------
+		
+		void OnGui_AmyRoomPowerStatus(const tString&in asEntityName, float afTimeStep)
+		{	
+			ImGui_SetTransCategory("01_04_transport_station");
+			
+			//StationGuiBG_BackdropV2();
+			StationGuiBG_Scanlines();
+			
+			if (mPowerState_General != ePowerState_Good)
+			{
+				float fAlpha = mPowerState_General == ePowerState_Bad ? 0.4 : 0.6;
+				float fDistortion = 0.05f + ImGui_GetStateFloat("Distortion", 0);
+				Depth_ImGui_WauLeechGibberish(cColor(0.8, fAlpha), fDistortion, 2);
+			}
+			
+			tString sText = "AmyRoomPowerInfo_NoPower";
+			if (mPowerState_General == ePowerState_Good)
+				sText = "AmyRoomPowerInfo_Good";
+			else if (mPowerState_General == ePowerState_Bad)
+				sText = "AmyRoomPowerInfo_Bad";
+			
+			cColor color = mPowerState_General == ePowerState_Good ? gStationGuiColor_Highlight : gStationGuiColor_Warning;
+			bool bBlinking = ImGui_GetStateFloat("Blinking") > 0;
+			
+			StationGui_BigStatusMessage(sText, color, 2, bBlinking);
+		}
+
+		//} END GENERAL
+	
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 2 Event A *Datamine Intercom (dialog)*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 2 Event B *Examine Amy Cargo Pad (text & dialog)*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 2 Event C *Enter Tunnel; hear weird sounds*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+
+		//If player hasn't interacted with lever - call same function to trigger music and scare event
+		bool Audio_TunnelScare(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			mbHasSwitchScareTriggered = true;
+			Entity_SetActive("Sound_SpookTrigger", false);
+			Map_AddTimer("SpookTrigger", cMath_RandRectf(2.5f,4.0f), "Audio_FirstTunnelScare");
+			return false;
+		}
+
+		//-------------------------------------------------------
+
+		void TimerAmyBreathe(const tString &in asTimer)
+		{
+			if (asTimer=="AmyBreatheOut")
+			{
+				cColor targetColor = cColor(0.391,0.871,1,1)*0.6;
+				targetColor.a = 0;
+				Light_FadeTo("AmyLight_Point_*", targetColor, -1, 3);
+				targetColor.a = 1;
+				Light_FadeTo("AmyLight_Spot", targetColor, -1, 3);
+			}
+			else
+			{
+				cColor targetColor = cColor(0.391,0.871,1,0);
+				Light_FadeTo("AmyLight_Point_*", targetColor, -1, 2);
+				targetColor.a = 1;
+				Light_FadeTo("AmyLight_Spot", targetColor, -1, 2);
+			}
+		}
+
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 2 Event D *Kill Amy and get the power-chip (dialog) (optional)*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		int mlTalkToAmyCount_NoPower = 0;
+		int mlTalkToAmyCount_BadPower = 0;
+		int mlTalkToAmyCount_Final = 0;
+
+		//-------------------------------------------------------
+		
+		void Interact_AmyCorpse(const tString &in asEntity)
+		{
+			Dialog_StartConversation("AmyCorpse", asEntity);
+			Dialog_Begin();
+			if (mPowerState_General == ePowerState_NoPower)
+			{
+				if (Voice_SubjectExists("TalkToAmy_"+(mlTalkToAmyCount_NoPower+1)))
+				{
+					mlTalkToAmyCount_NoPower++;
+					Dialog_AddBranchAndSubject("TalkToAmy_"+mlTalkToAmyCount_NoPower);
+				}
+				else
+				{
+					mlTalkToAmyCount_Final++;
+					if (Voice_SubjectExists("TalkToAmy_Final_"+mlTalkToAmyCount_Final)==false)
+						mlTalkToAmyCount_Final = cMath_RandRectl(1, 3);
+					Dialog_AddBranchAndSubject("TalkToAmy_Final_"+mlTalkToAmyCount_Final);
+				}
+			}
+			else
+			{
+				if (Voice_SubjectExists("TalkToAmy_CablePulled_"+(mlTalkToAmyCount_BadPower+1)))
+				{
+					mlTalkToAmyCount_BadPower++;
+					Dialog_AddBranchAndSubject("TalkToAmy_CablePulled_"+mlTalkToAmyCount_BadPower);
+				}
+				else
+				{
+					mlTalkToAmyCount_Final++;
+					if (Voice_SubjectExists("TalkToAmy_CablePulled_Final_"+mlTalkToAmyCount_Final)==false)
+						mlTalkToAmyCount_Final = cMath_RandRectl(1, 2);
+					Dialog_AddBranchAndSubject("TalkToAmy_CablePulled_Final_"+mlTalkToAmyCount_Final);
+				}
+			}
+			Dialog_End();
+		}
+
+		//-------------------------------------------------------
+		
+		bool Trigger_AmyBackRoom(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			Entity_SetActive("AmyMusicTrigger", false);
+			if (alState==1)
+			{
+				cLux_AddDebugMessage("Amy music look at trigger ACTIVE");
+				Entity_SetActive("AmyMusicTrigger", true);
+			}
+			return true;
+		}
+
+		//-------------------------------------------------------
+		
+		void Detach_AmyCable(const tString &in asStickyArea, const tString &in asBodyName)
+		{
+			Entity_SetActive(asStickyArea, false);
+			
+			LightFlash_Add(0, 0.1, 0.1, Map_GetEntity(asStickyArea).GetPosition(), cColor(0.5,0.5,1,1), 1, 5);
+			ParticleSystem_CreateAtEntityExt(asStickyArea + "SparkParticles", "ps_impact_metal_high.ps", asStickyArea, false, cColor(0.75,0.75,1,1), 3.f);
+			ParticleSystem_CreateAtEntityExt(asStickyArea + "DustParticles", "dust_puff.ps", asStickyArea, false, cColor(0.3f,1));
+			Sound_CreateAtEntity(asBodyName+"_Detatch", "01_04_transport_station/SFX/amy/unplug", asStickyArea, 0, false);
+			
+			////////////////////////////////
+			// Weak power on
+			if (mPowerState_General == ePowerState_NoPower)
+			{
+				Terminal_SetImGuiStateFloat("AmyRoomPowerStatus", "Blinking", 1);
+				Terminal_FadeImGuiStateFloat("AmyRoomPowerStatus", "Blinking", 0, 3, eEasing_Linear);
+				
+				Terminal_SetImGuiStateFloat("AmyRoomPowerStatus", "Distortion", 1);
+				Terminal_FadeImGuiStateFloat("AmyRoomPowerStatus", "Distortion", 0, 8, eEasing_Linear);
+				
+				Seq_FirstCable("");
+			}
+			
+			////////////////////////////////
+			// Full power on, amy dies
+			else
+			{
+				SetPowerState_General(ePowerState_Good);
+				if (mPowerState_Platform == ePowerState_Bad)
+					SetPowerState_Platform(ePowerState_Good);
+				
+				Seq_AmyDeath("");
+				
+				Entity_SetActive("AmyTalkTrigger", false);
+				Entity_SetActive("AmyDeadCheckpoint", true);
+			}
+		}
+		//-------------------------------------------------------
+
+		bool Trigger_AmyDeadCheckpoint(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			CheckPoint_Setup("");
+			AttackMeter_SetAttackerTeleportPosition("MonsterSpawn_AmyTunnel_*");
+			return false;
+		}
+		
+		//-------------------------------------------------------
+		
+		cSequenceStatesData mFirstCableSequence;
+		
+		bool mbAmyMusicTriggered = false;
+		
+		void Seq_FirstCable(const tString &in asTimer)
+		{
+			Sequence_Begin("Seq_FirstCable", mFirstCableSequence);
+					
+			if (Sequence_DoStepAndWait(0.5))
+			{
+				SetPowerState_General(ePowerState_Bad);
+				
+				//Music
+				if(mbAmyMusicTriggered==false)
+				{
+					Music_Play("01_04_shadow", 0.5f, false, eMusicPrio_BigEvent);
+					mbAmyMusicTriggered = true;
+				}
+				//Bad power sweetener
+				Audio_BadPowerSweetenerStart();
+			}
+			if (Sequence_DoStepAndWait(1))
+			{
+				Dialog_Begin();
+					Dialog_AddBranch("AmyChipPull");
+						Dialog_AddSubject("AmyChipPull");
+						Dialog_AddPause(0.5);
+						Dialog_AddSubject("CantTakeChipComment");
+				Dialog_End();
+			}
+			Sequence_End();
+		}
+
+		//-------------------------------------------------------
+		
+		cSequenceStatesData mAmyDeathSequence;
+			
+		void Seq_AmyDeath(const tString &in asTimer)
+		{
+			Sequence_Begin("Seq_AmyDeath", mAmyDeathSequence);
+				
+			if (Sequence_DoStepAndWait(0.5))
+			{
+				//Stop bad power sweetener
+				Audio_StopBadPowerSweetener();
+				
+				Entity_SetActive("AmyChipInteract", false);
+				Prop_SetStaticPhysics("Amy", false);
+				Entity_AddForce("Amy", 1, false, false);
+				Entity_SetInteractionDisabled("Amy", false);
+				
+				//Agent_SetViewRangeMul("AmyRobot", 0.25);
+				//Entity_SetEffectsActive("AmyRobot_PowerOff", true, false);
+				//Entity_SetActive("ApproachingAmyRobot", true);
+				//Entity_SetActive("tunnel_hole_drbris_*", true);
+			}
+			else if (Sequence_DoStepAndWait(6))
+			{
+				Voice_StopAll();
+				Voice_Play("AmyDeath");
+				
+				Light_FadeTo("AmyLight_*", cColor(0), -1, 3);
+				Map_RemoveTimer("AmyBreatheIn");
+				Map_RemoveTimer("AmyBreatheOut");
+			}
+			else if (Entity_GetCollide("Player", "PowerRoom"))
+			{
+				cLux_AddTodoMessage("Sound: Amy robot heard booting outside.");
+				//Sound_CreateAtEntity("AmyRobotBooting", "Entities_Station/doors/theta_door/unlock_longfalloff", "AmyRobot");
+			}
+			Sequence_End();
+		}
+
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 2 Event H *Amy Robot awakens (dialog)*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		int mlAmyFallTarget = 0;
+
+		//-------------------------------------------------------
+		
+		bool Trigger_ApproachingAmyRobot(const tString &in asParent, const tString &in asChild, int alState)
+		{
+/*			if (alState == 1 || Entity_PlayerIsInFront(asChild)==false)
+				return true;
+				
+			mbAmyRobotActivated = true;
+			Seq_AmyRobotAwakens("");*/
+			
+			return false;
+		}
+
+		//-------------------------------------------------------
+		
+		cSequenceStatesData mAmyRobotAwakensSequence;
+			
+		void Seq_AmyRobotAwakens(const tString &in asTimer)
+		{
+			Sequence_Begin("Seq_AmyRobotAwakens", mAmyRobotAwakensSequence);
+					
+			if (Sequence_DoStepAndWait(0.5))
+			{
+				cLux_AddTodoMessage("Sound: Amy robot falls to floor.");
+				Sound_CreateAtEntity("AmyRobotFallSound", "01_02_upsilon_inside_02/sfx/vent/construct/backtrack", "AmyRobot_PowerOff");
+				ParticleSystem_CreateAtEntity("AmyRobotFallPS", "smoke_cloud_oneshot", "AmyRobot_PowerOff", false);
+			}
+			if (Sequence_DoStepAndPause(0))
+			{				
+				Prop_MoveLinearTo("AmyRobot_PowerOff", "AmyRobot_Fall_1", 1, 1, 0, true, "MoveTo_AmyRobotFall");
+				Prop_AlignRotation("AmyRobot_PowerOff", "AmyRobot_Fall_1", 1, 1.5, 0, true);
+			}
+			else if (Sequence_DoStepAndWait(2))
+			{
+				Entity_SetActive("AmyRobot_PowerOff", false);
+				Entity_SetActive("AmyRobot", true);
+				
+				Voice_Play("AmyRobotAwakens");
+				cScript_RunGlobalFunc("AmyRobot", "cScrAgentConstructCrawler", "SetIdleBarkMachineIdle");
+
+				Map_AddTimer("AmyRobot", 6, "TimerSetAgentSensesActive");
+			}
+			else if (Sequence_DoStepAndWait(2))
+			{
+				Pathfinder_Track_Clear("AmyRobot");
+				Pathfinder_Track_Add("AmyRobot", "PathNodeArea_40", 5, 8);
+				Pathfinder_Track_Add("AmyRobot", "PathNodeArea_15", 5, 8);
+				Pathfinder_Track_Start("AmyRobot", true);
+			}
+			Sequence_End();
+		}
+
+		//-------------------------------------------------------
+		
+		void MoveTo_AmyRobotFall(const tString &in asProp)
+		{
+			mlAmyFallTarget++;
+			if (Entity_Exists("AmyRobot_Fall_"+mlAmyFallTarget)==false)
+			{
+				SequenceStates_Resume("Seq_AmyRobotAwakens");
+				return;
+			}
+			
+			Prop_MoveLinearTo(asProp, "AmyRobot_Fall_"+mlAmyFallTarget, 100, 2, 0, false, "MoveTo_AmyRobotFall");
+			Prop_AlignRotation(asProp, "AmyRobot_Fall_"+mlAmyFallTarget, 100, 3, 0, true);
+		}
+
+		//-------------------------------------------------------
+		
+		void TimerSetAgentSensesActive(const tString &in asTimer)
+		{
+			Agent_SetSensesActive(asTimer, true);
+		}
+
+		//-------------------------------------------------------
+		
+		void InteractVentClimbArea(const tString &in asEntity)
+		{
+			CameraAnimation_Begin(asEntity+"_Anim", "", true);
+			Sound_CreateAtEntity("VentClimb", "01_04_transport_station/SFX/foley/vent_climb", "Player", 0.0f, false, 1.0f);
+			Emotion_PlayEventBreath("01_04_transport_station/SFX/foley/vent_climb_vo", 3);
+		}
+
+		//-------------------------------------------------------
+		
+		bool Trigger_SetVentClimbAreaActive(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			Entity_SetActive(Entity_GetVarString(asChild, ""), alState==1);
+			return true;
+		}
+		
+		void button_hatch_exit_1_OnPlayerInteract(const tString &in asEntity)
+        {
+		    Entity_SetEffectsActive("button_hatch_exit_1", false, true);
+        }
+
+		//-------------------------------------------------------
+		
+		bool Trigger_VentSafeZone(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			Agent_SetSensesActive("AmyRobot", alState==-1);
+			return true;
+		}
+
+		//-------------------------------------------------------
+		
+		bool Trigger_AmyInvestigateVent(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			if (mbAmyRobotActivated==false)
+				return true;
+			
+			Entity_PlaceAtEntity("AmyRobot", "AmyRobotVentPos");
+			Agent_FaceEntity("AmyRobot", "AmyRobotVentLookAt");
+			Pathfinder_Track_Clear("AmyRobot");
+			Pathfinder_Track_Stop("AmyRobot");
+			Pathfinder_Track_Add("AmyRobot", "AmyInvestigateVentPos", 8);
+			Pathfinder_Track_Add("AmyRobot", "PathNodeArea_44", 8);
+			Pathfinder_Track_Start("AmyRobot", false, 1, "EndOfTrackAmyVentInvestigation");
+			return false;
+		}
+
+		//-------------------------------------------------------
+		
+		void EndOfTrackAmyVentInvestigation(const tString &in asEntity)
+		{
+			Pathfinder_Track_Clear("AmyRobot");
+			Pathfinder_Track_Stop("AmyRobot");
+			Pathfinder_Track_Add("AmyRobot", "PathNodeArea_4", 1, 5);
+			Pathfinder_Track_Add("AmyRobot", "PathNodeArea_19", 1, 5);
+			Pathfinder_Track_Start("AmyRobot", true);
+		}
+
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 2 Event I *Datamine Amy (optional) (dialog)*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		void InteractDatamineAmy(const tString &in asEntity)
+		{
+			Entity_CallEntityInteract("AmyDatamineArea");
+		}
+		
+		//} END EVENT
+
+	//} END SCENE 2
+
+	//-------------------------------------------------------
+
+	/////////////////////////////////////////
+	// ==============
+	// SCENE 3 *TURN ON TRAIN AND RIDE IT*
+	// ==============
+	//{///////////////////////////////////////
+
+	//-------------------------------------------------------
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 3 Event A *Turn on platform power*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+	
+		/**
+		 * The main power switch in the power cabinet.
+		 * */
+		bool mbHasSwitchScareTriggered = false; 
+		bool mbSwitchDownSweetenerSound = true;
+		void StateLightSwitch(const tString &in asEntity, int alState)
+		{
+			if(alState != 1) return;
+			
+			if (mPowerState_General == ePowerState_NoPower)
+			{
+				Terminal_SetImGuiStateFloat("PlatformPowerTerminal", "Blinking", 8);
+				Terminal_FadeImGuiStateFloat("PlatformPowerTerminal", "Blinking", 0, 3, eEasing_Linear);
+				Sound_CreateAtEntity("PowerNotReady", "01_04_transport_station/SFX/powerbox/power_notready", "AreaPowerOn_1");
+				Sound_CreateAtEntity("SwitchDownSweetener", "01_04_transport_station/SFX/powerbox/switch_downsweet", "electric_switch_1");
+				
+				if (mbHasSwitchScareTriggered==false)
+				{
+					//Call scare event and ambient music when player pulls switch
+					mbHasSwitchScareTriggered=true;
+					Entity_SetActive("Sound_SpookTrigger", false);
+					Map_AddTimer("SpookTrigger", cMath_RandRectf(3.5f,5.0f), "Audio_FirstTunnelScare");
+				}
+				return;
+			}
+			
+			cLux_AddTodoMessage("Script: Make sure the juice for turning on the power state is correct depending on power state.");
+			
+			Sound_Play("abandoned_train_buzz", 1.0f);
+			
+			ParticleSystem_CreateAtEntity("spark1", "elec_spark_huge_oneshot.ps", "AreaPowerOn_1", false);
+			ParticleSystem_CreateAtEntity("spark2", "elec_spark_huge_oneshot.ps", "AreaPowerOn_2", false);
+			
+			Lever_SetStuckState("electric_switch_1", 1, false);
+			Prop_SetStaticPhysics("tech_pipe_valve_handle_1", true);
+			
+			Entity_SetInteractionDisabled("electric_switch_1", true);
+			
+			SlideDoor_SetClosed("StationEntranceDoor", true); //Close entrance door to optimise level.
+			
+			mlLightValveCount = 5; //!Disabled!: Setting to 5 as disabled activity with setting power level.
+			
+			if (mPowerState_General == ePowerState_Bad)
+			{
+				Sound_CreateAtEntity("elec_hum_bad", "01_04_transport_station/AMB/Spot/PowerBox/Bad", "electric_switch_1", 1, true);
+				Sound_CreateAtEntity("PowerNotReady", "01_04_transport_station/SFX/powerbox/power_ready", "AreaPowerOn_1");
+				Sound_CreateAtEntity("SwitchDownSweetener", "01_04_transport_station/SFX/powerbox/switch_downsweet", "electric_switch_1");
+				SequenceTurnOnLights_Bad("");
+			}
+			else
+			{
+				Sound_CreateAtEntity("elec_hum_good", "01_04_transport_station/AMB/Spot/PowerBox/Good", "electric_switch_1", 1, true);
+				Sound_CreateAtEntity("PowerNotReady", "01_04_transport_station/SFX/powerbox/power_ready", "AreaPowerOn_1");
+				Sound_CreateAtEntity("SwitchDownSweetener", "01_04_transport_station/SFX/powerbox/switch_downsweet", "electric_switch_1");
+				SequenceTurnOnLights_Good("let_there_be_light_maybe");
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		void OnGuiPlatformPower(const tString&in asEntityName, float afTimeStep)
+		{			
+			ImGui_SetTransCategory("01_04_transport_station");
+			
+			StationGuiBG_BackdropV2();
+			StationGuiBG_Scanlines();
+			
+			tString sText = "PlatformPowerInfo_NoPower";
+			if (mPowerState_Platform == ePowerState_Good)
+				sText = "PlatformPowerInfo_Good";
+			else if (mPowerState_Platform == ePowerState_Bad)
+				sText = "PlatformPowerInfo_Bad";
+			else if (mPowerState_General != ePowerState_NoPower)
+				sText = "PlatformPowerInfo_Ready";
+			
+			cColor color = mPowerState_Platform == ePowerState_Good ? cColor_Green : cColor_Red;
+			bool bBlinking = ImGui_GetStateFloat("Blinking") > 0;
+			
+			StationGui_BigStatusMessage(sText, gStationGuiColor_Warning, 2, bBlinking);
+		}
+		
+		//------------------------------------------------------------
+		/**
+		 * Small areas around the valve rotate through another area to count and set "power level".
+		 * 
+		 * **/
+		bool CollideValveCount(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			if(true) return false; //!Disabled!: Removed this activity part.
+			
+			if(alState != 1) return true;
+			
+			tString sLight = "Light_"+asChild;	//Name of light entity to turn on/off.
+			int lLightNr = cString_ToInt(cString_Sub(asChild, asChild.length()-1), 1);	//Get the light number from the name.
+			mlLightValveCount = lLightNr;	//Update member var used in other methods to check power level setting.
+			bool bLit = Lamp_GetLit(sLight) ? false : true;
+			
+			//Turn lights on.
+			if(bLit && mbCableConnected)
+			{
+				for(int i=1;i<=lLightNr;i++)
+					Lamp_SetLit("Light_AreaValve0"+i, bLit, false);
+			}	
+			
+			//Turn lights off.
+			else if(!bLit && mbCableConnected)
+			{
+				mlLightValveCount--;	//Deduct one extra from light count to make it correct with visible lights.
+				
+				for(int i=8;i>=lLightNr;i--)
+					Lamp_SetLit("Light_AreaValve0"+i, bLit, false);
+			}
+			
+			cLux_AddDebugMessage(""+mlLightValveCount);
+
+			if(mbCableConnected)
+				Sound_CreateAtEntity("click", "Entities_Urban/lamp/bulb/bedside_off", sLight, 0.05, false);
+				
+			return true;
+		}
+		
+		/**
+		 * Sticky that attaches the power cable to cabinet
+		 * */
+		bool AttachPowerCable(const tString &in asStickyArea, const tString &in asBodyName)
+		{	
+			mbCableConnected = true;
+			
+			//Set lights on according to the valve position, if player moved the valve before connecting cable.
+			if(mlLightValveCount > 0)
+				CollideValveCount("", "AreaValve0"+mlLightValveCount, 1);
+			
+			Map_AddTimer("", 3, "TimerSetPCToStatic");	//Delay set static as it won't work while in grab.
+			
+			return true;
+		}
+		
+		//------------------------------------------------------------
+		
+		void TimerSetPCToStatic(const tString &in asTimer)
+		{
+			Prop_SetStaticPhysics("power_cable", true);
+		}
+		
+		//------------------------------------------------------------
+
+		cSequenceStatesData mSequenceTurnOnLights_Good;
+		void SequenceTurnOnLights_Good(const tString &in asX)
+		{
+			Sequence_Begin("SequenceTurnOnLights_Good", mSequenceTurnOnLights_Good);
+
+			//Light in airlock turn on.
+			if(Sequence_DoStepAndWait(1))
+			{
+				mPowerState_Platform = ePowerState_Good;
+				
+				Music_Stop(2.0f, eMusicPrio_BgAmb);
+				Audio_PowerSequence_Good();
+				Audio_ScheduleBoardsStart();
+				
+				Lamp_SetLit("screen_board_1", true, false);
+				if (mbPlatformFlowerDrained==false)
+					Lamp_SetLit("screen_board_2", true, false);
+					
+				LightSwitchLightsOn("lamp_room_1");
+				Lamp_SetLit("PowerBoxEmergencyLight", false, true);
+				
+				Map_FadeFogColor(mvLevelFogColor, 6); //Fog color of level is restored to default.
+				
+				cLux_AddDebugMessage("Ambient Areas switched to LIGHT");
+				
+				//Turn off Dark Areas
+				Entity_SetActive("AMB_StartingTunnel_DARK", false);
+				Entity_SetActive("AMB_Station_DARK", false);
+				Entity_SetActive("AMB_SideTunnel_DARK", false);
+				Entity_SetActive("AMB_VentSpace_Lower_DARK", false);
+				Entity_SetActive("AMB_VentSpace_UpperRight_DARK", false);
+				Entity_SetActive("AMB_VentSpace_UpperLeft_DARK", false);
+				Entity_SetActive("AMB_SideTunnel_Cave_DARK", false);
+				
+				//Turn on Light Areas
+				Entity_SetActive("AMB_StartingTunnel_LIGHT", true);
+				Entity_SetActive("AMB_Station_LIGHT", true);
+				Entity_SetActive("AMB_SideTunnel_LIGHT", true);
+				Entity_SetActive("AMB_VentSpace_Lower_LIGHT", true);
+				Entity_SetActive("AMB_VentSpace_UpperRight_LIGHT", true);
+				Entity_SetActive("AMB_VentSpace_UpperLeft_LIGHT", true);
+				Entity_SetActive("AMB_SideTunnel_Cave_LIGHT", true);
+			}
+			
+			//Lights in corridor down to station goes on.
+			if(Sequence_DoStepAndWait(2))
+			{
+				LightSwitchLightsOn("lamp_room_2");
+				ParticleSystem_SetVisible("fog_ps_1", true);
+				ParticleSystem_SetVisible("fog_ps_2", true);
+				ParticleSystem_SetVisible("fog_ps_3", true);
+			}
+			
+			//Lights at station platform goes on.
+			if(Sequence_DoStepAndWait(3))
+			{
+				LightSwitchLightsOn("lamp_room_3");
+				Lamp_SetFlickerActive("screen_board_*", false);
+				
+				ParticleSystem_SetVisible("fog_ps_4", true);
+				ParticleSystem_SetVisible("fog_ps_5", true);
+				ParticleSystem_SetVisible("steam_ps_*", true);
+			}
+
+			//Lights in the station subway tunnels and cart goes on.
+			if(Sequence_DoStepAndWait(0.1f))
+			{
+				LightSwitchLightsOn("wall_lamp_room_3");
+			}
+			
+			//Lights in the passenger train goes on.
+			if(Sequence_DoStepAndWait(1))
+			{		
+				TrainPowerOn();	
+				Lamp_SetLit("lamp_cargo_train_*", true, true);
+			}
+			
+			Sequence_End();
+		}
+		
+		//------------------------------------------------------------
+	
+		cSequenceStatesData mSequenceTurnOnLights_Bad;
+		void SequenceTurnOnLights_Bad(const tString &in asX)
+		{
+			Sequence_Begin("SequenceTurnOnLights_Bad", mSequenceTurnOnLights_Bad);
+
+			//Light in airlock turn on.
+			if(Sequence_DoStepAndWait(1))
+			{
+				mPowerState_Platform = ePowerState_Bad;
+	
+				Lamp_SetLit("PowerBoxEmergencyLight", false, true);
+				
+				Map_FadeFogColor(mvLevelFogColor, 6); //Fog color of level is restored to default.
+				
+				Music_Stop(2.0f, eMusicPrio_BgAmb);
+				Audio_PowerSequence_Bad();
+				Audio_ScheduleBoardsStart();
+				Entity_SetActive("LightFlickerTrigger", true);
+				
+				cLux_AddDebugMessage("Ambient Areas switched to LIGHT");
+				//Turn off Dark Areas
+				Entity_SetActive("AMB_StartingTunnel_DARK", false);
+				Entity_SetActive("AMB_Station_DARK", false);
+				Entity_SetActive("AMB_SideTunnel_DARK", false);
+				Entity_SetActive("AMB_VentSpace_Lower_DARK", false);
+				Entity_SetActive("AMB_VentSpace_UpperRight_DARK", false);
+				Entity_SetActive("AMB_VentSpace_UpperLeft_DARK", false);
+				Entity_SetActive("AMB_SideTunnel_Cave_DARK", false);
+				
+				//Turn on Light Areas
+				Entity_SetActive("AMB_StartingTunnel_LIGHT", true);
+				Entity_SetActive("AMB_Station_LIGHT", true);
+				Entity_SetActive("AMB_SideTunnel_LIGHT", true);
+				Entity_SetActive("AMB_VentSpace_Lower_LIGHT", true);
+				Entity_SetActive("AMB_VentSpace_UpperRight_LIGHT", true);
+				Entity_SetActive("AMB_VentSpace_UpperLeft_LIGHT", true);
+				Entity_SetActive("AMB_SideTunnel_Cave_LIGHT", true);
+			}
+			
+			//Lights in corridor down to station goes on.
+			if(Sequence_DoStepAndWait(2))
+			{
+				Lamp_SetLit("lamp_room_3_3", true, true);
+				Lamp_SetFlickerActive("lamp_room_3_3", true);
+				
+				ParticleSystem_SetVisible("fog_ps_5", true);
+				ParticleSystem_SetVisible("steam_ps_1", true);
+				ParticleSystem_SetVisible("steam_ps_2", true);
+			}
+			
+			//Lights in the passenger train goes on.
+			if(Sequence_DoStepAndWait(1))
+			{		
+				TrainPowerOn();	
+				Lamp_SetLit("lamp_cargo_train_*", true, true);
+				Lamp_SetFlickerActive("lamp_cargo_train_1", true);
+			}
+			
+			Sequence_End();
+		}
+			
+		//------------------------------------------------------------
+		//turn off light flicker on station when in train to stop sound spamming
+		bool StationLightFlicker(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			if (alState==1)
+			{
+				cLux_AddDebugMessage("Station Light Flicker Disabled");
+				Lamp_SetFlickerActive("lamp_room_3_3", false);	
+			}
+			else if (alState==-1)
+			{
+				cLux_AddDebugMessage("Station Light Flicker Enabled");
+				Lamp_SetFlickerActive("lamp_room_3_3", true);
+			}
+			return true;
+		}
+				
+		//------------------------------------------------------------
+		
+		/**
+		 * Create random timers for erratic lights turning on, a small likelyhood to also get a flickering light
+		 * */
+		void LightSwitchLightsOn(const tString &in asLight, bool abDoRandomActive = true)
+		{
+			for(int i=1;Entity_Exists(asLight+"_"+i);i++)
+			{
+				Map_AddTimer(asLight+"_"+i, cMath_RandRectf(0,2), "TimerSetLampLit");
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		void TrainPowerOn()
+		{
+			Entity_SetEffectsActive("TrainTerminal", true, true);
+			Entity_SetEffectsActive("01_05_transporter_passenger_starter_panel_1", true, true);
+			Entity_SetEffectsActive("TrainSwitch_1", true, true);
+			Entity_SetEffectsActive("TrainSwitch_2", true, true);
+			Entity_SetEffectsActive("TrainSwitch_3", true, true);
+				
+			Entity_SetActive("Area_Transport1_Door*", true);
+			Prop_SetStaticPhysics("01_05_transporter_passenger_door1", true);
+			Entity_SetInteractionDisabled("01_05_transporter_passenger_door1", true);
+			PhysicsSlideDoor_SetLocked("01_05_transporter_passenger_door1", false, false);
+			Lamp_SetLit("TrainDoorLamps", true, true);
+			LightSwitchLightsOn("cart_lamp_room_3");
+		}
+
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 3 Event B *Turn on train & pick station*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+	
+		/**
+		 * The back door is broken and only plays a broken sound and spark particles
+		 * */
+		bool CollideCartDoorBroken(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			if(alState == -1) return true;
+
+			//ADD TODO BROKEN DOOR SOUND AND PARTICLE SPARK
+			cLux_AddTodoMessage("SOUND: Sparks and noises from broken door", false);
+			
+			return true;
+		}
+		
+		//-------------------------------------------------------
+		
+		/**
+		 * Front door to cart auto slides open/close when player is near.
+		 **/
+		bool CollideCartDoor(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			msCartDoor = "01_05_transporter_passenger_door1";
+
+			//Clear all auto movement timers
+			for(int i=1;i<=4;i++) 
+				Map_RemoveTimer("door_timer_"+i);
+			for(int i=1;i<=4;i++) 
+				Map_RemoveTimer("door_timer_"+i+"_action");
+			
+			//Open door in two steps.
+			if(alState == 1)
+			{
+				mlCartDoorStep = 0;
+				TimerCartDoorOpen("door_timer_1");
+				cLux_AddDebugMessage("Train Door Open Stage 0");
+				Map_AddTimer("door_timer_2", 0.5, "TimerCartDoorOpen");
+				Map_AddTimer("door_timer_3", 1.95, "TimerCartDoorOpen");
+				Map_AddTimer("door_timer_4", 2.5, "TimerCartDoorOpen");
+				
+				//Stop close sounds
+				Sound_Stop("train_door_close_start", 0.25f);
+				Sound_Stop("train_door_close_loop", 0.25f);
+				Sound_Stop("train_door_close_stop", 0.5f);
+				
+				cLux_AddDebugMessage("Open Door Start");		
+				Sound_CreateAtEntity("train_door_open_loop", "Entities_Station/object/train/door/open_motion", msCartDoor, 0, false);
+				Sound_CreateAtEntity("train_door_open_start", "Entities_Station/object/train/door/open_start", msCartDoor, 0, false);
+			} 
+			
+			//Close door in two steps.
+			else 
+			{
+				mlCartDoorStep = 0;
+				TimerCartDoorClose("door_timer_1");
+				Map_AddTimer("door_timer_2", 1.5, "TimerCartDoorClose");
+				
+				//Stop open sounds
+				Sound_Stop("train_door_open_loop", 0.25f);
+				Sound_Stop("train_door_open_start", 0.25f);
+				Sound_Stop("train_door_open_stop", 0.5f);
+				
+				Sound_CreateAtEntity("train_door_close_start", "Entities_Station/object/train/door/close_start", msCartDoor, 0, false);
+				Sound_CreateAtEntity("train_door_close_loop", "Entities_Station/object/train/door/close_motion", msCartDoor, 0, false);
+			}
+			
+			return true;
+		}
+
+		//-------------------------------------------------------
+		
+		void TimerCartDoorOpen(const tString &in asTimer)
+		{
+			mlCartDoorStep++;
+			
+			switch (mlCartDoorStep)
+			{
+				case 1:
+				Entity_PlayProcAnimation(msCartDoor, "Open", 0.5, false, 0);
+				break;
+				
+				case 2:
+				Prop_SetStaticPhysics(msCartDoor, false);
+				PhysicsSlideDoor_AutoMoveToState(msCartDoor, 1);
+				break;
+				
+				case 3:
+				Sound_CreateAtEntity("train_door_open_stop", "Entities_Station/object/train/door/open_stop", msCartDoor);
+				Sound_Stop("train_door_open_loop", 0.25f);
+				break;
+				
+				case 4:
+				cLux_AddDebugMessage("TimerCartDoorOpen");
+				Prop_SetStaticPhysics(msCartDoor, true);
+				break;
+			}
+		}
+
+		//-------------------------------------------------------
+		
+		void TimerCartDoorClose(const tString &in asTimer)
+		{
+			if (mlCartDoorStep == 1 && PhysicsSlideDoor_GetClosed(msCartDoor)==false)
+			{
+				Map_AddTimer(asTimer, 0.1, "TimerCartDoorClose");
+				return;
+			}
+				
+			///////////////////////////////////
+			//Delay added to keep sound in sync
+			Map_AddTimer(asTimer+"_action", 0.5, "TimerCartDoorClose_Action");
+		}
+		
+		//------------------------------------------------------------
+
+		void TimerCartDoorClose_Action(const tString &in asTimer)
+		{
+			mlCartDoorStep++;
+			if (mlCartDoorStep==1)
+			{
+				Prop_SetStaticPhysics(msCartDoor, false);
+				PhysicsSlideDoor_AutoMoveToState(msCartDoor, -1);
+			}
+			else
+			{
+				cLux_AddDebugMessage("TimerCartDoorClose_Action Set Door Static");
+				Prop_SetStaticPhysics(msCartDoor, true);
+				Entity_PlayProcAnimation(msCartDoor, "Open", -0.5, false, 0);
+				Sound_CreateAtEntity("train_door_close_stop", "Entities_Station/object/train/door/close_stop", msCartDoor, 0, false);
+				Sound_Stop("train_door_close_loop", 0.25f);
+			}
+		}
+		
+		//------------------------------------------------------------
+	
+		/**
+		 * Areas around the chair to determine how the chair should rotate when sitting down.
+		 * */
+		bool CollideChairRotPos(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			if(alState == -1) return true;
+			
+			mlTrainChairRotPos = Entity_GetVarInt(asChild, "");
+			
+			if(asChild == "AreaChairPos_1")
+				msTrainChairCam = "AnimateSitTrainChairL";
+			else if(asChild == "AreaChairPos_3")
+				msTrainChairCam = "AnimateSitTrainChairR";
+			else
+				msTrainChairCam = "AnimateSitTrainChair";
+				
+			//cLux_AddDebugMessage("Var is:" +mlTrainChairRotPos);
+			return true;
+		}
+		
+		//-----------------------------------------------------------
+		
+		void InteractTrainChair(const tString &in asEntity)
+		{
+			mbPlayerIsSitting = true;
+			
+			msTrainChairName = asEntity;
+			
+			SequenceSitDownInTrain("");
+		}
+		
+		//-----------------------------------------------------------
+		
+		cSequenceStatesData mSequenceSitDownInTrain;
+		void SequenceSitDownInTrain(const tString &in asX)
+		{
+			Sequence_Begin("SequenceSitDownInTrain", mSequenceSitDownInTrain);
+
+			//Rotate chair towards player 
+			if(Sequence_DoStepAndWait(0.2))
+			{
+				Entity_SetInteractionDisabled("AreaLeaveChair", false);
+				Entity_SetInteractionDisabled(msTrainChairName, true);
+				Entity_SetCollideCharacter(msTrainChairName, false);
+				
+				Sound_CreateAtEntity("player_sit", "01_04_transport_station/SFX/foley/train_sit", msTrainChairName, 0, false);
+				Prop_RotateToSpeed(msTrainChairName, 20, mlTrainChairRotPos, cVector3f_Up, true, "AreaChairRot");
+			}
+			
+			//Player begins sitting down
+			if(Sequence_DoStepAndWait(0.3))
+			{
+				CameraAnimation_Begin(msTrainChairCam, "", true);
+			}
+			
+			//Chair rotates back to forward postion as player is sitting.
+			if(Sequence_DoStepAndWait(0.5))
+			{
+				Prop_RotateToSpeed(msTrainChairName, 20, -1.4*mlTrainChairRotPos, cVector3f_Up, false, "AreaChairRot");
+			}
+			
+			//Chair stop in forward direction.
+			if(Sequence_DoStepAndWait(0))
+			{
+				Prop_RotateToSpeed(msTrainChairName, 20, 0, cVector3f_Up, false, "AreaChairRot");
+				
+				//Rotate screen down.
+				if(mbTrainIsActivated)
+				{
+					RotateScreenDown();
+					Terminal_SetGuiActive("TrainTerminal", true, 1);
+				}
+			}
+					
+			Sequence_End();
+		}
+		
+		//-----------------------------------------------------------
+		
+		/**
+		 * Triggered by interactive camera when camera reaches last area.
+		 * */
+		bool TeleportPlayer(const tString &in asEntity, int alDirection)
+		{
+			Entity_SetActive("train_sitting_block_*", true);
+		
+			Player_SetMoveSpeedMul(0);
+			Player_SetJumpDisabled(true);
+			Player_SetStandDisabled(true);
+			
+			return true;
+		}
+
+		//-----------------------------------------------------------
+		
+		/**
+		 * Area by door that can be interacted with to leave the chair
+		 * */
+		void InteractLeaveChair(const tString &in asEntity)
+		{
+			mbPlayerIsSitting = false;
+			
+			Entity_SetInteractionDisabled(asEntity, true);
+			Entity_SetInteractionDisabled(msTrainChairName, false);
+			
+			SequenceGetUpInTrain("");
+		}
+		
+		//------------------------------------------------------------
+		
+		/**
+		 * Animation, setup and config changes to return player to normal walking mode when leaving chair.
+		 * */
+		cSequenceStatesData mSequenceGetUpInTrain;
+		void SequenceGetUpInTrain(const tString &in asX)
+		{
+			Sequence_Begin("SequenceGetUpInTrain", mSequenceGetUpInTrain);
+
+			//Rotate screen up if it is down.
+			if(Sequence_DoStepAndWait(0.3))
+			{
+				if(mbTrainScreenIsDown)
+				{
+					RotateScreenUp();
+					Terminal_SetGuiActive("TrainTerminal", false, 1);
+				}
+					
+			}
+			
+			//Disable flashlight as it flickers on teleport later if on.
+			if(Sequence_DoStepAndWait(0))
+			{
+				Sound_CreateAtEntity("player_sit", "Player/foley/default/pose_stand", msTrainChairName, 0, false);
+			}
+			
+			//Player gets up
+			if(Sequence_DoStepAndWait(0.2f))
+			{
+				CameraAnimation_Begin("AnimateGetUpTrainChair", "", true);
+			}
+			
+			//Player is up, reset entities to normal state
+			if(Sequence_DoStepAndWait(0.5))
+			{
+				Entity_RemoveEntityAttachment("Player");
+				Entity_SetActive("train_sitting_block_*", false);
+				Entity_SetCollideCharacter(msTrainChairName, true);
+			}
+			
+			Sequence_End();
+		}
+		
+		//------------------------------------------------------------
+		
+		/**
+		 * Triggered by interactive camera when camera reaches last area.
+		 * */
+		bool TeleportStanding(const tString &in asEntity, int alDirection)
+		{
+			//Player_Teleport("Player_StandingInTrain", true);
+			
+			Player_SetMoveSpeedMul(1);
+			Player_SetJumpDisabled(false);
+			Player_SetStandDisabled(false);
+			Player_SetCrouching(false);
+				
+			return true;
+		}
+		
+		//------------------------------------------------------------
+	
+		/**
+		 * Each of the three switches on the left side panel. 
+		 * */
+		void StateChangeSwitch(const tString &in asEntity, int alState)
+		{
+			if (CathTool_IsInserted("CathTool")==false)
+			{
+				if (alState!=1) return;
+				
+				Map_AddTimer(asEntity, 0.4, "TimerStopPlayerInteraction");
+				Map_AddTimer(asEntity, 0.4, "TimerSwitchMovingButtonOff");
+				return;
+			}
+			
+			Lamp_SetLit(asEntity+"_Lamp", alState==1, true);
+			Entity_SetActive(asEntity+"_Aux", alState!=1);
+			Sound_CreateAtEntity("TrainSwitch", "Entities_Station/object/train/console_switch", asEntity, 0.0f, false, 1.0f);
+			
+			////////////////
+			// Sounds
+			if (alState==1)
+			{
+				Sound_CreateAtEntity("TrainConsoleBeep", "Entities_Station/object/train/"+asEntity, asEntity, 0.0f, false, 1.0f);
+				PlayTrainSwitchSounds();
+			}
+			
+			Entity_IncVarInt("01_05_transporter_passenger_start_button_1", "", alState);
+			int lSwitchCount = Entity_GetVarInt("01_05_transporter_passenger_start_button_1", "");
+			
+			Lamp_SetLit("passenger_train_headlamp_*", lSwitchCount>=2, true);
+			Entity_SetEffectsActive("01_05_transporter_passenger_start_button_1", lSwitchCount == 3, true);
+		}
+		
+		//-----------------------------------------------------------
+		
+		/**
+		 * Poweron button on the left side panel, if all three switches turned, this activates the train.
+		 * */
+		void StateChangeButton(const tString &in asEntity, int alState)
+		{
+			//Fail to power up
+			if(Entity_GetVarInt(asEntity, "") < 3)
+			{
+				if(alState==1)
+				{
+					Sound_CreateAtEntity("TrainSwitch", "Entities_Station/tech/control_board_pplant_button/interact", asEntity, 0.0f, false, 1.0f);
+					Sound_CreateAtEntity("TrainSwitchBeepBad", "Entities_Station/tech/terminal_beeps/upsilon_train_map/train_button_negative", asEntity, 0.0f, false, 1.0f);
+				}
+			}
+			
+			//Powering up
+			else
+			{
+				//add slight delay to allow sound to play out
+				if(mbPlayerIsSitting) Map_AddTimer("ScreenDown", 0.5f, "TrainScreenDown");
+
+				mbTrainIsActivated = true;
+				
+				Entity_SetInteractionDisabled(asEntity, true);
+				Entity_SetInteractionDisabled("TrainSwitch_*", true);
+				
+				if(alState==1)
+				{
+					Sound_CreateAtEntity("TrainSwitchBeepComplete", "Entities_Station/object/train/console_phase_complete", asEntity, 0.0f, false, 1.0f);
+					Sound_CreateAtEntity("TrainSwitch", "Entities_Station/tech/control_board_pplant_button/interact", asEntity, 0.0f, false, 1.0f);
+				}
+			}
+		}
+
+		void TrainScreenDown(const tString &in asTimer)
+		{
+			RotateScreenDown();
+		} 
+		
+		bool mbJourneyInProgress = false;
+	
+		//-----------------------------------------------------------
+		
+		/**
+		 * Station selected in the terminal, train leaves the station.
+		 * */
+		cSequenceStatesData mSequenceBeginJourney;
+		void SequenceBeginJourney(const tString &in asX)
+		{
+			Sequence_Begin("SequenceBeginJourney", mSequenceBeginJourney);
+			
+			if(Sequence_DoStepAndWait(0.1f))
+			{
+				Audio_Train_Start();
+				cLux_AddTodoMessage("Train audio starts here");
+				mbJourneyInProgress = true;
+				// Stop the pipes rattling about
+				Prop_SetStaticPhysics("PipeReplace_*",true);
+				Prop_SetStaticPhysics("01_04_note_pipes_1", true);
+				
+				//Make sure the doors follow along
+				Prop_SetStaticPhysics("01_05_transporter_passenger_door*", true);
+				
+				// Activate debris causing the train to crash
+				if (mPowerState_Platform == ePowerState_Good)
+				{
+					Entity_SetActive("TunnelDebris_*", true);
+				}
+			}
+			
+			//Screen goes up.
+			if(Sequence_DoStepAndWait(2))
+			{
+				mlTrainRideMsg = eStatusScreenMsg_DEPART;
+				RotateScreenUp();
+			}
+									
+			if(Sequence_DoStepAndWait(0.5f))
+			{
+				Terminal_SetGuiActive("TrainTerminal", false);
+			}
+			
+			//Station door opens.
+			if(Sequence_DoStepAndWait(1))
+			{
+				Entity_AttachToEntity("player", "01_05_transporter_passenger_1", "", false, false);
+				Entity_SetActive("technical_occluder_1", false);
+				SlideDoor_SetClosed("slidedoor_traintunnel_5", false, false);
+				//Lamp_SetLit("cart_lamp_room_3_*", false, true);
+				Sound_Stop("train_sound", 0);	//trigger sustain point
+			}
+			
+			//Train leaves station.
+			if(Sequence_DoStepAndWait(0.2f))
+			{
+				Prop_MoveLinearTo("01_05_transporter_passenger_1", "Train_Dest_1", 5, 15, 8, false);
+				// Long fade time so it does not start out loud.
+			}
+			
+			if(Sequence_DoStepAndWait(0.0f))
+			{
+			}
+			
+			Sequence_End();
+		}
+		
+		//-------------------------------------------------------
+
+		/**
+		 * As train leaves station the walls begin to move and the train is slowly coming to a halt.
+		 * */
+		bool StartMovingTunnels(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			if(alState != 1) return true;
+			
+			MoveObject_SetStateExt("01_05_tunnel_moving*", 1, 10, 60, 0, false);
+			//MoveObject_SetStateExt("01_05_welder_moving*", 1, 10, 60, 0, false);
+			
+			//Begin preloading crash sounds
+			Sound_PreloadGroup("01_04_transport_station/Special/Train", true);
+			return false;
+		}
+
+		//-------------------------------------------------------
+		
+		/**
+		 * The walls reset to their first position and then move again in a loop for as long as
+		 * journey should last. THIS IS THE WHOLE JOURNEY PART.
+		 **/
+		 
+		int mlJourneySlideshowPoint = 1;		// When to show the slideshow
+		int mlJourneyCrashPoint = 3;			// When to hit the debris
+		
+		int mlJourneyRepeats = 0;
+		 
+		bool mbJourneyReset = true;
+
+		bool TunnelReset(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			if (!mbJourneyReset)
+				return true;
+			
+			mbJourneyReset = false;
+			
+			//Status jounrney 1, ETA and depth.
+			if(mlJourneyRepeats == 0)
+			{	
+				mlTrainRideMsg = eStatusScreenMsg_JOURNEY;
+			}
+			
+			if (mlJourneyRepeats == mlJourneySlideshowPoint)
+			{
+				if (!cLux_ScriptDebugOn())	// Don't show the slideshow in script debug
+				{
+					if (!mbSlideshowPlaying)
+						StartSlideshow();
+					else
+						mlJourneyRepeats++;	// Stop the film triggering twice!
+				}
+			}
+			
+			//The looping journey.
+			if(mlJourneyRepeats < mlJourneyCrashPoint)
+			{
+				MoveObject_SetStateExt("01_05_tunnel_moving*", 0, 1000000, 1000000, 0, true);
+				//MoveObject_SetStateExt("01_05_welder_moving*", 0, 1000000, 1000000, 0, true);
+				
+				Map_AddTimer("", 0.034, "TimerReset");	//.034 as to let tunnel reset before moving again in next update.
+			}
+			
+			//Trigger the event that ends the journey.
+			else if(mlJourneyRepeats >= mlJourneyCrashPoint)
+			{
+				SequenceMoveTrainAndShakeEvent("");
+			}
+			
+			return true;
+		}
+		
+		//-------------------------------------------------------
+		
+		/**
+		 * Short delay before tunnels move again to make sure they are back to original position first.
+		 * */
+		void TimerReset(const tString &in asTimer)
+		{
+			// Don't increment journey when slideshow is playing.
+			if (!mbSlideshowPlaying)
+			{
+				mlJourneyRepeats++;
+			}
+			
+			mbJourneyReset = true;
+			
+			MoveObject_SetStateExt("01_05_tunnel_moving*", 1, 1000000, 20, 0, true);
+			//MoveObject_SetStateExt("01_05_welder_moving*", 1, 1000000, 20, 0, true);
+		}
+
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 3 Event C *Watch Intro Movie (dialog)*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 3 Event D *Platform Wau Flower*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		bool mbPlatformFlowerDrained = false;
+
+		//-------------------------------------------------------
+		
+		void WauFlowerPlatform(const tString &in asEntity)
+		{
+			mbPlatformFlowerDrained = true;
+			Lamp_SetLit("screen_board_2", false, true);
+			
+			if (mPowerState_Platform != ePowerState_Good)
+				return;
+			
+			SetPowerState_Platform(ePowerState_Bad);
+		}
+
+		//} END EVENT
+
+	//} END SCENE 3
+
+	//-------------------------------------------------------
+
+	/////////////////////////////////////////
+	// ==============
+	// SCENE 4 *TRAIN CRASHES; ESCAPE TUNNEL*
+	// ==============
+	//{///////////////////////////////////////
+
+	//-------------------------------------------------------
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 4 Event A *Crash*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		void SetupCrash()
+		{
+			// Turn off obstacle debris
+			Entity_SetActive("ObstacleDebris*",false);
+			
+			Entity_SetActive("TriggerCrashArea",false);
+			
+			// GUI Off
+			Terminal_SetGuiActive("Airlock2GUI",false);
+			Entity_SetActive("Airlock2GUI", false);
+			
+			ParticleSystem_SetActive("TunnelEndLeak", false);
+		}
+		
+		//} END GENERAL
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 4 Event A *Crash*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		bool mbInCrashArea = false;
+		bool mbFlesherAwake = false;
+		bool mbLeftCapsule = false;
+		bool mbFirstFlesherAttackHappened = false;
+		int mlRadialBlurID = -1;
+		
+		//-----------------------------------------------------------
+		
+		/**
+		 * There is a electric shock/flash going through the tunnel and train rails off.
+		 * */
+		cSequenceStatesData mSequenceMoveTrainAndShakeEvent;
+		void SequenceMoveTrainAndShakeEvent(const tString &in asX)
+		{
+			Sequence_Begin("SequenceMoveTrainAndShakeEvent", mSequenceMoveTrainAndShakeEvent);
+			
+			//Train shakes and begins to move.
+			if(Sequence_DoStepAndWait(0.4f))
+			{
+				Prop_MoveLinearTo("01_05_transporter_passenger_1", "Train_Dest_2", 35, 20, 23, false);
+			}
+			
+			//Tunnels reset and the move loop has been stopped, so they stay put.
+			if(Sequence_DoStepAndWait(0.1f))
+			{
+				MoveObject_SetStateExt("01_05_tunnel_moving*", 0, 1000000, 1000000, 0, true);
+				//MoveObject_SetStateExt("01_05_welder_moving*", 0, 1000000, 1000000, 0, true);
+			}
+			
+			//Hide a large plane that has been used to optimize.
+			if(Sequence_DoStepAndPause(0.0f))
+			{
+				Entity_SetActive("technical_occluder_2", false);
+			}
+			
+			//Hit the obstacle
+			if(Sequence_DoStepAndWait(6.0f))
+			{
+				mlTrainRideMsg = eStatusScreenMsg_FAILURE;
+				
+				mbJourneyInProgress = false;
+				
+				Effect_Shake_Start(0.2f, 0.25f, 0.1f, 0.7f);
+				Effect_Shake_Start(0.1, 2.0f, 0.1, 0.7);
+				
+				//"Break" the train gear and add some spark effects.
+				Lamp_SetLit("TrainSwitch_*", false, true);
+				Entity_SetEffectsActive("TrainSwitch_1", false, true);
+				Entity_SetEffectsActive("TrainSwitch_2", false, true);
+				Entity_SetEffectsActive("TrainSwitch_3", false, true);
+				Entity_SetEffectsActive("TrainTerminal", false, true);
+				Lamp_SetLit("CrashSparkOutside_*", true, false);
+				ParticleSystem_CreateAtEntity("CrashSparks_1", "elec_spark_subway_continuous.ps", "CrashSparkPSArea_1", true);
+				ParticleSystem_CreateAtEntity("CrashSparks_2", "elec_spark_subway_continuous.ps", "CrashSparkPSArea_2", true);
+			
+				Lamp_SetLit("CrashSpark_*", true, false);
+				
+				Terminal_SetGuiActive("01_05_transporter_passenger_good_to_go_display_1", false, 0.2);
+			}
+			
+			Sequence_End();
+		}
+		
+		//-----------------------------------------------------------
+		
+		bool Trigger_DebrisWarning(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			cLux_AddTodoMessage("Sound: Warning that the track is blocked or that the power is low");
+			Sound_CreateAtEntity("TrackCompromisedWarning", "01_04_transport_station/Special/Train/alarms/console_warning", "TrainConsoleSideSoundSource", 0, false);
+			
+			if (mPowerState_Platform == ePowerState_Bad)
+			{
+				cLux_AddTodoMessage("SOUND: Power fails in train!");
+			
+				Lamp_SetLit("cart_lamp_room_3_1", false, true);
+				Lamp_SetFlickerActive("cart_lamp_room_3_2", true);
+				Map_AddTimer("cart_lamp_room_3_2", 3, "TimerSetLampUnlitNoEffects");
+				Map_AddTimer("StatusTerminal", 2.5, "TimerSetTerminalGuiInactive");
+				Map_AddTimer("passenger_train_headlamp_1", 2.85, "TimerSetLampUnlit");
+				Map_AddTimer("passenger_train_headlamp_2", 2.95, "TimerSetLampUnlit");
+			}
+			
+			mlTrainRideMsg = eStatusScreenMsg_WARNING;
+			return false;
+		}
+		
+		//-----------------------------------------------------------
+		
+		bool Trigger_TrainCrashStart(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			SequenceStates_Resume("SequenceMoveTrainAndShakeEvent");
+			
+			Sound_Stop("TrackCompromisedWarning", 0.5);
+			
+			// Debris crash
+			if (mPowerState_Platform == ePowerState_Good)
+			{
+				TrainCrashStart_Debris();
+			}
+			
+			// Low Power crash
+			else
+			{
+				TrainCrashStart_PowerOutage();
+			}
+
+			return false;
+		}
+		
+		//-----------------------------------------------------------
+		
+		void TrainCrashStart_Debris()
+		{
+			Effect_Shake_Start(0.4f, 0.5f, 0.1f, 0.7f);
+			Entity_SetActive("TunnelDebris_*", false);
+			
+			cLux_AddTodoMessage("SOUND: Train hits debris!");
+			cLux_AddTodoMessage("SCRIPT: Some neat particle effects.");
+			
+			Lamp_SetLit("cart_lamp_room_3_1", false, true);
+			Lamp_SetFlickerActive("cart_lamp_room_3_2", true);
+			Map_AddTimer("cart_lamp_room_3_2", 1, "TimerSetLampUnlitNoEffects");
+		}
+		
+		//-----------------------------------------------------------
+		
+		void TrainCrashStart_PowerOutage()
+		{
+			Effect_Shake_Start(0.1f, 0.5f, 0.1f, 0.7f);
+			
+			cLux_AddTodoMessage("SOUND: Power goes out in tunnel!");
+			
+			for (int i = 1; Entity_Exists("PreCrashLamp_"+i); i+=2)
+			{
+				Map_AddTimer("PreCrashLamp_"+i, (i-1)*0.125, "TimerSetLampUnlitNoEffects");
+				Map_AddTimer("PreCrashLamp_"+(i+1), (i-1)*0.125, "TimerSetLampUnlitNoEffects");
+			}
+		}
+		
+		//-----------------------------------------------------------
+		
+		bool OnTrainHitObstacle(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			//SequenceStates_Resume("SequenceMoveTrainAndShakeEvent");
+			
+			Entity_SetActive("BrokenTunnelPiece",false);
+			Entity_SetActive("train_broken_glass_*", true);
+			
+			Audio_Train_Hit2();
+			Map_AddTimer("TrainEventEnd", 14.0f, "TrainEventEnd");
+			
+			return false;
+		}
+
+		//-----------------------------------------------------------
+		
+		
+		
+		/**
+		 * Trigger opening a door to last part of level
+		 * */
+		bool CollideOpenLastDoor(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			cLux_AddDebugMessage("Open last door!");
+			
+			Audio_Train_Hit1();
+			Sound_Stop("TrackCompromisedWarning", 0.1f);
+			Sound_CreateAtEntity("TrackCompromisedAlarm", "01_04_transport_station/Special/Train/alarms/console_impact_alarm", "TrainConsoleSideSoundSource");
+			
+			SlideDoor_SetClosed("slidedoor_traintunnel_6", false, false);
+			Entity_SetActive("technical_occluder_3", false);
+			
+			Effect_Shake_Start(0.02, 1.5, 0.3, 0.5);
+			
+			Voice_Play("AboutToCrash");
+			
+			return false;
+		}
+		
+		//-----------------------------------------------------------
+		
+		/**
+		 * Train has railed off and comes to a halt, player falls out of chair and train gear break.
+		 * */
+		bool Trigger_StopTrain(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			Seq_StopTrain("");
+			return false;
+		}
+		
+		cSequenceStatesData mStopTrainSequence;
+			
+		void Seq_StopTrain(const tString &in asTimer)
+		{
+			Sequence_Begin("Seq_StopTrain", mStopTrainSequence);
+			//Small delay to keep everything in sync
+			if (Sequence_DoStepAndWait(0.15))
+			{				
+				// Stop derail effects
+				Prop_StopMovement("01_05_transporter_passenger_1");
+				Lamp_SetLit("CrashSparkOutside_*", false, false);
+				ParticleSystem_Destroy("CrashSparks_1");
+				ParticleSystem_Destroy("CrashSparks_2");
+				ParticleSystem_SetVisible("CrashSparks_*", false);
+				
+				SlideDoor_SetClosed("slidedoor_traintunnel_6", true, true);
+				Entity_SetActive("technical_occluder_4", true);
+				
+				Player_SetMoveSpeedMul(1);				
+				Effect_Shake_Start(0.04, 1, 0.1, 0.5);
+				
+				// Knock down pile of pipes.
+				Prop_SetStaticPhysics("01_04_note_pipes_1",false);
+				Entity_AddImpulse("01_04_note_pipes_1", cVector3f(0.0f, 0.0f, -0.05f), false, false);
+				
+			}
+			else if (Sequence_DoStepAndWait(0.2))
+			{		
+				cLux_AddDebugMessage("Fall off chair!");
+				Entity_RemoveEntityAttachment("Player");				
+				CameraAnimation_Begin("CamOffRailFall", "", true);
+			}
+				
+			else if (Sequence_DoStepAndPause())
+			{
+				Effect_Fade_Out(0.0f);
+				Sound_Stop("TrackCompromisedAlarm", 0.0f);
+				SetupPostTrainCrashEffects();
+				cSound_FadeLowPassFilter(300, 0.0f, 0.5f, eSoundEntryType_World);
+				Entity_PlaceAtEntity("01_05_transporter_passenger_1", "TrainCrashTarget", 0, true);
+				Lamp_SetFlickerActive("passenger_train_headlamp_*", true);
+			}
+			
+			else if (Sequence_DoStepAndWait(1))
+			{
+				TimerConfigTrainForAfterCrash("");
+				Map_AddTimer("TrainCrashOverMusic", 8.0f, "Timer_Music_TrainCrashFinale");
+			}
+			
+			Sequence_End();
+		}
+		
+		void TrainEventEnd(const tString &in asTimer)
+		{
+			//Omnitool
+			CathTool_AllowDetach("CathTool");
+			
+			// Hurt player
+			Player_GiveDamage(0.3, 0.1, eDamageType_None, "");
+			
+			//Reenable movement
+			Player_SetJumpDisabled(false);
+			Player_SetStandDisabled(false);
+			
+			//Add particle dust
+			ParticleSystem_CreateAtEntity("CrashDustPS", "dust_cloud_long", "CrashImpactDustArea", false);
+			
+			//Fade in picture
+			Map_AddTimer("FadePostCrash", 1.0f, "FadeinPostCrash");
+			
+			//Resume Sequence
+			Map_AddTimer("TrainSequenceResume", 4.5f, "TrainSequenceResume");
+			
+			//Fade in audio
+			cSound_FadeLowPassFilter(22000, 0.0f, 8.5f, eSoundEntryType_World);
+			Sound_FadeGlobalVolume(1.0f, 3.5f, eSoundEntryType_World);
+			Sound_FadeGlobalVolume(1.0f, 3.5f, eSoundEntryType_WorldClean);
+			
+			//Setup sound areas
+			Entity_SetActive("AMB_TrainCrashed", true);
+			Sound_CreateAtEntity("TrainAlarm", "01_04_transport_station/Special/Train/post_crash/alarm", "Sound_TrainAlarmSource");
+			Map_AddTimer("TrainAlarmStop", 20.0f, "TrainAlarmStop");
+			
+			Map_AddTimer("Intercom_1", 1, "Timer_FlashIntercomOff");
+		}
+		
+		void TrainAlarmStop(const tString &in asTimer)
+		{
+			Sound_Stop("TrainAlarm", 0.25f);
+		}
+		
+		void FadeinPostCrash(const tString &in asTimer)
+		{
+			Effect_Fade_In(2.f);
+			Sound_CreateAtEntity("ConsoleAlarm", "01_04_transport_station/Special/Train/post_crash/console_alarm", "TrainConsoleSideSoundSource");
+			Sound_CreateAtEntity("TrainSparks", "level_amb_shared_interior/amb/spot/sparks/spark_train_crash", "Sound_TrainSparks");
+		}
+		
+		void TrainSequenceResume(const tString &in asTimer)
+		{
+			SequenceStates_Resume("Seq_StopTrain");
+		}
+
+		//-----------------------------------------------------------
+		
+		void SetupPostTrainCrashEffects()
+		{
+			//sparks, debris etc goes here
+		}
+		
+		//-----------------------------------------------------------
+		
+		bool CamOffRailFall_2_CameraNodePassed(const tString &in asEntity, int alDirection)
+		{
+			 
+			Effect_ImageTrail_Start(1.0f, 0.0f, 0.0f, 15.0f);
+			Effect_ChromaticAberration_StartAnim(1.5, 0.05, 0.005, 0);
+			mlRadialBlurID = Effect_RadialBlur_Start(1, 0.5, 0, 0.3);
+			Player_SetMoveSpeedMul(0.1f);
+			Player_FadeMoveSpeedMulTo(1.0f, 30.0f);
+					
+			return true;
+		}
+		
+		//-----------------------------------------------------------
+		
+		bool CamOffRailFall_4_CameraNodePassed(const tString &in asEntity, int alDirection)
+		{
+			Effect_RadialBlur_FadeOut(mlRadialBlurID, 3);
+			return true;
+		}
+
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 4 Event B *Exit wreckage*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		/**
+		 * Change the train and entities in it to fit the crashed state.
+		**/ 
+		void TimerConfigTrainForAfterCrash(const tString &in asTimer)
+		{
+			//Turn back collision settings made to smooth the train ride.
+			Entity_SetActive("train_sitting_block_*", false);
+			Entity_SetCollideCharacter(msTrainChairName, true);
+			
+			//Activate the emergency exit.
+			Entity_SetInteractionDisabled("LeverEmergency", false);
+			Lamp_SetLit("LightEmergency", true, true);
+			
+			//Setup a broken normal door.
+			Entity_RemoveCollideCallback("Player", "Area_Transport1_Door1");
+			Entity_AddCollideCallback("Player", "Area_Transport1_Door1", "CollideCartDoorBroken");
+			
+			// Show the debris
+			Entity_SetActive("ObstacleDebris*",true);
+			
+			// Enable area so we can work out when we leave it...
+			Entity_SetActive("TriggerCrashArea",true);
+			mbInCrashArea = true;
+			
+			//////////////////////////////////////////
+			// Warning light
+			Lamp_SetLit("TrainWarningLamp", true, true);
+		
+			// Clear death meter
+			Map_AddTimer("TimerRemoveCrashDeathMeter",2.0f,"TimerRemoveCrashDeathMeter");
+			
+			// Start making the player want to get out quick
+			Map_AddTimer("TrainCartCreepyness", 7, "SequenceTrainCartCreepyness");
+			
+			//////////////////////////////////////////
+			// Setup checkpoint
+			CheckPoint_Setup();
+		}
+		
+		//------------------------------------------------------------
+		
+		bool OnTriggerPipeMusicActive(const tString &in asParent, const tString &in asChild, int alState)
+		{
+
+			//Entity_SetActive("TriggerPipeMusic",true);
+			return false;
+		}
+
+		//------------------------------------------------------------
+
+		bool OnTriggerPipeMusic(const tString &in asParent, const tString &in asChild, int alState)
+		{
+/*			if (alState==1)			{
+			}
+			else			{
+			}*/
+			return true;
+		}
+
+		//------------------------------------------------------------
+		
+		void TimerRemoveCrashDeathMeter(const tString& in asTimer)
+		{
+			AttackMeter_RemoveInstance( Map_GetEntity("01_05_transporter_passenger_1").GetID() );
+		}
+
+		//------------------------------------------------------------
+
+		bool CollideLeftCapsule(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			mbLeftCapsule = true;
+			Player_SetCrouching(false);
+			return false;
+		}
+		
+		//------------------------------------------------------------
+		
+		bool OnCollideCrashArea(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			bool bInCrashArea = (alState==1);
+			if (bInCrashArea!=mbInCrashArea)
+			{
+				if (!bInCrashArea)
+				{
+					if (mlFlesherDistortion!=0)
+					{
+						Effect_VideoDistortion_FadeOut(mlFlesherDistortion,3.0f);
+						cLux_AddDebugMessage("Kill distortion");
+						mlFlesherDistortion = 0;
+					}
+				}
+				else if (mbFlesherAwake)
+				{
+					
+					if (mbFirstFlesherAttackHappened)
+					{
+						if (!SequenceStates_IsActive("SequenceSecondBreakThroughDebris"))
+						{
+							//SequenceSecondBreakThroughDebris("");
+						}
+					}
+					else if (mlFlesherDistortion==0)
+					{
+						mlFlesherDistortion=Effect_VideoDistortion_Start(0.5f,-1,1.0f,0.0f);
+						cLux_AddDebugMessage("Start distortion");
+					}
+				}
+			}
+			mbInCrashArea = bInCrashArea;
+			return true;
+		}
+
+		//------------------------------------------------------------
+		
+		int mlFlesherDistortion = 0;
+		
+		cSequenceStatesData mSequenceTrainCartCreepyness;
+		void SequenceTrainCartCreepyness(const tString &in asX)
+		{
+			Sequence_Begin("SequenceTrainCartCreepyness",mSequenceTrainCartCreepyness);
+			
+			if (Sequence_DoStepAndWait(3.0f))
+			{
+				Effect_VideoDistortion_Start(0.3f,3.0f,3.0f,0.0f);
+				mbFlesherAwake = true;
+				//Sound loop starts - finishes when player pops hatch
+				Sound_CreateAtEntity("FlesherTrainLoop", "01_04_transport_station/SFX/flesher/train_roof", "TrainCartCreepynessSoundSource");
+			}
+			else if (Sequence_DoStepAndWait(20.0f))
+			{
+				if (mbInCrashArea&&mlFlesherDistortion==0)
+				{
+					cLux_AddDebugMessage("Begin distortion");
+					mlFlesherDistortion=Effect_VideoDistortion_Start(0.25f,-1,1.0f,0.0f);
+				}
+			}
+			else if (Sequence_DoStepAndWait(4.0f))
+			{
+				mbFirstFlesherAttackHappened = true;
+			}
+
+			Sequence_End();
+		}
+
+		//------------------------------------------------------------
+		
+		bool OnTriggerFlesherNastiness(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			return true;
+		}
+		
+		//------------------------------------------------------------
+
+		bool mbEscapeLeverPulledOnce = false;
+		void StatePulledEscapeLever(const tString &in asEntity, int alState)
+		{
+			Sound_CreateAtEntity("", "level_01_04/events/metro/door/emergengy_exit_lever", asEntity, 0.0f, false);
+			
+			if(mbEscapeLeverPulledOnce==false)
+			{
+				mbEscapeLeverPulledOnce = true;
+				
+				cLux_GetCurrentMap().GetEntityByName("01_05_transporter_passenger_fronthatch1_1").GetBody(0).SetMass(50);
+				Entity_AddImpulse("01_05_transporter_passenger_fronthatch1_1", cVector3f(0.1, 0.5, -6), false, false);
+				
+				Entity_SetActive("01_05_transporter_passenger_window_hatch1_1", false);
+				Entity_SetActive("train_broken_glass_sidehatch", false);
+				Entity_SetActive("01_05_transporter_passenger_window_hatch1_1_2", true);
+				Entity_SetActive("01_05_transporter_passenger_window_hatch1_2", false);
+				Entity_SetActive("01_05_transporter_passenger_window_hatch1_2_2", true);
+				Entity_SetActive("01_05_transporter_passenger_window_hatch1_3", false);
+				Entity_SetActive("01_05_transporter_passenger_window_hatch1_3_2", true);
+				Entity_SetActive("01_05_transporter_passenger_window_hatch1_4", false);
+				Entity_SetActive("01_05_transporter_passenger_window_hatch1_4_2", true);
+				
+				Lamp_SetLit("LightEmergency", false, true);
+				
+				Entity_SetActive("BloodSplash_1",false);
+				Entity_SetActive("BloodSplash_2",false);
+				Entity_SetActive("BloodSplash_4",true);
+				
+				//Swap out train sound area for one that includes tunnel ambience
+				Entity_SetActive("AMB_TrainCrashed_Spot", true);
+				Entity_SetActive("AMB_TrainCrashed", false);
+				
+				//Train hatch pop off sounds
+				Sound_CreateAtEntity("HatchPop", "01_04_transport_station/SFX/train/hatch_pop", "CrashImpactDustArea");
+				Sound_CreateAtEntity("HatchPopLand", "01_04_transport_station/SFX/train/hatch_impact", "CrashImpactDustArea");
+
+				//Stop spark sounds and flesher on train roof sound
+				//Sound_Stop("TrainSparks", 0.75f);
+				Sound_Stop("TrainAlarm", 0.75f);
+				Map_RemoveTimer("TrainAlarmStop");
+				Map_RemoveTimer("TrainCartCreepyness");
+				Sound_Stop("FlesherTrainLoop", 0.75f);
+				cLux_AddDebugMessage("Train cart creepyness timer stopped");
+				
+				//Quickly fade world during hatch pop to give perception of loudness
+				Sound_FadeGlobalVolume(0.5f, 0.1f);
+				Map_AddTimer("HatchPopSoundEnd", 2.0f, "HatchPopSoundEnd");	
+				
+				//Add music timers, one for tunnel welcome piece, one for ambience
+				Map_AddTimer("HatchPopSoundMusic", 4.50f, "HatchPopSoundMusic");
+				Map_AddTimer("SecondTunnelAmbientMusicStart", cMath_RandRectf(13.f,18.f),"Audio_StartSecondTunnelAmbience");
+			}
+		}
+		
+		void HatchPopSoundEnd(const tString &in asTimer)
+		{
+			PreloadSetPrioNormal();
+			
+			Sound_FadeGlobalVolume(1.f, 3.f);
+			Sound_CreateAtEntity("TunnelAlarm", "01_04_transport_station/Special/Train/post_crash/tunnel_alarm", "Player");
+		}
+		
+		void HatchPopSoundMusic(const tString &in asTimer)
+		{
+			Music_Play("03_02_emptypack", 0.55f, false, eMusicPrio_BigEvent);
+		}
+		
+
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 4 Event C *Use Lambda Transmission Link (dialog)*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		void Timer_FlashIntercomOff(const tString &in asTimer)
+		{
+			Entity_FadeEffectBaseColor(asTimer, 0, 0.5);
+			Map_AddTimer(asTimer, 0.5, "Timer_FlashIntercomOn");
+		}
+
+		//-------------------------------------------------------
+		
+		void Timer_FlashIntercomOn(const tString &in asTimer)
+		{
+			Entity_FadeEffectBaseColor(asTimer, cColor_White, 0.5);
+			Map_AddTimer(asTimer, 0.5, "Timer_FlashIntercomOff");
+			
+			cLux_AddTodoMessage("Sound: Catherine calling simon on intercom.");
+			Sound_CreateAtEntity("IntercomCall", "Entities_Urban/tech/laptop/email_sent", asTimer);
+		}
+
+		//-------------------------------------------------------
+
+		void InteractTransmissionLink(const tString &in asEntity)
+		{
+			cLux_AddTodoMessage("Sound: Player answers the call, rinigng stops");
+			if (Sound_Exists("IntercomCall")) Sound_Stop("IntercomCall", 0.1);
+			Map_RemoveTimer("Intercom_1");
+			Entity_FadeEffectBaseColor("Intercom_1", cColor_White, 0.25);
+			
+			cScript_SetGlobalVarBool("TalkedToCathInLambda", true);
+				
+			Dialog_StartConversation("Catherine", asEntity);
+			Dialog_Begin("");
+				Dialog_AddBranchAndSubject("LambdaTransmissionLink", "", "Subject_TransmissionLinkCut");
+			Dialog_End();
+		}
+		
+		void LineOver_InteractTransmissionLink(const tString&in asScene, const tString&in asSubject, int alLineIndex, bool abStart)
+		{
+			if (abStart==false) return;
+			
+			Entity_FadeEffectBaseColor("Intercom_1", 0, 0.1);
+		}
+		
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 4 Event D *Flood Airlock (dialog)*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		/**
+		 * Interaction on the exit door, not possible to leave level
+		 * */
+		void InteractLevelExit(const tString &in asEntity)
+		{
+			cLux_AddTodoMessage("SOUND: Locked door.");
+			//TODO MAKE NICE EVENT.
+			Entity_SetInteractionDisabled(asEntity, true);
+			Map_AddTimer(asEntity, 1, "TimerEnableInteraction");
+		}
+		
+		//-----------------------------------------------------------
+		
+		bool OnEnterFinalAirlock(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			Entity_SetActive("TrainFlesher", true);
+			Entity_SetActive("TriggerRemoveTrainFlesher", true);
+			
+			//////////////////////////////////////////
+			// Setup checkpoint
+			CheckPoint_Setup();
+			return false;
+		}
+		
+		//-----------------------------------------------------------
+		
+		void LookAtOmnitoolPanel(const tString &in asEntity, int alState)
+		{
+			if (Player_ToolIsInInventory("CathTool")==false)
+				Voice_Play("ForgotOmnitool");
+		}
+		
+		//-----------------------------------------------------------
+		
+		/**
+		 * Pushing button to begin filling the water in last air lock.
+		 * */
+		void StateFillAirLock(const tString &in asEntity, int alState)
+		{
+			if(alState != 1) return;
+			
+			Entity_SetInteractionDisabled(asEntity, true);
+			
+			// If the GUI isn't on, turn it on
+			Terminal_SetGuiActive("Airlock2GUI",true);
+			Entity_SetActive("Airlock2GUI", true);
+			
+			Map_RemoveTimer("TimerTurnOffGUI");
+			Map_AddTimer("TimerTurnOffGUI",10.0f,"TimerTurnOffGUI");
+			
+			Entity_SetActive("LadderArea_1_Aux", false);
+			
+			SequenceFillAirLock("");
+		}
+		
+		//-----------------------------------------------------------
+		
+		void TimerTurnOffGUI(const tString& in asTimer)
+		{
+			Terminal_SetGuiActive("Airlock2GUI",false);
+			Entity_SetActive("Airlock2GUI", false);
+		}
+		
+		//-----------------------------------------------------------
+		
+		void OnGuiDatapad(const tString&in asEntityName, float afTimeStep)
+		{
+			ImGui_SetTransCategory("01_04_transport_station");
+			
+			StationGuiBG_BackdropV2("background_logo_pathosstation");
+			StationGuiBG_Scanlines();
+			
+			cStationGui_TextReaderSettings settings;
+			settings.msCustomHeader = "ReaderTitle"; 
+			
+			Depth_ImGui_AddTextFile("ReaderArticleTitle_1", "ReaderArticle_1");
+			Depth_ImGui_AddTextFile("ReaderArticleTitle_2", "ReaderArticle_2");
+			StationGui_DatapadMultiReader(settings);
+		}
+
+		//-----------------------------------------------------------
+
+		void OnGuiAirlock2(const tString&in asEntityName, float afTimeStep)
+		{
+			ImGui_SetTransCategory("01_04_transport_station");
+		
+			StationGuiBG_Scanlines();
+			StationGuiBG_Backdrop();
+			
+			StationGui_BigStatusMessage("GUIAirlockFixed", gStationGuiColor_Highlight, 1.75, true);
+		}
+		
+		//-----------------------------------------------------------
+		
+		/**
+		 * The water pump fails when not able to pump out water.
+		 * */
+		void TimerResetWaterPump02(const tString &in asTimer)
+		{
+			Entity_SetInteractionDisabled("button_reactor_2", false);
+			Button_SetSwitchedOn("button_reactor_2", false, true);
+			
+			Entity_SetEffectBaseColor("button_reactor_2", cColor(0,0,0,0));
+		}
+		
+		//-----------------------------------------------------------
+		
+		cSequenceStatesData mSequenceFillAirLock;
+		void SequenceFillAirLock(const tString &in asX)
+		{
+			Sequence_Begin("SequenceFillAirLock", mSequenceFillAirLock);
+			
+			//Water filling sounds begin
+			if(Sequence_DoStepAndWait(1.7))
+			{
+				MovingButton_SetSwitchedOn("hatch_floor_1", false, true);
+				Sound_CreateAtEntity("HatchClose", "01_04_transport_station/SFX/airlock/end/hatch_close", "hatch_floor_1");
+				Sound_FadeGlobalVolume(1.0f, 1.0f, eSoundEntryType_WorldClean);
+			}
+			if(Sequence_DoStepAndWait(1.))
+			{
+				PreloadDeload();
+				
+				Sound_CreateAtEntity("AirlockWarning", "Entities_OceanBottom/airlock/alarms/filling_alarm", "EndAirlockAlarmSource");
+				Sound_CreateAtEntity("AirlockAirPump", "Entities_OceanBottom/airlock/air/pump/pump_loop", "AirlockEndPumpSoundSource");
+			}
+			if(Sequence_DoStepAndWait(0.55))
+			{
+				PreloadSetPrioHigh();
+				
+				EndAirlockEffectsFillWithWater();
+				Sound_CreateAtEntity("ValvesOpen", "01_04_transport_station/SFX/airlock/end/valve_open", "AirlockValveSoundSource");
+				Player_SetCrouchDisabled(true);
+			}
+			if(Sequence_DoStepAndWait(0.5))
+			{
+				Sound_CreateAtEntity("AirlockPipePour", "01_04_transport_station/SFX/airlock/end/water_fill", "AirlockWaterSoundSource");
+				Entity_SetEffectBaseColor("button_reactor_2", cColor(1,1,1,1));
+				Entity_SetActive("LadderArea_1", false); //Remove ladder area from first hatch.
+			}
+			if(Sequence_DoStepAndWait(0.5))
+			{
+			    ParticleSystem_SetActive("particles_flood_airlock_*", true);
+			}
+			//Water is activated and begins rising.
+			if(Sequence_DoStepAndWait(2.5))
+			{
+				Music_PlayExt("01_04_airlock.ogg", false, 1, 1, 0.5, 0, eMusicPrio_BigEvent, false);
+				Music_Stop(0, eMusicPrio_BgAmb);
+				Entity_SetActive("LiquidArea_2", true);
+				LiquidArea_MoveLinearTo("LiquidArea_2", "LiquidArea2_EndPos", 0.1, 1, 0.5, false);
+			}
+			// Comment on the situation
+			if(Sequence_DoStepAndWait(4.15))
+			{
+				Dialog_Begin("SimonComment");
+					Dialog_AddBranchAndSubject("SimonOnFloodRoom");
+				Dialog_End();
+			}
+			if(Sequence_DoStepAndWait(0))
+			{
+				Player_SetCrouchDisabled(false);
+				Lamp_SetLit("spotlight_laddershaft", false, false);
+				LensFlare_SetVisible("LensFlare_1", false);
+				ParticleSystem_Destroy("particles_flood_airlock_*");
+				
+			}
+			//Removing water streaming from ladder passage and the dripping water effects.
+			if(Sequence_DoStepAndWait(0.5))
+			{
+				ParticleSystem_Destroy("ParticleSystem_43");
+				Terminal_SetGuiActive("Airlock2GUI",false);
+				Entity_SetActive("Airlock2GUI", false);
+				
+				Effect_Screen_Start("water_splash_screen.mat", cVector2f(0.5, 0.5), cVector2f(1.8, 1.8), 1, 0.7f, 0.7f, 0.7f); 
+				
+				PreloadFadeEffects();
+			}
+			if (Sequence_DoStepAndWait(3.5f))
+			{
+				ParticleSystem_CreateAtEntity("bubble_4", "loop_waterbubbles_small_stream.ps", "AreaWaterPipe", false);
+				ParticleSystem_CreateAtEntity("bubble_5", "loop_waterbubbles_small_plunge.ps", "hatch_floor_1", false);
+				ParticleSystem_CreateAtEntity("bubble_6", "loop_waterbubbles_small_plunge.ps", "BubblePSArea", false);
+			}
+			
+			// End level
+			if(Sequence_DoStepAndWait(3.5))
+			{
+				ParticleSystem_Destroy("bubble_4");
+				ParticleSystem_Destroy("bubble_5");
+				ParticleSystem_Destroy("bubble_6");
+			}
+			if(Sequence_DoStepAndWait(0))
+			{
+				PreloadChangeOfMap();
+			}
+			Sequence_End();
+		}
+		
+		//-----------------------------------------------------------
+		
+		bool OnTriggerOpenHatch(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			MovingButton_SetSwitchedOn("ExitHatch", true, true);
+			return false;
+		}
+	 
+		//-------------------------------------------------------
+		//Airlock audio
+		void EndAirlockEffectsFillWithWater()
+		{
+			Depth_Audio_AirlockFillingLeadInAir();
+			Depth_Audio_AirlockFillingLoopAir();
+			Map_AddTimer("AirlockFillingAirStopTimer", 8.f, "EndAirlockFillingAirStop");
+		}
+
+		void EndAirlockFillingAirStop(const tString &in asTimer)
+		{
+			cLux_AddDebugMessage("Underwater airlock sounds start");
+			
+			Sound_CreateAtEntity("AirlockFillingLoopUW", "Entities_OceanBottom/airlock/uw/water/filling/loop", "Player", 1.f, false, 1.0f);
+			Depth_Audio_AirlockFillingLoopAirStop();
+			Depth_Audio_PlayEnterWater();
+			
+			///////////////////
+			//Pump Sounds
+			Sound_CreateAtEntity("AirlockFillingPumpLoopUW", "Entities_OceanBottom/airlock/uw/pump/pump_loop_nointro", "AirlockEndPumpSoundSource", 0.0f, false, 1.0f);
+			Sound_CreateAtEntity("AirlockPipePourUW", "01_04_transport_station/SFX/airlock/end/water_fill_underwater", "AirlockWaterSoundSource", 0.0f, false, 1.0f);
+			Sound_Stop("AirlockAirPump", 0.5f);
+			Sound_Stop("AirlockPipePour", 0.5f);
+			
+			///////////////////
+			//Sound area change
+			Entity_SetActive("AMB_EndAirlock", false);
+			Entity_SetActive("AMB_EndAirlock_Water", true);
+			
+			Map_AddTimer("AirlockFillingLoopUWStopTimer", 5.0f, "EndAirlockFillingLoopUWStop");
+		}
+		
+		void EndAirlockFillingLoopUWStop(const tString &in asTimer)
+		{
+			cLux_AddDebugMessage("Underwater airlock sounds stop");
+			
+			///////////////////
+			//Pump Sounds
+			Sound_Stop("AirlockFillingLoopUW", 1.25f);			
+			Sound_Stop("AirlockFillingPumpLoopUW", 1.25f);
+			Sound_CreateAtEntity("AirlockFillingLeadOutUW", "Entities_OceanBottom/airlock/uw/water/filling/end", "Player", 1.f, false, 1.0f);
+			Sound_CreateAtEntity("PumpUWLeadOut", "Entities_OceanBottom/airlock/uw/pump/pump_end", "AirlockEndPumpSoundSource", 0.0f, false, 1.0f);
+			Map_AddTimer("PumpChangeUnderwater", 1.5f, "AirlockPumpSoundUnderwater");
+		}
+		
+		void AirlockPumpSoundUnderwater(const tString &in asTimer)
+		{
+			Sound_Stop("PumpUW", 0.5f);
+			Sound_CreateAtEntity("Pump_Idle_Loop_Underwater", "Entities_OceanBottom/airlock/uw/pump/idle_loop", "AirlockEndPumpSoundSource", 1.0f, false, 1.0f);
+			cLux_AddDebugMessage("Underwater airlock pump idle");
+		}
+
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 4 Event E *Return to Wreck*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		void LookAtTrainFlesher(const tString &in asEntity, int alState)
+		{
+			Map_AddTimer(asEntity, 2, "Seq_RemoveTrainFlesher");
+			cLux_AddDebugMessage("LookAtTrainFlesher");
+		}
+
+		//-------------------------------------------------------
+		
+		bool Trigger_RemoveTrainFlesher(const tString &in asParent, const tString &in asChild, int alState)
+		{				
+			Map_RemoveTimer("TrainFlesher");
+			cLux_AddDebugMessage("Trigger_RemoveTrainFlesher");
+			Seq_RemoveTrainFlesher("");
+			return false;
+		}
+
+		//-------------------------------------------------------
+		
+		cSequenceStatesData mRemoveTrainFlesherSequence;
+		bool mbTrainFlesherEventComplete = false;
+	
+		void Seq_RemoveTrainFlesher(const tString &in asTimer)
+		{					
+			Sequence_Begin("Seq_RemoveTrainFlesher", mRemoveTrainFlesherSequence);
+				
+			if (Sequence_DoStepAndPause(0))
+			{
+				Entity_SetActive("TriggerRemoveTrainFlesher", false);
+				Effect_TimeGlitch_Start(2, 0.5, 0.2, true);
+				
+				Agent_FaceEntity("TrainFlesher", "Player");
+				
+				Entity_SetActive("TriggerFlesherFlees", true);
+				Map_AddTimer("Timer_FlesherFlees", 1.5, "Timer_FlesherFlees");
+			}
+			else if (Sequence_DoStepAndWait(0.5))
+			{
+				Effect_TimeGlitch_Start(1, 0.5, 0.2, true);
+				Entity_SetActive("TrainFlesher", false);
+				Entity_SetActive("TrainFlesher_Escapee", true);
+				Prop_MoveLinearTo("TrainFlesher_Escapee", "TrainFlesher_Escapee_Target", 10, 1.25, 0, true);
+				
+				Prop_SetStaticPhysics("FlesherEscapeVent", false);
+				
+				mbTrainFlesherEventComplete = true;
+				
+				// Hack to place the vent at the correct pos
+				iLuxEntity@ pVent = cLux_GetCurrentMap().GetEntityByName("FlesherEscapeVent", eLuxEntityType_Prop);
+				iLuxEntity@ pTarget = cLux_GetCurrentMap().GetEntityByName("FlesherEscapeVent_Target", eLuxEntityType_Area);
+				pVent.GetMainBody().SetWorldMatrix(pTarget.GetMainBody().GetWorldMatrix());
+			
+				Entity_AddImpulse("FlesherEscapeVent", cVector3f_Forward, true, true);
+				
+				//Sound
+				Sound_CreateAtEntity("FlesherEscapeSound", "01_04_transport_station/SFX/flesher/vent_event", "TrainFlesher_Escapee");
+				Map_AddTimer("FlesherVentSoundEnd", 2.0f, "FlesherVentSoundEnd");
+				Sound_FadeGlobalVolume(0.35, 0.1f);
+				Depth_Audio_Fear_HighIntensity();
+				
+				//Music
+				Map_AddTimer("SecondTunnelAmbientMusicStart", cMath_RandRectf(22.f,26.f),"Audio_StartSecondTunnelAmbience");
+				Music_Play("03_02_flesherspook06", 0.45f, false, eMusicPrio_BigEvent);
+				
+			}
+			Sequence_End();
+		}
+		
+		void FlesherVentSoundEnd(const tString &in asTimer)
+		{
+			//Fade up world after flesher event
+			Sound_FadeGlobalVolume(1.f, 3.f);
+		}
+
+		//-------------------------------------------------------
+		
+		bool Trigger_FlesherFlees(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			SequenceStates_Resume("Seq_RemoveTrainFlesher");
+			Map_RemoveTimer("Timer_FlesherFlees");
+			return false;
+		}
+		
+		void Timer_FlesherFlees(const tString &in asTimer)
+		{
+			Entity_SetActive("TriggerFlesherFlees", false);
+			SequenceStates_Resume("Seq_RemoveTrainFlesher");
+		}
+		
+		//} END EVENT
+
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Scene 4 Event F *Wau flower in tunnel*
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		void WauFlowerTunnelEnd(const tString &in asEntity)
+		{
+		    SequenceTunnelEndWater("");
+		}
+		
+		cSequenceStatesData mSequenceTunnelEndWater;
+		void SequenceTunnelEndWater(const tString &in asX)
+		{
+			Sequence_Begin("SequenceTunnelEndWater", mSequenceTunnelEndWater);
+			
+			if(Sequence_DoStepAndWait(2.5f))
+			{
+			    cLux_AddDebugMessage("start water leak sequence");
+			    Music_Play("01_02_reactorroom_transformers", 0.55f, false, eMusicPrio_BigEvent);
+				Effect_Shake_Start(0.01, 2.0f, 2.0f, 0.5f);
+				Sound_CreateAtEntity("FloodWater", "01_04_transport_station/SFX/flood_event/leak_event", "tunnelfloodsoundsource", 1.0f, true, 2.0f);
+			    if (mbTrainFlesherEventComplete==true)
+			    {
+				    cLux_AddDebugMessage("Ambient Music Trigger enabled");
+				    Entity_SetActive("Trigger_AmbientMusicResumeFlood", true);
+			    }
+			}
+			else if(Sequence_DoStepAndWait(0.05f))
+			{
+			    cLux_AddDebugMessage("door cracks open");
+			    Effect_Shake_Start(0.1f, 0.1f, 0.1f, 0.5f);
+				SlideDoor_SetOpenAmount("TunnelEndSlideDoor", 0.1f, true);
+			}
+			else if(Sequence_DoStepAndWait(0.75f))
+			{
+				cLux_AddDebugMessage("water begins pouring");
+			    ParticleSystem_SetActive("End_tunnel_leak_*", true);
+				Sound_CreateAtEntity("FloodWater", "01_04_transport_station/SFX/flood_event/spot", "tunnelfloodsoundsource", 0.5f, true, 1.0f);	
+            }		
+			else if(Sequence_DoStepAndWait(1))
+			{
+			    Entity_SetActive("water_effects_tunnel_end_*", true);
+				ParticleSystem_SetActive("End_tunnel_leakimpact_*", true);
+			}
+			else if(Sequence_DoStepAndWait(1))
+			{
+			    Entity_SetActive("water_tunnel_end_leak_stream_*", true);
+				Prop_MoveLinearTo("water_tunnel_end_leak_stream_1", "tunnel_end_stream_target", 5, 15, 8, true);
+			}
+			Sequence_End();
+		}
+
+		//} END EVENT
+
+	//} END SCENE 4
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// PRELOADING
+	/////////////////////////////////////////
+
+	//-------------------------------------------------------
+
+	bool PreloadDisabled(bool abCheckIfPreloading = true)
+	{
+		if(cLux_ScriptDebugOn())
+		{
+			cLux_AddDebugMessage("PRELOAD DISABLED!"); 
+			
+			return true;
+		}
+
+		if(abCheckIfPreloading == true && Map_IsPreloading() == false)
+			return true;
+			
+		return false;
+	}
+	
+	//-------------------------------------------------------
+	
+	void Preload()
+	{
+		if(PreloadDisabled(false)) return;
+		
+		Map_Preload("02_01_ms_curie_outside.hpm", eWorldStreamPriority_Low);
+	}
+	
+	//-------------------------------------------------------
+	
+	void PreloadSetPrioNormal()
+	{
+		if(PreloadDisabled()) return;
+		
+		Map_SetPreloadPriority(eWorldStreamPriority_Normal);
+	}
+	
+	//-------------------------------------------------------
+
+	void PreloadDeload()
+	{
+		if(PreloadDisabled()) return;
+		
+		Map_Deload("Transfer1421");
+	}
+	
+	//-------------------------------------------------------
+	
+	void PreloadSetPrioHigh()
+	{
+		if(PreloadDisabled()) return;
+		
+		Map_SetPreloadPriority(eWorldStreamPriority_High);
+	}
+	
+	//-------------------------------------------------------	
+	
+	void PreloadFadeEffects()
+	{
+		Map_AddTimer("FadeGlobal", 0, "PreloadTimer");
+		Map_AddTimer("FadePreset", 0.15, "PreloadTimer");
+		
+		Map_SetEnvironmentParticlesActive(true);
+		
+		cWorld@ pWorld = cLux_GetCurrentMap().GetWorld();
+		pWorld.SetFogApplyAfterFogAreas(false);
+	}
+
+	//-------------------------------------------------------
+
+	void PreloadChangeOfMap()
+	{
+		if(PreloadDisabled()) 
+		{
+			PreloadManualChangeMap();
+			return;
+		}
+		
+		Map_AddTimer("ChangeMap", 0, "PreloadTimer");
+		Map_AddTimer("ChangeMapNotReady", 3, "PreloadTimer");
+	}
+	
+	//-------------------------------------------------------
+	bool mbGlobalCopyCompleted = false;
+	void PreloadTimer(const tString &in asTimer)
+	{
+		////////////////////////////
+		//Preload - Change map globals when possible.
+		if(asTimer == "FadeGlobal")
+		{
+			if(mbGlobalCopyCompleted) return;
+
+			mbGlobalCopyCompleted = Map_CopyGlobalSettings(Map_GetPreloadMap(), 0.1);
+			
+			Map_AddTimer("FadeGlobal", 0.3, "PreloadTimer");
+		}
+		
+		if(asTimer == "FadePreset")
+		{
+			Map_Preset_Fade("Outside2.1", 0.1); 
+		}
+		
+		if(asTimer == "ChangeMapNotReady")
+		{
+			Description_Add("02_05_theta_inside", "ScanRoom_Legacy_Loading", 10, false);
+			Map_SetPreloadPriority(eWorldStreamPriority_VeryHigh);
+		}
+		
+		////////////////////////////
+		//Preload - Change map when possible
+		if(asTimer == "ChangeMap")
+		{
+			if(Map_IsPreloadCompleted())
+			{
+				Entity_SetActive("LiquidArea_2", false);
+				Description_SetForceFading(true);
+				Map_ChangeMap("02_01_ms_curie_outside.hpm", "", "Transfer1421", "", "");
+			}
+			else Map_AddTimer("ChangeMap", 0.25f, "PreloadTimer");
+		}
+	}
+	
+	//-------------------------------------------------------
+	
+	//////////////////////
+	//Manually load next level if preload fails,  preload disabled.
+	void PreloadManualChangeMap()
+	{
+		Map_ChangeMap("02_01_ms_curie_outside.hpm", "PlayerStartArea_1", "", "");
+	}
+	
+	//-------------------------------------------------------
+
+	/////////////////////////////////////////
+	// ==============
+	// TERMINALS
+	// ==============
+	//{///////////////////////////////////////
+
+	//-------------------------------------------------------
+	
+		//-------------------------------------------------------
+
+		/////////////////////////////////////////
+		// Amy Cargo Terminal
+		//{///////////////////////////////////////
+
+		//-------------------------------------------------------
+		
+		bool mbAudioDucked = false;
+
+		//-------------------------------------------------------
+	
+		void OnGuiAmyCargoPad(const tString&in asEntityName, float afTimeStep)
+		{
+			StationGuiBG_Scanlines();
+			StationGuiBG_BackdropV2("background_logo_pathosstation");
+			
+			ImGui_SetTransCategory("01_04_transport_station");
+			
+			cStationGui_TextReaderSettings readerSettings;
+			readerSettings.mvTextFontSize = 30;
+			cStationGui_MainMenuSettings mainMenuSettings;
+			mainMenuSettings.mfEdgePadding = 0.125;
+			mainMenuSettings.mfButtonHeight = 0.125;
+			mainMenuSettings.msCustomSound = "Entities_Station/tech/terminal_beeps/datapad/datapad_forward";;
+			
+			if (mbAudioDucked && Depth_ImGui_PlaybackActive()==false)
+				StopVideoAudio();
+			
+			bool bDrawBackButton = true;
+			int lActiveApp = StationGui_GetActiveApp(eCargoTerminalState_MainMenu);
+			switch (lActiveApp)
+			{	
+				case eCargoTerminalState_MainMenu:
+				StationGui_AddApp("CargoTerminalApp_Inventory");
+				StationGui_AddApp("CargoTerminalApp_CometMemo");
+				StationGui_AddApp("CargoTerminalApp_Video");
+				StationGui_MainMenu(mainMenuSettings);
+				bDrawBackButton = false;
+				break;
+				
+				case eCargoTerminalState_Inventory:
+				StationGui_TextReaderSingle("CargoTerminalApp_Inventory", "CargoTerminalInventory", readerSettings);
+				break;
+				
+				case eCargoTerminalState_CometMemo:
+				StationGui_TextReaderSingle("CargoTerminalApp_CometMemo", "CargoTerminalCometMemo", readerSettings);
+				break;
+				
+				case eCargoTerminalState_Video:
+				OnGuiAmyCargoPad_VideoPlayer();
+				break;
+			}
+			
+			if (bDrawBackButton && StationGui_BackButton(true, -1, false))
+			{
+				Depth_Audio_Datapad_Back(ImGui_GetName());
+				if (lActiveApp == eCargoTerminalState_Video)
+				{
+					Depth_ImGui_StopAudioFilePlayback(ImGui_GetName());
+				}
+			}
+		}
+
+			/////////////////////////////////////////
+			// APP: Video player
+			//{///////////////////////////////////////
+			
+	
+			void OnGuiAmyCargoPad_VideoPlayer()
+			{
+				Depth_ImGui_CheckAudioFilePlaybackEnd();
+				
+				ImGui_DoWindowStart("CargoTerminalApp_Video", PathOS_CreateDefaultWindowData(), ImGui_NrmPosGroup(cVector3f(0.05, 0.1, 1)), ImGui_NrmSizeGroup(cVector2f(0.9, 0.75)));
+	
+					tString sImage;
+					if (Depth_ImGui_PlaybackActive())
+					{
+						// Static overlay
+						int lRotation = ImGui_GetStateInt("AnimationRotation", 0);
+						if (ImGui_RepeatTimer("StaticIndex", 0.1))
+						{
+							lRotation = lRotation==0 ? 1 : 0;
+							
+							ImGui_SetStateInt("AnimationRotation", lRotation);
+						}
+						ImGui_SetModColorMul(gStationGuiColor_Normal*cColor(0.8, 1));
+						ImGui_SetModRotateAngle(lRotation*180);
+						
+						sImage = "static_0";
+					}
+					else
+					{
+						sImage = "";
+						ImGui_SetModColorMul(gStationGuiColor_Normal*cColor(0.2, 1));
+						
+					}
+					ImGui_DoImage(cImGuiGfx(sImage), ImGui_NrmPosGroup(cVector3f(0.025, 0.025, 1)), ImGui_NrmSizeGroup(cVector2f(0.95, 0.75)));
+					ImGui_ResetModifiers();
+					
+					if (StationGui_VoicePlaybackButton("CargoPadRecording", "VoiceOver_VideoPlayerEnd", ImGui_NrmPosGroup(cVector3f(0.35, 0.825, 1)), ImGui_NrmSizeGroup(cVector2f(0.3, 0.125))))
+					{
+						if (Depth_ImGui_PlaybackActive())
+						{
+							//Fade out audio for video
+							Depth_Audio_Datapad_Play(ImGui_GetName());
+							cLux_AddDebugMessage("Start Video");
+							Sound_FadeGlobalVolume(0.45f, 2.0f, eSoundEntryType_World);
+							Music_FadeVolumeMul(0.1f, 2.0f);
+							mbAudioDucked = true;
+						}
+						else
+						{
+							//Fade up audio on stop
+							Depth_Audio_Datapad_Stop(ImGui_GetName());
+							StopVideoAudio();
+						}
+					}
+
+				ImGui_DoWindowEnd();
+			}
+			
+			void StopVideoAudio()
+			{
+				cLux_AddDebugMessage("Stop Video");
+				Sound_FadeGlobalVolume(1.0f, 2.0f, eSoundEntryType_World);
+				Music_FadeVolumeMul(1.0f, 2.0f);
+				mbAudioDucked = false;
+			}
+			
+			//} END APP
+		
+		//------------------------------------------------------------
+			
+		bool mbHeardSkyFallingDown = false;
+		void Line_SkyFallingDown(const tString&in asScene, const tString&in asSubject, int alLineIndex, bool abStart)
+		{
+			if (abStart) return;
+			
+			mbHeardSkyFallingDown = true;
+		}
+		
+		void VoiceOver_VideoPlayerEnd(const tString&in asScene, const tString&in asSubject)
+		{
+			if (mbHeardSkyFallingDown==false)
+				return;
+				
+			Map_AddTimer("CargoPadRecording_Comment", 1, "Timer_PlayVoice");
+		}
+		
+		//------------------------------------------------------------
+			
+		void LeaveAmyCargoPad(const tString&in asEntityName)
+		{
+			tString sScene = Voice_GetSubjectSceneName("CargoPadRecording");
+			
+			if (Voice_SceneIsActive(sScene))
+			{
+				StopVideoAudio();
+			}
+			
+			Voice_Stop(sScene);
+		}
+		
+		//} END TERMINAL
+		
+		//------------------------------------------------------------
+	
+		/////////////////////////////////////////
+		// TRAIN - STATION SELECTION SCREEN GUI
+		//{///////////////////////////////////////
+		
+		//-----------------------------------------------------------
+		
+		tString msStationClosedImg = "01_05_station_closed";
+		tString msStationCurrentImg = "01_05_station_current";
+		tString msStationOpenImg = "01_05_station_open";
+		tString msText = "";
+		tString msStationDestination = "Station03";
+		
+		cVector3f mvTextFramePos = cVector3f(43, 256, 5);
+		
+		bool mbMessageBoxActive = false;
+		tString msPickedStation;
+		tString msFocusedStation = "Station02";
+		int mlPickedETA;
+		eStationType mMessageBoxType;
+		void OnGUIStationSelection(const tString &in asEntityName, float afTimeStep)
+		{
+			ImGui_SetTransCategory("01_04_transport_station");
+			
+			////////////////////
+			// Data
+			cImGuiLabelData labelData;
+			labelData.mFont.SetFile("sansation_large_bold.fnt");
+			labelData.mFont.mvSize = ImGui_NrmSizeKeepRatio(0.0555);
+			cImGuiLabelData youAreHereLabel;
+			youAreHereLabel.mFont.SetFile("sansation_medium.fnt");
+			youAreHereLabel.mFont.mvSize = ImGui_NrmSizeKeepRatio(0.0266);
+			youAreHereLabel.mColorText = gStationGuiColor_Disabled+cColor(0.25f,0.25f,0.25f,1);
+
+			//////////////
+			//GUI Background setup
+			StationGuiBG_Scanlines();
+			
+			if (mbJourneyInProgress)
+				return;
+				
+			cImGuiGfx bg("trainstation_trainmap", eImGuiGfx_Texture);
+			bg.mColor = cColor(0.375, 1);
+			ImGui_DoImage(bg, ImGui_NrmPos(cVector3f_Zero), ImGui_GetRatioCorrectSizeByNrmWidth(bg, 1));
+			
+			StationGuiBG_TaskbarV2("");
+			
+			/////////////////
+			//Title
+			ImGui_DoLabelExt("GUIMapTitle",labelData, cVector3f(90.0f, 50.0f, 3));
+			
+			///////////////////////////////////////////////////////////
+			// Draw tracks between stations
+			{
+				cColor colRedTrack =  gStationGuiColor_Warning;
+				cColor colBlueTrack = gStationGuiColor_Normal;
+				cColor colYellowTrack = gStationGuiColor_Highlight2;
+				float fTrackThickness = 4.0f;
+				float fTrackZ = 2.0;
+				
+				// UpsilonA -> UpsilonB
+				ImGui_AddLineStripNrmVertex(cVector2f(0.1f, 0.28f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.1f, 0.37f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.13f, 0.37f));
+				ImGui_DrawAndClearLineStrip(fTrackZ, fTrackThickness, colRedTrack);
+				
+				// UpsilonB -> Lambda
+				ImGui_AddLineStripNrmVertex(cVector2f(0.15f, 0.37f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.1875f, 0.37f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.1875f, 0.53f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.375f, 0.53f));
+				ImGui_DrawAndClearLineStrip(fTrackZ, fTrackThickness, colBlueTrack);
+
+				// Lambda -> Delta
+				ImGui_AddLineStripNrmVertex(cVector2f(0.395f, 0.5f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.395f, 0.73f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.5375f, 0.73f));
+				ImGui_DrawAndClearLineStrip(fTrackZ, fTrackThickness, colBlueTrack);
+
+				// Lambda -> Theta
+				ImGui_AddLineStripNrmVertex(cVector2f(0.395f, 0.5f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.395f, 0.27f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.7125f, 0.27f));
+				ImGui_DrawAndClearLineStrip(fTrackZ, fTrackThickness, colBlueTrack);
+				
+				// Theta -> Omicron
+				ImGui_AddLineStripNrmVertex(cVector2f(0.7325f, 0.28f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.7325f, 0.405f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.875f, 0.405f));
+				ImGui_DrawAndClearLineStrip(fTrackZ, fTrackThickness, colBlueTrack);
+				
+				// Delta -> Theta
+				ImGui_AddLineStripNrmVertex(cVector2f(0.5575f, 0.73f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.5575f, 0.29f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.7125f, 0.29f));
+				ImGui_DrawAndClearLineStrip(fTrackZ, fTrackThickness, colBlueTrack);
+				
+				// Omicron -> Tau
+				ImGui_AddLineStripNrmVertex(cVector2f(0.895f, 0.405f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.895f, 0.6f));
+				ImGui_DrawAndClearLineStrip(fTrackZ, fTrackThickness, colYellowTrack);
+				
+				// Tau -> Phi
+				ImGui_AddLineStripNrmVertex(cVector2f(0.895f, 0.6f));
+				ImGui_AddLineStripNrmVertex(cVector2f(0.895f, 0.75f));
+				ImGui_DrawAndClearLineStrip(fTrackZ, fTrackThickness, colYellowTrack);
+			}
+			
+			///////////////////////////////////////////////////////////////////////
+			// Station Selector button check
+			{										
+				// Station UpsilonA (offline)
+				ImGui_SetModUISizeVertExpansion(1, 8.75);
+				DoStationButton(eStationType_Invalid, "Station01", ImGui_NrmPos(cVector3f(0.08f, 0.25f, 3)), 600);
+
+				// Station UpsilonB (you are here)
+				ImGui_SetModUISizeVertExpansion(2.5, 7.25);
+				DoStationButton(eStationType_Current, "Station02", ImGui_NrmPos(cVector3f(0.13f, 0.34f, 3)), 0);
+				ImGui_DoLabelExt("GUIStationYouAreHere", youAreHereLabel, ImGui_NrmPos(cVector3f(0.18f, 0.37f, 3)), cVector2f(50.0f, 32.0f));
+					
+				// Station Lambda(online)
+				ImGui_SetModUISizeVertExpansion(5, 4.75);
+				DoStationButton(eStationType_Valid, "Station03", ImGui_NrmPos(cVector3f(0.375f, 0.5f, 3)), mlLambdaJourneyTime);
+				
+				// Station Theta(online)
+				ImGui_SetModUISizeVertExpansion(1, 8.75);
+				DoStationButton(eStationType_Valid, "Station04", ImGui_NrmPos(cVector3f(0.7125f, 0.25, 3)), mlLambdaJourneyTime+400); 
+					
+				// Station Omicron(online)
+				ImGui_SetModUISizeVertExpansion(3, 2.5);
+				DoStationButton(eStationType_Valid, "Station05", ImGui_NrmPos(cVector3f(0.875f, 0.375f, 3)), mlLambdaJourneyTime+800);
+				
+				// Station Delta(online)
+				ImGui_SetModUISizeVertExpansion(8.25, 1.5);
+				DoStationButton(eStationType_Valid, "Station06", ImGui_NrmPos(cVector3f(0.5375f, 0.7f, 3)), mlLambdaJourneyTime+300);
+				
+				// Station Tau(online)
+				ImGui_SetModUISizeVertExpansion(0, 0);
+				DoStationButton(eStationType_Abyssal, "Station07", ImGui_NrmPos(cVector3f(0.875f, 0.6f, 3)), mlLambdaJourneyTime+1800);
+				
+				// Station Phi(online)
+				ImGui_SetModUISizeVertExpansion(0, 0);
+				DoStationButton(eStationType_Abyssal, "Station08", ImGui_NrmPos(cVector3f(0.875f, 0.72f, 3)), mlLambdaJourneyTime+1200);
+			
+				///////////////////////////////////////////////////////
+				// Set up message box and station description window
+				if(msPickedStation!="")
+				{
+					mbMessageBoxActive = true;
+				}
+				
+				DoStationDescriptionWindow(msFocusedStation);
+			}
+			
+			////////////////////////////////////////
+			// Pop up message box
+			if(mbMessageBoxActive) 
+			{
+				if(msPickedStation=="Station01")
+					DoErrorMessageBox(msPickedStation);
+				else
+					DoDepartMessageBox(msPickedStation);
+			}
+			
+			ImGui_ResetModifiers();
+			
+			
+			///////////////////////////////////////////
+			// Departure is confirmed, begin journey
+			if(ImGui_TimerOver("DepartureConfirmed") && !mbJourneyInProgress)
+			{
+				ImGui_Exit();
+				Entity_SetInteractionDisabled(asEntityName, true);
+				SequenceBeginJourney("");
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		void DoStationButton(eStationType aType, const tString &in asName, const cVector3f &in avIconPos, int alETA)
+		{
+			cColor buttonCol;
+			cColor focusCol = gStationGuiColor_Highlight;
+			switch(aType)
+			{
+				case eStationType_Invalid: buttonCol = gStationGuiColor_Warning; focusCol = gStationGuiColor_Warning2; break;
+				case eStationType_Current: buttonCol = gStationGuiColor_Disabled+cColor(0.25f,0.25f,0.25f,1); focusCol = gStationGuiColor_Disabled; break;
+				case eStationType_Valid: buttonCol = gStationGuiColor_Normal;   break;
+				case eStationType_Abyssal: buttonCol = gStationGuiColor_Highlight2; focusCol = gStationGuiColor_Warning2; break;
+			}
+			
+			///////////
+			// Data
+			cImGuiButtonData button;
+			button.mGfxBackground.SetFile("station/checkbox/default_fullsize");
+			button.mGfxInFocus = button.mGfxTriggered = button.mGfxBackground;
+			button.mvDefaultSize = ImGui_NrmSize(cVector2f(0.04f, 0.06f));
+			button.mGfxBackground.mColor = buttonCol;
+			button.mGfxInFocus.mColor = focusCol;
+			button.mGfxTriggered.mColor = buttonCol + cColor(0.5f,0.5f,0.5f,1);
+			button.mbUseInFocusGfx = true;
+			button.mbUseTriggeredGfx = true;
+			
+			cImGuiLabelData label;
+			label.mFont.SetFile("sansation_medium.fnt");
+			label.mFont.mvSize = ImGui_NrmSizeKeepRatio(0.0233);
+			
+			ImGui_DoLabelExt("GUI"+asName+"Name", label, avIconPos+cVector3f(button.mvDefaultSize.x+10.0f,0,0), cVector2f(50.0f, 32.0f));
+			
+			ImGui_SetModUseInput(mbMessageBoxActive==false);	
+			if(ImGui_DoButtonExt(asName, "", button, avIconPos))
+			{
+				if (aType != eStationType_Current)
+				{
+					msPickedStation = asName;
+					mlPickedETA = alETA;
+				}
+				
+				///////////////////////////////////////
+				// Sounds for picking stations
+				if (asName == "Station01")
+				{
+					Sound_CreateAtEntity("StationMap_UpsilonA", "Entities_Station/tech/terminal_beeps/upsilon_train_map/destination_upsilon_B", "TrainTerminalSoundSource");
+				}
+				else if (asName == "Station02")
+				{
+					Sound_CreateAtEntity("StationMap_UpsilonB", "Entities_Station/tech/terminal_beeps/upsilon_train_map/destination_upsilon_A", "TrainTerminalSoundSource");
+				}
+				else
+				{
+					Sound_CreateAtEntity("StationMap_Select", "Entities_Station/tech/terminal_beeps/upsilon_train_map/destination_select", "TrainTerminalSoundSource");
+				}
+			}
+			if(ImGui_PrevBecameInFocus())
+			{
+				if (msFocusedStation != asName)
+					Sound_CreateAtEntity("StationMap_Hover", "Entities_Station/tech/terminal_beeps/upsilon_train_map/destination_hover", "TrainTerminalSoundSource");
+					
+				msFocusedStation = asName;
+			}
+			ImGui_SetModUseInput(true);	
+		}
+		
+		//------------------------------------------------------------
+		
+		void DoErrorMessageBox(const tString &in asStationName)
+		{
+			cColor colorRed = gStationGuiColor_Warning;
+			
+			float fFadeAlpha = ImGui_GetStateFloat("MessageFadeAlpha",0.0f);
+			
+			///////////////////////////////////////////////////////
+			// Draw background			
+			cColor bgCol = colorRed * cColor(0.1f, fFadeAlpha*0.9f);
+			ImGui_DrawGfx(cImGuiGfx(""), cVector3f(0,0,9), ImGui_GetSize(), bgCol);
+			
+			
+			/////////////////////////////////////////////
+			// Show error window			
+			cGuiDialogBoxSettings dialogBox = StationGui_CreateDefaultDialogBox();
+			dialogBox.mWindow.mColorBase = colorRed; 
+			dialogBox.mWindow.mColorBase.a = fFadeAlpha;
+			dialogBox.mfZ = 9.5;
+			dialogBox.mType = eGuiDialogBoxType_OK;
+			ImGui_SetModUseInput(ImGui_IsFading("MessageFadeAlpha")==false);
+			eGuiDialogCode buttonPressed = Depth_ImGui_DialogBox("GUIStationErrorCaption", "GUIStationError", dialogBox);
+			ImGui_SetModUseInput(true);
+			
+			////////////////////////////////////////
+			// Sound when getting rid of message
+			if (buttonPressed == eGuiDialogCode_OK)
+			{
+				Sound_CreateAtEntity("StationMap_Upsilon_B_Cancel", "Entities_Station/tech/terminal_beeps/upsilon_train_map/destination_upsilon_B_cancel", "TrainTerminalSoundSource");
+			}
+			
+			////////////////////////////////////////
+			// Start fade in
+			if(fFadeAlpha==0.0f && ImGui_IsFading("MessageFadeAlpha")==false)
+			{
+				ImGui_FadeStateFloat("MessageFadeAlpha", 1.0f, 0.5f);
+			}
+			
+			////////////////////////////////////////////////////////////////////////
+			// Dismiss if messagebox is fully faded in and button is pressed. 
+			//  Start fade out and set the messagebox active to false when done
+			if(fFadeAlpha==1.0f && buttonPressed == eGuiDialogCode_OK)
+			{
+				ImGui_FadeStateFloat("MessageFadeAlpha", 0.0f, 0.5f);
+			}
+			
+			// Delayed dismiss (MessageBox is fully faded out now)
+			if(fFadeAlpha==0.0f && ImGui_FadeOver("MessageFadeAlpha"))
+			{
+				ExitMessageBox();
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		bool mbDeparting = false;
+		
+		void DoDepartMessageBox(const tString &in asStationName)
+		{
+			cColor colorBlue = gStationGuiColor_Normal;
+			
+			tString sStationLabel = "GUI"+asStationName+"Name";
+			
+			float fFadeAlpha = ImGui_GetStateFloat("MessageFadeAlpha",0.0f);
+			
+
+			///////////////////////////////////////////////////////
+			// Draw background
+			cImGuiGfx gfx;
+			gfx.mMaterial = eGuiMaterial_Alpha;
+			
+			cColor bgCol = colorBlue * cColor(0.1f, fFadeAlpha*0.9f);
+								
+			ImGui_DrawGfx(gfx, cVector3f(0,0,9), ImGui_GetSize(), bgCol);
+			
+					
+			tString sCaption = "GUIStationWarningCaption";
+			if(mbDeparting)
+				sCaption = "GUIStationInformationCaption";
+			
+			float fMenuAlpha = ImGui_GetStateFloat("ValidStationMenuAlpha", 1.0f);
+			float fMsgDeparting = 1-fMenuAlpha;
+			
+			/////////////////////////////////////////////
+			// Show error window		
+			cGuiDialogBoxSettings dialogBox = StationGui_CreateDefaultDialogBox();
+			dialogBox.mWindow.mColorBase.a = fFadeAlpha;
+			dialogBox.mfZ = 9.5;
+			
+			tWString sText;
+			if(fMsgDeparting>0.0f)
+			{
+				dialogBox.mTextFrame.mFont.mvSize = ImGui_NrmSizeKeepRatio(0.06);
+				dialogBox.mType = eGuiDialogBoxType_NoButton;
+				dialogBox.mTextFrame.mFont.mColor.a = ImGui_FadeOscillateFloat("DepartLabelAlpha", 0.5f, 1.0f, 0.5f, eEasing_CubicIn);
+				ImGui_SetModColorMul(cColor(1, fMsgDeparting*fFadeAlpha));
+				sText += ImGui_Translate("GUIStatusDisplayDepartCaption") + "\n\n";
+				sText += ImGui_Translate("GUI"+msPickedStation+"Name");
+				
+			}
+			else
+			{
+				dialogBox.mTextFrame.mFont.mvSize = ImGui_NrmSizeKeepRatio(0.045);
+				dialogBox.mType = eGuiDialogBoxType_OKCancel;
+				ImGui_SetModColorMul(cColor(1, fMenuAlpha*fFadeAlpha));
+				sText += ImGui_Translate("GUIStationSettingTo") + "\n\n";
+				sText += ImGui_Translate("GUI"+msPickedStation+"Name");
+			}
+				
+			ImGui_SetModUseInput(ImGui_IsFading("MessageFadeAlpha")==false);
+			ImGui_SetTextOverride(sText);
+			eGuiDialogCode buttonPressed = Depth_ImGui_DialogBox(sCaption, "", dialogBox);
+			ImGui_ClearTextOverride();
+			ImGui_SetModUseInput(true);
+			ImGui_SetModColorMul(cColor_White);
+			
+			if (buttonPressed == eGuiDialogCode_OK)
+			{
+				ImGui_FadeStateFloat("ValidStationMenuAlpha", 0.0f, 0.5f);
+				mbDeparting = true;	
+				Terminal_SetGuiActive("StatusTerminal", true, 0.5f);
+				Sound_CreateAtEntity("StationMap_OK", "Entities_Station/tech/terminal_beeps/upsilon_train_map/destination_OK", "TrainTerminalSoundSource");
+				
+				Entity_SetInteractionDisabled("AreaLeaveChair", true);
+			}
+			else if (buttonPressed == eGuiDialogCode_Cancel)
+			{
+				Sound_CreateAtEntity("StationMap_Cancel", "Entities_Station/tech/terminal_beeps/upsilon_train_map/destination_cancel", "TrainTerminalSoundSource");
+			}
+			
+			////////////////////////////////////////
+			// Start fade in
+			if(fFadeAlpha==0.0f && ImGui_IsFading("MessageFadeAlpha")==false)
+			{
+				ImGui_FadeStateFloat("MessageFadeAlpha", 1.0f, 0.5f);
+			}
+			
+			////////////////////////////////////////////////////////////////////////
+			// Dismiss if messagebox is fully faded in and button was pressed. 
+			//  Start fade out and set the messagebox active to false when done
+			if(fFadeAlpha==1.0f && buttonPressed == eGuiDialogCode_Cancel)
+			{
+				ImGui_FadeStateFloat("MessageFadeAlpha", 0.0f, 0.5f);
+			}
+			
+			// Delayed dismiss (MessageBox is fully faded out now)
+			if(fFadeAlpha==0.0f && ImGui_FadeOver("MessageFadeAlpha"))
+			{
+				ExitMessageBox();
+			}
+			
+			///////////////////////////////////////////////////////////////////////
+			// Depart message is fully faded in, begin journey
+			if(fMsgDeparting==1.0f && ImGui_FadeOver("ValidStationMenuAlpha"))
+			{
+				ImGui_AddTimer("DepartureConfirmed", 1.0f);
+			}			
+		}
+		
+		//------------------------------------------------------------
+		
+		void DoStationDescriptionWindow(const tString &in asFocusedStation)
+		{
+			tString sStationLabel = "GUI" + asFocusedStation + "Name";
+			tString sStationDesc = "GUI" + asFocusedStation + "Desc";
+			
+			ImGui_ResetModifiers();
+			
+			ImGui_SetTransCategory("01_04_transport_station");
+			
+			//////////////////////////////////////////////////////////////////////
+			// Station Information Window
+			cImGuiWindowData window = PathOS_CreateDefaultWindowData();
+			window.SetPadding(10,0,0,10);
+					
+			StationGui_DoWindowStart(sStationLabel, window, ImGui_NrmPos(cVector3f(0.04f, 0.575f, 3.0f)), ImGui_NrmSize(cVector2f(0.28f, 0.32f)), false);
+			{
+				cImGuiTextFrameData textFrameData = PathOS_CreateDefaultTextFrameData();
+				textFrameData.mFont.mvSize = ImGui_NrmSizeKeepRatio(0.03);
+				
+				////////////////////////////////////////////////////////
+				// Show focused station description
+				ImGui_DoTextFrameExt(sStationDesc, cVector2f(3,3), 3.0f, 0, textFrameData, cVector3f_Zero, ImGui_GetCurrentGroupSize());
+			}
+			StationGui_DoWindowEnd();
+		}
+		
+		//------------------------------------------------------------
+		
+		void ExitMessageBox()
+		{
+			mbMessageBoxActive = false;
+			msPickedStation = "";
+			mlPickedETA = 0;
+		}
+		
+		//------------------------------------------------------------
+		
+		void OnLeaveStationSelection(const tString&in asEntityName)
+		{
+			if (mbJourneyInProgress || mbDeparting)
+				return;
+			
+			InteractLeaveChair("AreaLeaveChair");
+		}
+		
+		//} END TERMINAL
+		
+		//------------------------------------------------------------
+		
+		/////////////////////////////////////////
+		// TRAIN - STATUS SCREEN GUI
+		//{///////////////////////////////////////
+		
+		//-----------------------------------------------------------
+		
+		float mfJourneyElapsedTime = 0.0f;
+		int mlLambdaJourneyTime = 100;		// Faked up, just for depth calcs.
+		
+		void OnGuiPowerScreen(const tString&in asEntityName, float afTimeStep)
+		{
+			ImGui_SetTransCategory("");
+			
+			if (ImGui_IsFirstRun())
+			{
+				ImGui_AddTimer("Image_1", 1);
+				ImGui_AddTimer("Image_2", 1.3);
+				ImGui_AddTimer("Image_3", 1.6);
+				Sound_CreateAtEntity("TrainConsoleOn", "Entities_Station/tech/terminal_beeps/upsilon_train_map/train_console_on", asEntityName);
+			}
+			
+			if (ImGui_TimerOver("Image_1"))
+				ImGui_SetStateBool("ShowImage_1", true);
+			if (ImGui_TimerOver("Image_2"))
+				ImGui_SetStateBool("ShowImage_2", true);
+			if (ImGui_TimerOver("Image_3"))
+				ImGui_SetStateBool("ShowImage_3", true);
+			
+			//////////////////////////////
+			//Background
+			StationGuiBG_Scanlines();
+			
+			/////////////////////////////////////////////////////////////////////
+			//Draw train schematics and updates as player turns stuff on.
+			{
+				///////////////////////////////////////////////////////
+				// Draw train schematics background
+				ImGui_SetModColorMul(ImGui_GetStateColor("GUIColor2", cColor_White));
+				
+				ImGui_LayoutBegin(eImGuiLayout_X, ImGui_NrmPos(cVector3f(0.05f, 0.15f, 0)));
+					cImGuiGfx TrainBG("station/train/stats_train_rear");
+					TrainBG.mColor = gStationGuiColor_Normal;
+					ImGui_DoImage(TrainBG, cVector3f_Zero, cVector2f(27,88));
+					TrainBG.SetFile("station/train/stats_train_mid");
+					ImGui_DoImage(TrainBG, cVector3f_Zero, cVector2f(360,88));
+					TrainBG.SetFile("station/train/stats_train_front");
+					ImGui_DoImage(TrainBG, cVector3f_Zero, cVector2f(67,88));
+				ImGui_LayoutEnd();
+				
+				/////////////////////////////////////////////////
+				// Draw system status icons according to button status
+				{
+					cImGuiGfx gfxIcon;
+					cColor activeCol = gStationGuiColor_Highlight;
+					cColor inactiveCol = gStationGuiColor_Warning;
+					
+					///////////////////////////////////////////
+					// Draw tracks icon
+					cVector3f vIconPos = cVector3f(62,30,2);
+					bool bToolPluggedIn = CathTool_IsInserted("CathTool");
+					if (ImGui_GetStateBool("ShowImage_1", false))
+					{
+						if(bToolPluggedIn && MovingButton_IsSwitchedOn("TrainSwitch_1"))
+						{
+							DoPowerScreenIcon("station/train/stats_tracks_active", activeCol, vIconPos);
+
+						}
+						else
+						{
+							DoPowerScreenIcon("station/train/stats_tracks_inactive", inactiveCol, vIconPos);
+						}
+					}
+					
+					///////////////////////////////////////////
+					// Draw comm icon
+					vIconPos = cVector3f(186,26,2);
+					if (ImGui_GetStateBool("ShowImage_2", false))
+					{
+						if(bToolPluggedIn && MovingButton_IsSwitchedOn("TrainSwitch_2"))
+						{
+							DoPowerScreenIcon("station/train/stats_comm_active", activeCol, vIconPos);
+						
+						}
+						else
+						{
+							DoPowerScreenIcon("station/train/stats_comm_inactive", inactiveCol, vIconPos);
+						}
+					}
+					
+					///////////////////////////////////////////
+					// Draw door icon
+					vIconPos = cVector3f(314,30,2);
+					if (ImGui_GetStateBool("ShowImage_3", false))
+					{
+						if(bToolPluggedIn && MovingButton_IsSwitchedOn("TrainSwitch_3"))
+						{
+							DoPowerScreenIcon("station/train/stats_door_active", activeCol, vIconPos);
+						}
+						else
+						{
+							DoPowerScreenIcon("station/train/stats_door_inactive", inactiveCol, vIconPos);
+						}
+					}
+				}
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		void PlayTrainSwitchSounds()
+		{
+	
+			int lNumSwitches = 0;
+			if (MovingButton_IsSwitchedOn("TrainSwitch_1")) ++lNumSwitches;
+			if (MovingButton_IsSwitchedOn("TrainSwitch_2")) ++lNumSwitches;
+			if (MovingButton_IsSwitchedOn("TrainSwitch_3")) ++lNumSwitches;
+			
+			if (lNumSwitches == 1)
+			{
+				Sound_CreateAtEntity("Train_Power_Stage_1", "Entities_Station/object/train/TrainSwitchPower_1", "TrainPowerTerminalSoundSource");
+				cLux_AddDebugMessage("Train switch 1");
+			}
+			if (lNumSwitches == 2)
+			{
+				Sound_CreateAtEntity("Train_Power_Stage_2", "Entities_Station/object/train/TrainSwitchPower_2", "TrainPowerTerminalSoundSource");
+				cLux_AddDebugMessage("Train switch 2");
+			}
+			if (lNumSwitches == 3)
+			{
+				Sound_CreateAtEntity("Train_Power_Stage_3", "Entities_Station/object/train/TrainSwitchPower_3", "TrainPowerTerminalSoundSource");
+				cLux_AddDebugMessage("Train switch 3");
+			}
+		}
+
+		//------------------------------------------------------------
+		
+		void DoPowerScreenIcon(const tString &in asGfx, const cColor &in aCol ,const cVector3f &in avPos)
+		{
+			const cVector2f vIconSize = cVector2f(64,64);
+			
+			cImGuiGfx gfxIcon(asGfx);
+			gfxIcon.mColor = aCol;
+			ImGui_DoImage(gfxIcon, avPos, vIconSize);
+		}
+		
+		//} END TERMINAL
+
+		//------------------------------------------------------------
+		
+		/////////////////////////////////////////
+		// TRAIN - STATUS GUI
+		//{///////////////////////////////////////
+		
+		//-----------------------------------------------------------
+		
+		void OnGuiStatus(const tString&in asEntityName, float afTimeStep)
+		{
+			StationGuiBG_Backdrop();
+			StationGuiBG_Scanlines();
+			
+			ImGui_SetTransCategory("01_04_transport_station");
+			
+			tString sStatusText = "";
+			bool bWarning = true;
+			float fSizeMul = 1.25;
+						
+			if (mbDeparting==false)
+			{
+				fSizeMul = 1.75f;
+				if (mPowerState_Platform == ePowerState_Good)
+				{
+					sStatusText = "GUIStatusDisplayActivated01";
+					bWarning = false;
+				}
+				else
+				{
+					sStatusText = "GUIStatusDisplayLowPower";
+				}
+			}
+			else if(mlTrainRideMsg == eStatusScreenMsg_WARNING)
+			{
+				if (mPowerState_Platform == ePowerState_Good)
+				{
+					sStatusText = "GUIStatusDisplayWarning";
+				}
+				else
+				{
+					sStatusText = "GUIStatusDisplayLowPower";
+					fSizeMul = 1.75f;
+				}
+			}
+			else if(mlTrainRideMsg == eStatusScreenMsg_FAILURE)
+			{
+				if (mPowerState_Platform == ePowerState_Good)
+					sStatusText = "GUIStatusDisplayCrash";
+				else
+					sStatusText = "GUIStatusDisplayShutdown";
+			}
+			else if(mlTrainRideMsg==eStatusScreenMsg_JOURNEY)
+			{
+				cImGuiLabelData labelData;
+				labelData.mFont.SetFile("sansation_large_bold.fnt");
+				labelData.mFont.mvSize = cVector2f(65, 65);
+				labelData.mFontAlign = eFontAlign_Left;
+				
+				mfJourneyElapsedTime += afTimeStep;
+				float fETA = mlPickedETA - cMath_RoundToInt(mfJourneyElapsedTime);
+				tString sClockDisplay = String_SecondsToClockDisplay(fETA, false, true, true, false);
+				tString sEta = cString_To8Char(cResources_Translate("01_04_transport_station", "GUIDisplayETA")) + " "+ sClockDisplay;
+				
+				// The two depth numbers here are from Mike's text for Upsilon and Lambda.
+				tString sDepthValue =  cMath_Easing(eEasing_QuadIn, mfJourneyElapsedTime / mlLambdaJourneyTime, 107.0f, 96.0f);
+				int lDotPos = cString_GetLastCharPos(sDepthValue, '.');
+				sDepthValue = cString_Sub(sDepthValue, 0, lDotPos+3);
+		
+				tString sDepth = cString_To8Char(cResources_Translate("01_04_transport_station", "GUIDisplayDepth")) + " "+sDepthValue + "m";
+			
+				ImGui_SetTransCategory("");
+				ImGui_DoLabelExt(sEta, labelData, cVector3f(0,155,3), ImGui_NrmSizeGroup(1, -1));
+				ImGui_DoLabelExt(sDepth, labelData, cVector3f(0,240,3), ImGui_NrmSizeGroup(1, -1));
+			}
+			else
+			{
+				sStatusText = "GUIStatusDisplayDepart";
+				fSizeMul = 1.5f;
+				bWarning = false;
+			}
+			
+			if (sStatusText != "")
+			{
+				cColor col = bWarning ? gStationGuiColor_Warning : cColor_White;
+				StationGui_BigStatusMessage(sStatusText, col, fSizeMul, bWarning);
+			}
+		}
+
+		//} END TERMINAL
+		
+		//------------------------------------------------------------
+		
+		/////////////////////////////////////////
+		// TRAIN - STATION SELECTION SCREEN WORLD MOVEMENT
+		//{///////////////////////////////////////
+		
+		//-----------------------------------------------------------
+		
+		/**
+		 * Timer is triggered when screen is rotated down into the correct position.
+		 * */
+		void TimerEnterStationSelection(const tString &in asTimer)
+		{
+			Entity_CallEntityInteract("TrainTerminal");
+			Terminal_SetGuiActive("TrainTerminal", true);
+		}
+		
+		//-----------------------------------------------------------
+		
+		/**
+		 * Stops the station selection screen when rotating down.
+		 * */
+		bool CollideScreenDown(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			if(alState == -1) return true;
+			
+			Prop_RotateToSpeed("TrainTerminal", 2, 0, cVector3f_Left, false, "AreaScreenRot");
+			
+			mbTrainScreenIsDown = true;
+			
+			if (!mbJourneyInProgress)	// Want slideshow!
+				Map_AddTimer("trigger_screen", 0.4, "TimerEnterStationSelection");
+			
+			return true;
+		}
+		
+		//-----------------------------------------------------------
+		
+		/**
+		 * Stops the station selection screen when rotating up.
+		 * */
+		bool CollideScreenUp(const tString &in asParent, const tString &in asChild, int alState)
+		{
+			if(alState == -1) return true;
+			
+			Prop_RotateToSpeed("TrainTerminal", 2, 0, cVector3f_Right, false, "AreaScreenRot");
+		
+			mbTrainScreenIsDown = false;
+			
+			return true;
+		}
+		
+		//------------------------------------------------------------
+		
+		void RotateScreenDown()
+		{
+			if (mbTrainScreenIsDown) return;
+			Sound_CreateAtEntity("Screen_Sound_RotateDown", "Entities_Station/object/train/screen/screen_down", "AreaScreenDown", 0, false);
+			Prop_RotateToSpeed("TrainTerminal", 1, 1, cVector3f_Left, false, "AreaScreenRot");
+		}
+		
+		//------------------------------------------------------------
+		
+		void RotateScreenUp()
+		{
+			if (mbTrainScreenIsDown==false) return;
+			Sound_CreateAtEntity("Screen_Sound_RotateUp", "Entities_Station/object/train/screen/screen_up", "AreaScreenDown", 0, false);
+			Map_AddTimer("RotateUpComplete", 2.25f, "RotateScreenUpComplete");
+			Prop_RotateToSpeed("TrainTerminal", 1, 1, cVector3f_Right, true, "AreaScreenRot");
+		}
+		
+		void RotateScreenUpComplete(const tString &in asTimer)
+		{
+			Sound_CreateAtEntity("Screen_Sound_RotateUp_Ding", "Entities_Station/object/train/screen/screen_up_ding", "TrainTerminal", 0, false);
+		}
+		
+		//} END TERMINAL
+		
+		//------------------------------------------------------------
+		
+		/////////////////////////////////////////
+		// TRAIN - SLIDESHOW
+		//{///////////////////////////////////////
+		
+		bool mbSlideshowPlaying = false;
+		eSlideShowSlide mCurrentSlide = eSlideShowSlide_None;
+		int mlStationSlide = 5;
+				
+		float mfSlideTime = 0.0f;
+		
+		//-----------------------------------------------------------
+		
+		void StartSlideshow()
+		{
+			Terminal_SetOnGuiFunction("TrainTerminal", "OnGUISlideshow");
+			Voice_SetSource("SlideshowNarrator","Player",1, 10, true, 10);
+			cLux_AddDebugMessage("Slideshow Start");
+
+			SequenceSlideshow("");
+			mbSlideshowPlaying = true;
+			mfSlideTime = 0.0f;
+			
+			//Slideshow music begin
+			Music_Stop(3.0f, eMusicPrio_BgAmb);
+			Sound_CreateAtEntity("SlideshowMusic", "01_04_transport_station/Special/Train/infomercial/music", "Player", 0.0f, false, 1.0f);
+			
+			//Fade train engine and world to focus on screen
+			Sound_FadeGlobalVolume(0.45f, 3.f, eSoundEntryType_GuiWorld);
+		}
+		
+		//------------------------------------------------------------
+		
+		void OnGUISlideshow(const tString &in asEntityName, float afTimeStep)
+		{
+			ImGui_SetTransCategory("");
+			//////////////
+			StationGuiBG_Scanlines();
+			
+			ImGui_SetAlignment(eImGuiAlign_TopLeft);
+			
+			mfSlideTime+=afTimeStep;
+			
+/*			if (true)
+			{
+				cImGuiGfx slide("slide3", eImGuiGfx_Texture);
+				cVector2f vSize = ImGui_GetRatioCorrectSizeByWidth(slide, 1024);
+				ImGui_DoImage(slide, cVector3f(0,0,1.0f), vSize);
+				return;
+			}*/
+			
+			ImGui_SetModColorMul(cColor(0,ImGui_GetStateFloat("SlideFade", 1)));
+			ImGui_DoImage(cImGuiGfx(""), cVector3f(0,0,9.5f), ImGui_NrmSize(1));
+			ImGui_SetModColorMul(cColor_White);
+			
+			if (mCurrentSlide!=eSlideShowSlide_None)
+			{
+				tString sSlideName = "slide"+int(mCurrentSlide);
+				cImGuiGfx slide(sSlideName, eImGuiGfx_Texture);
+				if (mCurrentSlide!=eSlideShowSlide_Pathos2 && mCurrentSlide!=eSlideShowSlide_SelectedStation)
+				{
+					cVector2f vSize = ImGui_GetRatioCorrectSizeByWidth(slide, 1024);
+					ImGui_DoImage(slide, cVector3f(0.0f,0.0f,1.0f), vSize);
+				}
+				
+				if (mCurrentSlide==eSlideShowSlide_Intro)
+				{
+					float t=cMath_Clamp(mfSlideTime/4.0f, 0.0f, 1.0f);
+					
+					float fGlobeWidth = cMath_Easing(eEasing_QuadOut,t,400.f,600.f);
+					cImGuiGfx globe("trainmovie_globe", eImGuiGfx_Texture);
+					ImGui_DrawAlignedGfx(globe, ImGui_NrmPosGroup(0.5, 0.444, 2), eImGuiAlign_CenterCenter, ImGui_GetRatioCorrectSizeByWidth(globe, fGlobeWidth));
+					
+					float fLogoWidth = cMath_Easing(eEasing_QuadOut,t,750.f,900.f);
+					cImGuiGfx logo("trainmovie_pathossuperlogo", eImGuiGfx_Texture);
+					ImGui_DrawAlignedGfx(logo, ImGui_NrmPosGroup(0.5, 0.444, 3), eImGuiAlign_CenterCenter, ImGui_GetRatioCorrectSizeByWidth(logo, fLogoWidth));
+					
+					cImGuiGfx phial("trainmovie_picto_phiole", eImGuiGfx_Texture);
+					cVector2f vIconSize = ImGui_GetRatioCorrectSizeByNrmWidth(phial,0.15);
+					ImGui_DrawAlignedGfx(phial, ImGui_NrmPosGroup(0.35,0.822,3), eImGuiAlign_CenterCenter, vIconSize);
+					
+					cImGuiGfx rocket("trainmovie_picto_rocket", eImGuiGfx_Texture);
+					ImGui_DrawAlignedGfx(rocket, ImGui_NrmPosGroup(0.5,0.822,3), eImGuiAlign_CenterCenter, vIconSize);
+					
+					cImGuiGfx gear("trainmovie_picto_gear", eImGuiGfx_Texture);
+					ImGui_DrawAlignedGfx(gear, ImGui_NrmPosGroup(0.65,0.822,3), eImGuiAlign_CenterCenter, vIconSize);
+				}
+				else if (mCurrentSlide==eSlideShowSlide_Pathos2)
+				{
+					float t=cMath_Clamp(mfSlideTime/12.0f, 0.0f, 1.0f);
+					float fOffsX = cMath_Easing(eEasing_Linear, t, 0, -200);
+					float fOffsY = cMath_Easing(eEasing_Linear, t, 0, -150);
+					float fZoom = cMath_Easing(eEasing_Linear, t, 1, 1.25);
+					cVector2f vSize = ImGui_GetRatioCorrectSizeByWidth(slide, 1024);
+					ImGui_DoImage(slide, cVector3f(fOffsX,fOffsY,1.0f), vSize*fZoom );
+									
+					cImGuiGfx logo("trainmovie_pathosslide2logo", eImGuiGfx_Texture);
+					ImGui_DrawAlignedGfx(logo, cVector3f(20,20,3), eImGuiAlign_TopLeft, ImGui_GetRatioCorrectSizeByWidth(logo,256));
+					
+					cImGuiGfx map("atlanticmap", eImGuiGfx_Texture);
+					ImGui_DrawAlignedGfx(map, cVector3f(50,512,3), eImGuiAlign_BottomLeft, ImGui_GetRatioCorrectSizeByWidth(map,200));
+				}
+				else if (mCurrentSlide==eSlideShowSlide_Team)
+				{
+					cImGuiGfx photo1("trainmovie_foto_diver", eImGuiGfx_Texture);
+					cImGuiGfx photo2("trainmovie_foto_lab", eImGuiGfx_Texture);
+					cImGuiGfx photo3("trainmovie_foto_shaking", eImGuiGfx_Texture);
+					
+					float fPhoto1X = cMath_Easing(eEasing_QuadOut, cMath_Min(mfSlideTime-1.0f, 1.5f)/1.5f, 1.25, 0.175);
+					float fPhoto2X = cMath_Easing(eEasing_QuadOut, cMath_Min(mfSlideTime-2.0f, 1.5f)/1.5f, 1.25, 0.5);
+					float fPhoto3X = cMath_Easing(eEasing_QuadOut, cMath_Min(mfSlideTime-3.0f, 1.5f)/1.5f, 1.25, 0.825);
+					cVector2f vPhotoSize = ImGui_GetRatioCorrectSizeByNrmWidth(photo1,0.225);
+					ImGui_DrawAlignedGfx(photo1, ImGui_NrmPos(fPhoto1X,0.93,2.0f), eImGuiAlign_CenterCenter, vPhotoSize);
+					ImGui_DrawAlignedGfx(photo2, ImGui_NrmPos(fPhoto2X,0.93,2.0f), eImGuiAlign_CenterCenter, vPhotoSize);
+					ImGui_DrawAlignedGfx(photo3, ImGui_NrmPos(fPhoto3X,0.93,2.0f), eImGuiAlign_CenterCenter, vPhotoSize);
+				}
+				else if (mCurrentSlide==eSlideShowSlide_Science_1)
+				{
+					if (mfSlideTime > gfScienceSlideTime_1)
+					{
+						mCurrentSlide++;
+						mfSlideTime=0.0f;
+					}
+				}
+				else if (mCurrentSlide==eSlideShowSlide_Science_2)
+				{
+					if (mfSlideTime > gfScienceSlideTime_2)
+					{
+						mCurrentSlide++;
+						mfSlideTime=0.0f;
+					}
+				}
+				else if (mCurrentSlide==eSlideShowSlide_SelectedStation)
+				{
+					float t=cMath_Clamp(mfSlideTime/8.0f, 0.0f, 1.0f);
+					float fOffsX = cMath_Easing(eEasing_Linear, t, 0, -256);
+					float fOffsY = cMath_Easing(eEasing_Linear, t, 0, -128);
+					float fZoom = cMath_Easing(eEasing_Linear, t, 1.25, 1.5);
+					ImGui_DoImage(slide, cVector3f(fOffsX,0.0f,1.0f), cVector2f(1024*fZoom, 512*fZoom) );
+									
+					cImGuiGfx logo("trainstationlogo_"+msPickedStation, eImGuiGfx_Texture);
+					ImGui_DrawAlignedGfx(logo, cVector3f(20,20,3), eImGuiAlign_TopLeft, ImGui_GetRatioCorrectSizeByWidth(logo,256));
+				}
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		void ShowSlide(eSlideShowSlide aSlide)
+		{
+			mCurrentSlide = aSlide;
+			mfSlideTime = 0.0f;
+		}
+		
+		//------------------------------------------------------------
+		
+		void HideSlides()
+		{
+			mCurrentSlide=eSlideShowSlide_None;
+		}
+		
+		//------------------------------------------------------------
+		
+		void OnSlideshowNextLine(const tString&in asSubject, bool abStartOfSubject)
+		{
+			if (abStartOfSubject)
+				return;
+			
+			Terminal_FadeImGuiStateFloat("TrainTerminal", "SlideFade", 1, 0.3);
+			Map_AddTimer("Timer_FadeInSlide", 0.3, "Timer_FadeInSlide");
+		}
+		
+		void Timer_FadeInSlide(const tString &in asTimer)
+		{
+			Terminal_FadeImGuiStateFloat("TrainTerminal", "SlideFade", 0, 0.3);
+			mCurrentSlide++;
+			mfSlideTime=0.0f;
+		}
+		
+		//------------------------------------------------------------
+		void OnSlideshowLastLine(const tString&in asSubject, bool abStartOfSubject)
+		{
+			if (abStartOfSubject)
+				return;
+			HideSlides();
+			SequenceStates_Resume("SequenceSlideshow");
+		}
+		
+		//------------------------------------------------------------
+		
+		cSequenceStatesData mSequenceSlideshow;
+		void SequenceSlideshow(const tString &in asX)
+		{
+			Sequence_Begin("SequenceSlideshow", mSequenceSlideshow);
+			
+			if (Sequence_DoStepAndWait(2.0f))
+			{
+				mCurrentSlide=eSlideShowSlide_None;
+				RotateScreenDown();
+			}
+			else if (Sequence_DoStepAndWait(0.25f))
+			{
+				Terminal_SetGuiActive("TrainTerminal", true);
+			}
+			else if (Sequence_DoStepAndPause(0.0f))
+			{
+				////////////
+				// Start preloading
+				Preload();
+					
+				ShowSlide(eSlideShowSlide_Intro);
+				Terminal_SetImGuiStateFloat("TrainTerminal", "SlideFade", 1);
+				Terminal_FadeImGuiStateFloat("TrainTerminal", "SlideFade", 0, 0.3);
+				Dialog_Begin("Slideshow");
+					Dialog_AddBranch("Main");
+						Dialog_AddSubject("Slideshow1","OnSlideshowNextLine");
+						Dialog_AddSubject("Slideshow2","OnSlideshowNextLine");
+						Dialog_AddSubject("Slideshow3","OnSlideshowNextLine");
+						Dialog_AddSubject("Slideshow4","OnSlideshowNextLine");
+						Dialog_AddSubject("Slideshow5","OnSlideshowNextLine");
+						Dialog_AddSubject("Slideshow"+msPickedStation,"OnSlideshowLastLine");
+				Dialog_End();
+			}
+			else if (Sequence_DoStepAndWait(2.0f))
+			{
+				RotateScreenUp();
+				
+				/////Stop slideshow music if still playing
+				Sound_Stop("SlideshowMusic", 0.25f);
+				////Fade up World audio
+				Sound_FadeGlobalVolume(1.0f, 5.0f, eSoundEntryType_GuiWorld);
+			}
+			else if (Sequence_DoStepAndWait(0.0f))
+			{
+				Terminal_SetGuiActive("TrainTerminal", false);
+				mbSlideshowPlaying = false;
+			}
+			
+			Sequence_End();
+		}
+		
+		//} END TERMINAL
+	
+	//} END TERMINALS
+	
+	//-----------------------------------------------------------
+	
+	 //////////////////////////////////////////////////////////////////////////////////////////
+	 // ==============
+	 // AUDIO
+	 // ==============
+	 //{//////////////////////////////////////////////////////////////////////////////////////
+
+	//-----------------------------------------------------------
+	//Music
+	
+	void Audio_StationPowerOnMusic(const tString &in asTimer)
+	{
+		cLux_AddDebugMessage("Station Powered Music Triggered");
+		Music_PlayExt("01_04_powerstation", false, 0.75f, 1.0f, 0.0f, 0.0f, eMusicPrio_BigEvent, false);
+	}
+	
+	void Audio_MusicAmbientPart1(const tString &in asTimer)
+	{
+		cLux_AddDebugMessage("Station Ambient Music Triggered");
+		Music_PlayExt("01_04_explorationambience", true, 0.325f, 1.0f, 3.0f, 0.0f, eMusicPrio_BigEvent, false);
+	}
+	
+	bool Audio_StopAmbientMusic(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		Music_Stop(3.0f, eMusicPrio_BgAmb);
+		return false;
+	}
+	
+	void Trigger_AmySpotMusic(const tString &in asEntity, int alState)
+	{
+		Music_Play("01_04_discoveringamy", 0.65f, false, eMusicPrio_BigEvent);
+	}
+	
+	//Second tunnel music
+	
+	bool mbSecondAmbientMusicPlaying = false;
+	
+	void Audio_StartSecondTunnelAmbience(const tString &in asTimer)
+	{
+		if (mbSecondAmbientMusicPlaying==false){
+		//second ambient music starts here
+		mbSecondAmbientMusicPlaying = true;
+		Music_PlayExt("01_04_spookytunnel", true, 0.5f, 1.0f, 4.5f, 0.0f, eMusicPrio_BgAmb, true);
+		cLux_AddDebugMessage("Second Ambient Music Triggered");
+		}
+	}
+	
+	bool FinalAirlockMusic(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		//stop music
+		mbSecondAmbientMusicPlaying = false;
+		Music_Stop(3.5f, eMusicPrio_BgAmb);
+		Map_RemoveTimer("Audio_StartSecondTunnelAmbience");
+		cLux_AddDebugMessage("Ambient music stopping");
+		
+		//if omnitool collected and flesher event is done - spawn restart music trigger incase player wants to do more exploring
+		if (Player_ToolIsInInventory("CathTool")==true && mbTrainFlesherEventComplete==true)
+		{
+			cLux_AddDebugMessage("Resume ambient music trigger enabled");
+			Entity_SetActive("Trigger_AmbientMusicResumeEnd", true);
+		}
+		return true;
+	}
+	
+	bool ResumeAmbientMusicEndTunnel(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (mbSecondAmbientMusicPlaying==false){
+		Entity_SetActive("Trigger_AmbientMusicResumeEnd", false);
+		Map_AddTimer("SecondTunnelAmbientMusicStart", cMath_RandRectf(4.f,8.f),"Audio_StartSecondTunnelAmbience");
+		}
+		return true;
+	}
+	
+	bool ResumeAmbientMusicFlood(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (mbSecondAmbientMusicPlaying==false){
+		Map_AddTimer("SecondTunnelAmbientMusicStart", cMath_RandRectf(8.f,12.f),"Audio_StartSecondTunnelAmbience");
+		}
+		return false;
+	}
+	
+	//-----------------------------------------------------------
+	//LEVEL FADES
+	void LevelAudioFades(const tString &in asTimer)
+	{
+		//Fade Up audio
+		if(asTimer == "FadeUp")
+		{
+			Sound_FadeGlobalVolume(1.0f, 3.0f, eSoundEntryType_WorldAll);
+			Sound_FadeGlobalVolume(1.0f, 2.0f, eSoundEntryType_GuiAll);
+		}
+	}
+	
+	//-----------------------------------------------------------
+	//Enter Station
+	
+	bool Audio_EnterStation(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		Map_AddTimer("EnterStation", cMath_RandRectf(0.25f,1.0f), "Audio_EnterStationSweetener");
+		return false;
+	}
+		
+	void Audio_EnterStationSweetener(const tString &in asTimer)
+	{
+		Sound_CreateAtEntity("EnterStation", "01_04_transport_station/Special/Enter_Station/enter_station_sweetener", "Player", 0.0f, false, 1.0f);
+		Map_AddTimer("EnterStationTremor", 10.0f, "Audio_EnterStation_Tremor");
+	}
+	
+	void Audio_EnterStation_Tremor(const tString &in asTimer)
+	{
+		Sound_CreateAtEntity("EnterStationTremor", "01_04_transport_station/Special/Enter_Station/enter_station_quake", "Player", 0.0f, false, 1.0f);
+		Effect_Shake_Start(0.005, .5f, 1.5f, 1.0f);
+		Map_AddTimer("FearBreathingStart", 4.0f, "Audio_EnterStation_Tremor_FearBreathing");
+	}
+	
+	void Audio_EnterStation_Tremor_FearBreathing(const tString &in asTimer)
+	{
+		Depth_Audio_Fear_LowIntensity(5.f, 10.f, 1, false, true);
+	}
+	
+	//Pause Quake Timer if datamining currently active
+	void IntercomDatamineInteract(const tString &in asEntity)
+	{
+		Map_SetTimerPaused("EnterStationTremor", true);
+	}
+	
+	//Resume Quake Timer if datamining complete
+	void IntercomDatamineComplete(const tString &in asEntity)
+	{
+		Map_SetTimerPaused("EnterStationTremor", false);
+	}
+	
+	//-----------------------------------------------------------
+	//Spooky Trigger with ambient music
+	void Audio_FirstTunnelScare(const tString &in asTimer)
+	{
+		cLux_AddDebugMessage("Tunnel Scare Triggered");
+		Sound_CreateAtEntity("Tunnel_Scare", "01_04_transport_station/SFX/tunnel/scare/level_start", "TunnelDistantScareSoundSource", 0.0f, false, 1.0f);
+		Map_AddTimer("AmbientMusicTimer", 6.0f, "Audio_MusicAmbientPart1");
+	}
+	
+	//-----------------------------------------------------------
+	//Platform Power Sequence
+	
+	void Audio_PowerSequence_Bad()
+	{
+		Sound_CreateAtEntity("PowerSequence_Bad", "01_04_transport_station/Special/Station_PowerOn/PowerOn_Bad", "Player", 0.0f, false, 1.0f);
+		Map_AddTimer("BadAlarm", 4.5f, "Audio_PowerSequence_BadAlarm");
+		Map_AddTimer("BadExplosion", 3.33f, "Audio_PowerSequence_Screenshake");
+		Map_AddTimer("Tremor", 6.0f, "Audio_PowerSequence_Tremor");
+		Map_AddTimer("PowerOnMusic", 10.5f,"Audio_StationPowerOnMusic");
+		Sound_FadeGlobalVolume(0.25f, 1.5f);
+	}
+	
+	void Audio_PowerSequence_BadAlarm(const tString &in asTimer)
+	{
+		Sound_CreateAtEntity("PowerSequence_BadAlarm", "01_04_transport_station/Special/Station_PowerOn/PowerOn_Bad_Alarm", "Sound_BadPowerAlarmSouce", 0.0f, false, 1.0f);
+	}
+	
+	void Audio_PowerSequence_Good()
+	{
+		Sound_CreateAtEntity("PowerSequence_Good", "01_04_transport_station/Special/Station_PowerOn/PowerOn_Good", "Player", 0.0f, false, 1.0f);
+		Map_AddTimer("PowerOnMusic", 9.f,"Audio_StationPowerOnMusic");
+		Map_AddTimer("Tremor", 5.0f, "Audio_PowerSequence_Tremor");
+		Sound_FadeGlobalVolume(0.25f, 1.5f);
+	}
+	
+	void Audio_PowerSequence_Tremor(const tString &in asTimer)
+	{
+		Sound_CreateAtEntity("Power_Tremor", "01_04_transport_station/Special/Station_PowerOn/PowerOn_Tremor", "Player", 0.0f, false, 1.0f);
+		Map_AddTimer("FirstTremorScreenshake", 0.4f, "Audio_PowerSequence_Screenshake");
+		Map_AddTimer("SecondTremorScreenshake", 1.35f, "Audio_PowerSequence_Screenshake");
+		Sound_FadeGlobalVolume(0.5f, 0.85f);
+	}
+	
+	void Audio_PowerSequence_Screenshake(const tString &in asTimer)
+	{
+		if(asTimer == "BadExplosion")
+		{
+			Effect_Shake_Start(0.055f, .85f, 0.01f, 1.2f);
+		}
+		if(asTimer == "FirstTremorScreenshake")
+		{
+			Effect_Shake_Start(0.015f, 0.2f, 0.1f, 0.5f);
+		}
+		if(asTimer == "SecondTremorScreenshake")
+		{
+			Effect_Shake_Start(0.015f, 0.5, 0.4f, 1.6f);
+			Depth_Audio_Fear_LowIntensity(5.f, 10.f, 1, false, true);
+			Sound_FadeGlobalVolume(1.f, 3.f);
+		}
+	}
+	
+	void Audio_ScheduleBoardsStart()
+	{
+		//Power Boards
+		//Good
+		Sound_CreateAtEntity("WorkingScheduleStart", "01_04_transport_station/SFX/train_schedule_sign/train_schedule_sign_start", "Sound_WorkingScheduleSign_Source", 0.0f, false, 1.0f);
+		
+		//Bad
+		Sound_CreateAtEntity("BrokenScheduleStart", "01_04_transport_station/SFX/train_schedule_sign/train_schedule_sign_broken_start", "Sound_BrokenScheduleSign_Source", 0.0f, false, 1.0f);
+		
+		Map_AddTimer("ScheduleBoardsStart", 5.0f, "Audio_ScheduleBoards_Loop");
+	}
+	
+	void Audio_ScheduleBoards_Loop(const tString &in asTimer)
+	{
+		Sound_CreateAtEntity("BrokenScheduleLoop", "01_04_transport_station/SFX/train_schedule_sign/train_schedule_sign_broken_loop", "Sound_BrokenScheduleSign_Source", 0.0f, true, 1.0f);
+		Sound_CreateAtEntity("WorkingScheduleLoop", "01_04_transport_station/SFX/train_schedule_sign/train_schedule_sign_loop", "Sound_WorkingScheduleSign_Source", 0.0f, true, 1.0f);
+	}
+
+	//-----------------------------------------------------------
+	//Tunnel Debris Triggers
+	
+	bool TunnelDebrisSoundTrigger(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		cLux_AddDebugMessage("Debris Sound Triggered");
+		Sound_CreateAtEntity("Tunnel_Debris", "level_amb_shared_interior/amb/sfx/dust/medium", "Player", 0.0f, false, 1.0f);
+		
+		//Disable triggers to stop spamming
+		Entity_SetActive("SideTunnel_DebrisSoundArea_1", false);
+		Entity_SetActive("SideTunnel_DebrisSoundArea_2", false);
+		Entity_SetActive("SideTunnel_DebrisSoundArea_3", false);
+		
+		//Timer to reenable triggers
+		Map_AddTimer("SideTunnel_DebrisSound_Reset", cMath_RandRectf(6.0f,10.0f), "SideTunnel_DebrisSound_Activate");
+		return false;
+	}
+	
+	void SideTunnel_DebrisSound_Activate(const tString &in asTimer)
+	{	
+		cLux_AddDebugMessage("Debris Sound Areas Restored");
+		Entity_SetActive("SideTunnel_DebrisSoundArea_1", true);
+		Entity_SetActive("SideTunnel_DebrisSoundArea_2", true);
+		Entity_SetActive("SideTunnel_DebrisSoundArea_3", true);
+	}
+
+	//-----------------------------------------------------------
+	//Vent Landing Triggers
+	bool Trigger_SetVentMetalLandBothInactive(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		cLux_AddDebugMessage("Set Vent Landing Sound Triggers INACTIVE");
+		Entity_SetActive("VentLandingTrigger", false);
+		Entity_SetActive("VentLandingTrigger_Wet", false);
+		return true;
+	}
+	
+	//Normal
+	bool Trigger_SetVentMetalLandActive(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		Entity_SetActive("VentLandingTrigger", true);
+		cLux_AddDebugMessage("Set Vent Landing Metal Sound ACTIVE");
+		return true;
+	}
+	
+	bool Trigger_SetVentMetalLandInactive(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		Entity_SetActive("VentLandingTrigger", false);
+		cLux_AddDebugMessage("Set Vent Landing Metal Sound INACTIVE");
+		return true;
+	}
+	
+	bool Trigger_VentLanding(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState==1)
+		{
+			cLux_AddDebugMessage("Vent Landing Play");
+			Sound_CreateAtEntity("VentLandMetal", "01_04_transport_station/SFX/foley/vent_land", "Player", 0.0f, false, 1.0f);
+			Entity_SetActive("VentLandingTrigger", false);
+		}
+		return true;
+	}
+	
+	//Wet
+	bool Trigger_SetVentMetalWaterLandActive(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		Entity_SetActive("VentLandingTrigger_Wet", true);
+		cLux_AddDebugMessage("Set Vent Landing Metal Water Sound ACTIVE");
+		return true;
+	}
+	
+	bool Trigger_SetVentMetalLandWaterInactive(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		Entity_SetActive("VentLandingTrigger_Wet", false);
+		cLux_AddDebugMessage("Set Vent Landing Metal Water Sound INACTIVE");
+		return true;
+	}
+	
+	bool Trigger_VentWaterLanding(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState==1)
+		{
+			cLux_AddDebugMessage("Vent Landing Play");
+			Sound_CreateAtEntity("VentLandMetal", "01_04_transport_station/SFX/foley/vent_land_water", "Player", 0.0f, false, 1.0f);
+			Entity_SetActive("VentLandingTrigger_Wet", false);
+		}
+		return true;
+	}
+	
+	void Audio_BadPowerSweetenerStart()
+	{
+		Sound_CreateAtEntity("BadPowerSweetener", "01_04_transport_station/SFX/tunnel/sparks/tunnel_sparks", "BadPowerSoundSource");
+		Sound_CreateAtEntity("BadPowerBox", "01_04_transport_station/Special/Amy_Setpiece/amy_electric_box/electric_box", "AmyBoxSoundSource");
+		Entity_AttachToEntity("BadPowerSoundSource", "player", "", false, false);
+		Entity_SetActive("Sound_DetachPowerSweetener", true);
+	}
+	
+	bool Audio_DetachPowerSweetener(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		cLux_AddDebugMessage("Sweetener Sound Detached");
+		Entity_RemoveEntityAttachment("BadPowerSoundSource");
+		Entity_SetActive("Sound_DetachPowerSweetener", false);
+		Entity_SetActive("Sound_AttachPowerSweetener", true);
+		return true;
+	}
+	
+	bool Audio_AttachPowerSweetener(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		cLux_AddDebugMessage("Sweetener Sound Attached");
+		Entity_AttachToEntity("BadPowerSoundSource", "player", "", false, true);
+		Entity_SetActive("Sound_DetachPowerSweetener", true);
+		Entity_SetActive("Sound_AttachPowerSweetener", false);
+		return true;
+	}
+	
+	void Audio_StopBadPowerSweetener()
+	{
+		cLux_AddDebugMessage("Sweetener Sound Stopped and Areas disabled");
+		Sound_Stop("BadPowerSweetener", 0.25f);
+		Sound_Stop("BadPowerBox", 0.05f);
+		Entity_RemoveEntityAttachment("BadPowerSoundSource");
+		Entity_SetActive("Sound_DetachPowerSweetener", false);
+		Entity_SetActive("Sound_AttachPowerSweetener", false);
+	}
+	
+	//-----------------------------------------------------------
+	//Train and crash
+	
+	void Audio_Train_Start()
+	{
+		Sound_CreateAtEntity("Train_Engine", "01_04_transport_station/Special/Train/sequence", "Player");
+		Sound_FadeGlobalVolume(0.0f, 6.0f);
+		Music_Stop(5.0f, eMusicPrio_BgAmb);
+		Music_Stop(5.0f, eMusicPrio_BigEvent);
+	}
+	
+	void Audio_Train_Hit1()
+	{
+		Sound_CreateAtEntity("Train_Hit_1", "01_04_transport_station/Special/Train/train_hit_debris_1", "Player");
+		Sound_Fade("Train_Engine", 0.75, 0.05f);
+	}
+	
+	void Audio_Train_Hit2()
+	{
+		//Microtimer for fine tuning
+		Map_AddTimer("Audio_Train_Hit2Begin", 0.005f, "Audio_Train_Hit2_Timer");
+
+	}
+	
+	void Audio_Train_Hit2_Timer(const tString &in asTimer)
+	{
+		Sound_CreateAtEntity("Train_Hit_2", "01_04_transport_station/Special/Train/train_hit_debris_2", "Player");
+		Sound_CreateAtEntity("Train_Hit_WakeUp", "01_04_transport_station/Special/Train/train_hit_wake_up" , "Player");
+		Emotion_PlayEventBreath("01_04_transport_station/Special/Train/train_hit_wake_up_VO", 5);
+		Sound_Fade("Train_Engine", 0.45, 0.05f);
+		Map_AddTimer("TrainEngineStop", 2.0f, "TrainEngine_SoundStop");
+	}
+
+	void TrainEngine_SoundStop(const tString &in asTimer)
+	{
+		Sound_Stop("Train_Engine", 0.15f);
+	}
+	
+	//----------------------------------------------------
+	//Breathing sweetener for walking down tunnel
+	bool BeginBreathing(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		Depth_Audio_Fear_MediumIntensity(15.f, 10.f, 1, false, true);
+		return false;
+	}
+		
+	//----------------------------------------------------
+	//Tunnel flooding logic
+	void Audio_TunnelFloodLogic(const tString &in asTimer)
+	{
+		cLux_AddDebugMessage("Audio Flood Logic Triggered");
+		
+		//new ambient areas activate, disable non flooded ones
+		Entity_SetActive("AMB_DeepTunnels_1", false);
+		Entity_SetActive("AMB_DeepTunnels_Water", false);
+		Entity_SetActive("AMB_CrawlSpace_1", false);
+		Entity_SetActive("AMB_DeepTunnels_Flooded", true);
+		Entity_SetActive("AMB_DeepTunnels_Flooded_Deep", true);
+		Entity_SetActive("AMB_CrawlSpace_Flood_1", true);
+		Entity_SetActive("AMB_CrawlSpace_Flood_2", true);
+	}
+
+	
+	////////////////////////////////////////////////////////
+	//VO Ducking Callbacks 
+	
+	//Ducks
+	void Audio_DuckforVO_Light(const tString &in asScene, const tString &in asSubject, int alLineIndex, bool abStart)
+	{
+		Sound_FadeGlobalVolume(0.75, 2.0f);
+		cLux_AddDebugMessage("Ducking Audio for VO - Light");
+	}
+	
+	void Audio_DuckforVO_Medium(const tString &in asScene, const tString &in asSubject, int alLineIndex, bool abStart)
+	{
+		Sound_FadeGlobalVolume(0.55, 2.0f);
+		cLux_AddDebugMessage("Ducking Audio for VO - Medium");
+	}
+	
+	void Audio_DuckforVO_Strong(const tString &in asScene, const tString &in asSubject, int alLineIndex, bool abStart)
+	{
+		Sound_FadeGlobalVolume(0.35, 2.0f);
+		cLux_AddDebugMessage("Ducking Audio for VO - Strong");
+	}
+	
+	//Return to normal
+	void Audio_Duck_ReturnToNormal_3s(const tString &in asScene, const tString &in asSubject, int alLineIndex, bool abStart)
+	{
+		Sound_FadeGlobalVolume(1.0f, 3.0f);
+		cLux_AddDebugMessage("Returning Audio to Normal - 3 seconds");
+	}
+	
+	void Audio_Duck_ReturnToNormal_6s(const tString &in asScene, const tString &in asSubject, int alLineIndex, bool abStart)
+	{
+		Sound_FadeGlobalVolume(1.0f, 6.0f);
+		cLux_AddDebugMessage("Returning Audio to Normal - 6 seconds");
+	}
+	
+	void Audio_Duck_ReturnToNormal_9s(const tString &in asScene, const tString &in asSubject, int alLineIndex, bool abStart)
+	{
+		Sound_FadeGlobalVolume(1.0, 9.0f);
+		cLux_AddDebugMessage("Returning Audio to Normal - 9 seconds");
+	}
+	
+	//-------------------------------------------------------
+	
+	//} END AUDIO
+}
+

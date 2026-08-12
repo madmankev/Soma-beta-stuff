@@ -1,0 +1,39 @@
+<HPLMapTrack_LightMask ID="46A1B5A2266B2D6AA252F4724F194D04319C7FB" Version="1.00">
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects>
+            <LightMaskBox ID="268436679" Name="LightMaskBox_2" CreStamp="0" ModStamp="0" WorldPos="0.5 6.25 39.5" Rotation="0 0 0" Scale="1 1 1" Size="8.05926 5.75 8.75" UID="16 101 268436679" />
+        </Objects>
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="Aaron@AARON-PC">
+        <Objects>
+            <LightMaskBox ID="318767656" Name="LightMaskBox_1" CreStamp="1413885240" ModStamp="1415266903" WorldPos="-0.132077 -1.18884 49.1209" Rotation="0 0 0" Scale="1 1 1" Size="8.25144 2.12301 2.11919" UID="19 2210 318767656" />
+            <LightMaskBox ID="318767875" Name="LightMaskBox_3" CreStamp="1413908311" ModStamp="1413996347" WorldPos="4.75492 2.5861 71.9592" Rotation="0 0 0" Scale="1 1 1" Size="5.9227 6.79865 25.1246" UID="19 2097 318767875" />
+            <LightMaskBox ID="318769265" Name="LightMaskBox_5" CreStamp="1416863812" ModStamp="1416863848" WorldPos="9.27392 0.91023 61.756" Rotation="0 0 0" Scale="1 1 1" Size="2.07957 1.65367 9.58078" UID="19 1218 318769265" />
+            <LightMaskBox ID="318769487" Name="LightMaskBox_4" CreStamp="1416932406" ModStamp="1416932491" WorldPos="9.94776 2.54046 75.0327" Rotation="0 0 0" Scale="1 1 1" Size="0.61861 1.1098 0.180855" UID="19 1062 318769487" />
+        </Objects>
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="Peter@PETER-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+</HPLMapTrack_LightMask>
