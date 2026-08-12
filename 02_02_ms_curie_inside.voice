@@ -1,0 +1,226 @@
+﻿<?xml version="1.0" encoding="utf-16"?>
+<VoiceData>
+ <Characters>
+  <Character ID="0" Name="Player" DisplayName="Simon" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="False" AffectedByReverb="False" TextToSpeechVoice="Default" DefaultCriteria="" EntryType="GUIWorld" Volume="0.75" ReverbVolume="1" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="1" Name="Catherine" DisplayName="Catherine" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="True" AffectedByReverb="False" TextToSpeechVoice="Default" DefaultCriteria="" EntryType="GUIWorld" Volume="0.95" ReverbVolume="1" SpeakerSpread="80" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="2" Name="_SoundEffect" DisplayName="SoundEffect" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="False" AffectedByReverb="False" TextToSpeechVoice="Default" DefaultCriteria="" EntryType="GUIWorld" Volume="1" ReverbVolume="1" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="3" Name="AutomatedVoice" DisplayName="Automated Voice" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="True" AffectedByReverb="False" TextToSpeechVoice="Default" DefaultCriteria="" EntryType="WorldClean" Volume="1" ReverbVolume="1" SpeakerSpread="60" EntitySource="" MinDist="5" MaxDist="25" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="4" Name="Captain" DisplayName="Captain" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="True" AffectedByReverb="False" TextToSpeechVoice="Default" DefaultCriteria="" EntryType="WorldClean" Volume="1" ReverbVolume="1" SpeakerSpread="60" EntitySource="" MinDist="0" MaxDist="25" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="5" Name="Brockley" DisplayName="BROCKLEY" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="True" AffectedByReverb="False" TextToSpeechVoice="Default" DefaultCriteria="" EntryType="GUIWorld" Volume="1" ReverbVolume="1" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+ </Characters>
+ <Effects />
+ <Scenes>
+  <Scene ID="0" Name="Radio" FocusPrio="0" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+  <Scene ID="1" Name="SimonComments" FocusPrio="0" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+  <Scene ID="3" Name="CathMeeting" FocusPrio="0" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+  <Scene ID="4" Name="Datamine" FocusPrio="0" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+  <Scene ID="5" Name="EscapePod" FocusPrio="0" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+  <Scene ID="6" Name="Corpses" FocusPrio="0" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+  <Scene ID="7" Name="AgentBark" FocusPrio="0" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+ </Scenes>
+ <Subjects>
+  <Subject Name="1_StaticVoice" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="3" Prio="1" ChangeSource="True" EntitySource="AreaStaticVoice" MinDist="5" MaxDist="10">
+    <Sound Text="Warning! Catastrophic impact event has turned the surface lethally toxic to humans. CURIE is to remain submerged." FileName="radio_1_staticvoice_001_automatedvoice_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+  </Subject>
+  <Subject Name="2A_PlugInCatherine" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="1" Direction="(startled)" Prio="0">
+    <Sound Text="Huh, what?" FileName="cathmeeting_2a_plugincatherine_001_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Direction="(collected)" Prio="0">
+    <Sound Text="You made it. This is much better. Let's see if we can't get this thing moving." FileName="cathmeeting_2a_plugincatherine_002_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="What... safety locks are blocking the vessel's release? How much more of an emergency could this ship be in? It's on the bottom of the sea!" FileName="cathmeeting_2a_plugincatherine_003_catherine_001" Timestamp="2014-12-15 05:20" />
+   </Line>
+   <Line CharacterId="1" Direction="(back to business)" Prio="0">
+    <Sound Text="Take a look at the engine room and see if you can figure it out. Maybe there's an override or something." FileName="cathmeeting_2a_plugincatherine_004_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="0" Direction="(concerned)" Prio="0">
+    <Sound Text="There's monsters out there. Like the one we saw at Lambda." FileName="cathmeeting_2a_plugincatherine_005_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="The more reason to get going." FileName="cathmeeting_2a_plugincatherine_006_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="What?" FileName="cathmeeting_2a_plugincatherine_007_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Come on, you know the drill: Don't look at them or get too close. It will mess with your circuits." FileName="cathmeeting_2a_plugincatherine_008_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="Ah, shit." FileName="cathmeeting_2a_plugincatherine_009_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="We need to get out of here." FileName="cathmeeting_2a_plugincatherine_010_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="I know, I know. I'm going." FileName="cathmeeting_2a_plugincatherine_011_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+  </Subject>
+  <Subject Name="2B_ReturnToLifeboat_1" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="What are those things? They look like people. Really messed-up people." FileName="cathmeeting_2b_returntolifeboat_1_001_player_001" Timestamp="2015-01-30 09:28" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="I think they could be dead people brought back." FileName="cathmeeting_2b_returntolifeboat_1_002_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="To life." FileName="cathmeeting_2b_returntolifeboat_1_003_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Sure, let's call it that." FileName="cathmeeting_2b_returntolifeboat_1_004_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+  </Subject>
+  <Subject Name="2B_ReturnToLifeboat_2" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="Do you think we should try going to the surface?" FileName="cathmeeting_2b_returntolifeboat_2_001_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="No, the comet really did a number on the atmosphere. I doubt it will ever be &quot;okay&quot; again." FileName="cathmeeting_2b_returntolifeboat_2_002_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="I was afraid you'd say that." FileName="cathmeeting_2b_returntolifeboat_2_003_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+  </Subject>
+  <Subject Name="2B_ReturnToLifeboat_3" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="You think this thing will get us to Theta in one piece?" FileName="cathmeeting_2b_returntolifeboat_3_001_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="I don't see why not. It looks perfectly fine." FileName="cathmeeting_2b_returntolifeboat_3_002_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="Really, fine? I probably wouldn't use that word, but I'm glad you're confident." FileName="cathmeeting_2b_returntolifeboat_3_003_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+  </Subject>
+  <Subject Name="CaptainDialog_1" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="4" Prio="0">
+    <Sound Text="Attention crew, this is your captain speaking. The final efforts to stop the comet have officially failed. Impact is imminent. See you on the other side." FileName="radio_captaindialog_1_001_captain_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+  </Subject>
+  <Subject Name="3A_RemoveWau" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="1" Direction="(shocked)" Prio="0">
+    <Sound Text="Christ, what did you do?! The reactor just lost all balance, I think we're in deep..." FileName="cathmeeting_3a_removewau_001_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Direction="(imperative)" Prio="0">
+    <Sound Text="Simon, the lifeboat locks just released -- quick, get back here!" FileName="cathmeeting_3a_removewau_002_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+  </Subject>
+  <Subject Name="3C_LifeboatEscape" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="0" Direction="(exhausted)" Prio="0">
+    <Sound Text="Ok, I'm in." FileName="cathmeeting_3c_lifeboatescape_001_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Then let's get the hell out of here." FileName="cathmeeting_3c_lifeboatescape_002_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="What's taking so long?" FileName="cathmeeting_3c_lifeboatescape_003_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="I need to pump all the water out before we take off." FileName="cathmeeting_3c_lifeboatescape_004_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="Can't you do it any faster?" FileName="cathmeeting_3c_lifeboatescape_005_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Almost there." FileName="cathmeeting_3c_lifeboatescape_006_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+  </Subject>
+  <Subject Name="3C_WaterDrained" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="All right, here we go. Hold on to something!" FileName="cathmeeting_3c_waterdrained_001_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+  </Subject>
+  <Subject Name="3C_LifeBoatEscape_Branch2" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="What the hell happened here? What are all these emergency -- What did you do?!" FileName="cathmeeting_3c_lifeboatescape_branch2_001_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="I messed up, okay? Can you get us out of here?" FileName="cathmeeting_3c_lifeboatescape_branch2_002_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Yes, yes. I just need to pump out the water and get a trajectory in place." FileName="cathmeeting_3c_lifeboatescape_branch2_003_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="Hurry up." FileName="cathmeeting_3c_lifeboatescape_branch2_004_player_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Just a second." FileName="cathmeeting_3c_lifeboatescape_branch2_005_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+  </Subject>
+  <Subject Name="3C_WaterDrained_Branch2" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="All right, taking off. Hold on to something!" FileName="cathmeeting_3c_waterdrained_branch2_001_catherine_001" Timestamp="2014-11-09 09:41" />
+   </Line>
+  </Subject>
+  <Subject Name="CaptainDialog_2" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="4" Prio="0">
+    <Sound Text="CURIE is safe while submerged. The crew -what's left of it - is doing okay. For the rest of the world, there's no good way to describe it. The destruction is absolute. The surface is just gone." FileName="radio_captaindialog_2_001_captain_001" Timestamp="2015-01-30 09:28" />
+   </Line>
+  </Subject>
+  <Subject Name="BrockleyDialog_1" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="5" Prio="0">
+    <Sound Text="We're fucked. This was a huge mistake. Even with the suits -- we're just in a mess up here. Keep CURIE safe. Forget about Omega, forget about the surface." FileName="radio_brockleydialog_1_001_brockley_001" Timestamp="2015-01-30 09:28" />
+   </Line>
+  </Subject>
+  <Subject Name="HintEscapePod_LookForPowerRoom_1" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Something is stabilizing the ship. We need to let it know this is an emergency." FileName="cathmeeting_hintescapepod_lookforpowerroom_1_001_catherine_001" Timestamp="2014-12-11 02:45" />
+   </Line>
+  </Subject>
+  <Subject Name="HintEscapePod_LookForPowerRoom_2" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="1" Prio="0" PlayOnce="True">
+    <Sound Text="Convince the ship that this is an emergency." FileName="cathmeeting_hintescapepod_lookforpowerroom_2_001_catherine_001" Timestamp="2014-12-11 02:45" />
+   </Line>
+  </Subject>
+  <Subject Name="HintEscapePod_WreckPowerRoom_1" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Sabotage the stabilizer, Simon. The black cords you mentioned, pull them down." FileName="cathmeeting_hintescapepod_wreckpowerroom_1_001_catherine_001" Timestamp="2014-12-11 02:45" />
+   </Line>
+  </Subject>
+  <Subject Name="HintEscapePod_WreckPowerRoom_2" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Tear down all the black cords." FileName="cathmeeting_hintescapepod_wreckpowerroom_2_001_catherine_001" Timestamp="2014-12-11 02:45" />
+   </Line>
+  </Subject>
+  <Subject Name="2B_ReturnToLifeboat_PRoom" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="Do you know anything about dark metallic cords that seem to be feeding off the machinery?" FileName="cathmeeting_2b_returntolifeboat_proom_001_player_001" Timestamp="2015-01-30 09:28" />
+   </Line>
+   <Line CharacterId="1" Direction="to self" Prio="0">
+    <Sound Text="Huh?" FileName="cathmeeting_2b_returntolifeboat_proom_002_catherine_001" Timestamp="2014-12-11 01:24" />
+    <Sound Text=" Oh. You mean the WAU is here." FileName="cathmeeting_2b_returntolifeboat_proom_002_catherine_002" Timestamp="2015-01-30 10:40" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="What?" FileName="cathmeeting_2b_returntolifeboat_proom_003_player_001" Timestamp="2014-12-11 01:24" />
+   </Line>
+   <Line CharacterId="1" Direction="figuring it out" Prio="0">
+    <Sound Text="That's what's keeping the ship together." FileName="cathmeeting_2b_returntolifeboat_proom_004_catherine_001" Timestamp="2014-12-11 01:24" />
+    <Sound Text="Pull them, Simon. Pull them all down." FileName="cathmeeting_2b_returntolifeboat_proom_004_catherine_002" Timestamp="2014-12-11 01:24" />
+   </Line>
+  </Subject>
+  <Subject Name="2C_FlesherEntersLifeboat" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="1" Direction="Monster gets in to the EV while Simon is in there" Prio="0">
+    <Sound Text="Look out!" FileName="cathmeeting_2c_flesherenterslifeboat_001_catherine_001" Timestamp="2015-01-12 04:16" />
+   </Line>
+  </Subject>
+  <Subject Name="2C_EnterLifeboatAfterDeath" UseSingleRandomLine="False" SceneId="3" EffectId="-1">
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Simon? Are you okay?" FileName="cathmeeting_2c_enterlifeboatafterdeath_001_catherine_001" Timestamp="2015-01-12 04:16" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="I think so." FileName="cathmeeting_2c_enterlifeboatafterdeath_002_player_001" Timestamp="2015-01-12 04:16" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="You really scared me. Thought I was going to be trapped here forever." FileName="cathmeeting_2c_enterlifeboatafterdeath_003_catherine_001" Timestamp="2015-01-12 04:16" />
+   </Line>
+  </Subject>
+  <Subject Name="1_EnterLevel" UseSingleRandomLine="False" SceneId="1" EffectId="-1">
+   <Line CharacterId="0" Direction="(to self)" Prio="0">
+    <Sound Text="All right, we're in. Let's find a working Escape Vessel." FileName="simoncomments_1_enterlevel_001_player_001" Timestamp="2015-01-14 06:08" />
+   </Line>
+  </Subject>
+ </Subjects>
+</VoiceData>

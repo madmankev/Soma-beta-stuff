@@ -1,0 +1,48 @@
+<HPLMapTrack_FogArea ID="149928B5580D25A9845C6B8151C36ED5D21B009" Version="1.00">
+    <Section Name="Aaron@AARON-PC">
+        <Objects>
+            <FogArea ID="268442152" Name="FogArea_1" CreStamp="0" ModStamp="0" WorldPos="0 -2.25 14.2196" Rotation="0 0 0" Scale="11.25 2.75 3.5" Color="0.0730591 0.175323 0.222656 0.392157" Brightness="1" Start="0" End="2" FalloffExp="0.5" ShownBacksideWhenOutside="true" ShownBacksideWhenInside="false" Underwater="true" NoiseStrength="0.1" NoiseSize="0.0999999" NoiseTurbulence="-0.1 0.1 0.1" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="16 8208 268442152" />
+        </Objects>
+    </Section>
+    <Section Name="Snafu@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="marcus@HADEX">
+        <Objects />
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@HALSMANDELTOFU">
+        <Objects />
+    </Section>
+    <Section Name="anya@MIDGAR">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="MrB@BENZIE">
+        <Objects />
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects>
+            <FogArea ID="486539270" Name="FogArea_2" CreStamp="1424420358" ModStamp="1424420534" WorldPos="10.6717 -5.1899 37.867" Rotation="0 0 0" Scale="0.509414 3.54467 2.79563" Color="0 0 0 1" Brightness="1" Start="0" End="0.1" FalloffExp="1" ShownBacksideWhenOutside="true" ShownBacksideWhenInside="false" Underwater="false" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="29 9159 486539270" />
+        </Objects>
+    </Section>
+</HPLMapTrack_FogArea>

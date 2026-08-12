@@ -1,0 +1,3983 @@
+#include "interfaces/Map_Interface.hps"
+#include "helpers/helper_effects.hps"
+#include "helpers/helper_map.hps"
+#include "helpers/helper_entity.hps"
+#include "helpers/helper_areas.hps"
+#include "helpers/helper_props.hps"
+#include "helpers/helper_effects.hps"
+#include "helpers/helper_physics.hps"
+#include "helpers/helper_world_effects.hps"
+#include "helpers/helper_sequences.hps"
+#include "helpers/helper_audio.hps"
+#include "helpers/helper_imgui.hps"
+#include "helpers/helper_game.hps"
+#include "helpers/helper_modules.hps"
+#include "helpers/helper_ai.hps"
+#include "custom_depth/helper_custom_depth.hps"
+#include "helper_custom_depth_imgui.hps"
+#include "inputhandler_types.hps"
+#include "custom_depth/helper_custom_depth_audio.hps"
+
+const tString gsCurieMusicLevel = "02_02_ambient";		
+
+class cScrMap : iScrMap
+{
+
+	//-------------------------------------------------------
+		
+	tID mlID_Player;
+	
+	//-------------------------------------------------------
+
+	 //////////////////////////////////////////////////////////////////////////////////////////
+	 // ==============
+	 // AUDIO
+	 // ==============
+	 //{//////////////////////////////////////////////////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	float gfFlesherAlertMusicVolume = 1.0f;
+	
+	//-------------------------------------------------------
+	bool mbIsEscapeMusicActive = false;
+	void StartEscapeMusic()
+	{
+		if(mbIsEscapeMusicActive == false)
+		{
+			Music_PlayExt("02_02_escapesequence", true, 0.65f, 1.0f, 2.0f, 0.0f, eMusicPrio_BigEvent, false);
+		}
+	}
+		
+	//-------------------------------------------------------
+
+	void StopEscapeMusic(float afFadeTime, bool abPlayerSuccessful=false)
+	{
+		Music_Stop(afFadeTime, eMusicPrio_BigEvent);
+		mbIsEscapeMusicActive = false;
+		
+		if(abPlayerSuccessful==true)
+		{
+			//Music_PlayOverlay("01_02_torturecarl", 0.35f);
+		}
+	}
+		
+	//-------------------------------------------------------
+	
+	bool Trigger_StairCreak(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		cLux_AddDebugMessage("stair creakw");
+		Sound_CreateAtEntity("StairCreak", "02_02_ms_curie_inside/AMB/spot/creaky_stairs", "Player");
+		Entity_SetActive("StairCreakTrigger_*", false);
+		Map_AddTimer("Timer_ActiveStairCreakArea", cMath_RandRectf(6.0f,12.0f), "Timer_ActiveStairCreakArea");
+		return true;
+	}
+		
+	//-------------------------------------------------------
+	
+	void Timer_ActiveStairCreakArea(const tString &in asTimer)
+	{
+		cLux_AddDebugMessage("stair creak areas enabled");
+		Entity_SetActive("StairCreakTrigger_*", true);
+	}
+	
+	//-------------------------------------------------------
+	
+	void StartMorseCodeSound()
+	{
+		Map_AddTimer("timer_morsecode", 1.0f, "morsecodesound");
+	}
+			
+	//-------------------------------------------------------
+	
+	void morsecodesound (const tString &in asTimer)
+	{
+		Sound_CreateAtEntity("MorseCodeBeep", "02_02_ms_curie_inside/SFX/wau_morse/morse", "MorseSoundArea");
+		Map_AddTimer("timer_morsecode", 10.0f, "morsecodesound");
+	}
+			
+	//-------------------------------------------------------
+	
+	void StopMorseCodeSound()
+	{
+		Sound_Stop("MorseCodeBeep", 0.25f);
+		Map_RemoveTimer("timer_morsecode");
+	}
+		
+	//-------------------------------------------------------
+	
+	bool mbIsEscapeAlarmsActive = false;
+	bool mbIsBigEscapeAlarmActive = false;
+	bool mbAmbientAreasDisabledForEscape = false;
+	void StartEscapeAlarms(float afFadeTime=0.0f)
+	{
+		Entity_SetActive("StairCreakTrigger_*", false);
+		if(mbAmbientAreasDisabledForEscape == false)
+		{
+			//Remove old sound areas for optimisation
+			Entity_SetActive("AMB_Pre_*", false);
+			Entity_SetActive("AMB_Post_*", true);
+			mbAmbientAreasDisabledForEscape = true;
+		}
+		if(mbIsEscapeAlarmsActive == false)
+		{			
+			Sound_CreateAtEntity("AreaCargoHoldAlarm_1", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_1", afFadeTime);
+			Sound_CreateAtEntity("AreaCargoHoldAlarm_2", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_2", afFadeTime);
+			Sound_CreateAtEntity("AreaCargoHoldAlarm_3", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_3", afFadeTime);
+			Sound_CreateAtEntity("AreaCargoHoldAlarm_4", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_4", afFadeTime);
+			Sound_CreateAtEntity("AreaCargoHoldAlarm_5", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_5", afFadeTime);
+			Sound_CreateAtEntity("AreaCargoHoldAlarm_6", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_6", afFadeTime);
+			Sound_CreateAtEntity("AreaCargoHoldAlarm_7", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_7", afFadeTime);
+			Sound_CreateAtEntity("AreaCargoHoldAlarm_7", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_8", afFadeTime);
+			Sound_CreateAtEntity("AreaCargoHoldAlarm_7", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_9", afFadeTime);
+			mbIsEscapeAlarmsActive = true;
+		}
+		if(mbIsBigEscapeAlarmActive == false)
+		{
+			Map_AddTimer("timer_alarmloop",1.0f,"TimerStartAlarms");
+			mbIsBigEscapeAlarmActive = true;
+		}
+	}
+			
+	//------------------------------------------------------
+	
+	void StopEscapeAlarms_Small(float afFadeTime=0.25f)
+	{
+		if(mbIsEscapeAlarmsActive == true)
+		{
+			Sound_Stop("AreaCargoHoldAlarm_*", afFadeTime);
+			mbIsEscapeAlarmsActive = false;
+		}
+	}
+		
+	//------------------------------------------------------
+	
+	bool mbIsBigSirenPlaying = false;
+	void TimerStartAlarms(const tString &in asTimer)
+	{
+		Sound_CreateAtEntity("BigAlarm", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/big", "Player");
+		Map_AddTimer("timer_alarmloop",10.f,"TimerStartAlarms");
+		if(mbIsBigSirenPlaying == false)
+		{
+			Sound_CreateAtEntity("BigSiren", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/big_siren", "Player");
+			mbIsBigSirenPlaying = true;
+		}
+	}
+		
+	//-------------------------------------------------------
+
+	void StopEscapeAlarms(float afFadeTime=0.25f)
+	{
+		Sound_Stop("AreaCargoHoldAlarm_*", afFadeTime);
+		mbIsEscapeAlarmsActive = false;
+	}
+	
+	//----------------------------------------------------
+	
+	void AirlockEffectsFlushWater()
+	{
+		Depth_Audio_AirlockDrainLeadInUW();
+		Depth_Audio_AirlockDrainLoopUW();
+		Map_AddTimer("AirlockDrainUWStopTimer", 5.0f, "AirlockDrainUWStop");
+		Sound_PreloadGroup("02_02_ms_curie_inside/SFX/escape_pod", true);
+	}
+ 
+    //-------------------------------------------------------
+	
+	void AirlockDrainUWStop(const tString &in asTimer)
+	{
+		Sound_CreateAtEntity("PumpingAirLoop", "Entities_OceanBottom/airlock/air/pump/pump_loop_nointro", "PumpsSource", 0.55f, false, 1.0f);
+		Depth_Audio_AirlockDrainLoopUWStop();
+		Depth_Audio_AirlockDrainLoopAir();
+		Map_AddTimer("AirlockDrainingAirStopTimer", 4.0f, "AirlockDrainingAirStop");
+		Sound_Stop("Pump_Idle_Loop_Underwater", 0.25f);
+	}
+	
+	//-------------------------------------------------------
+	
+	void AirlockDrainingAirStop(const tString &in asTimer)
+	{
+		Depth_Audio_AirlockDrainLoopAirStop();
+		Depth_Audio_AirlockDrainLeadOutAir();
+		Sound_Stop("PumpingAirLoop", 0.5f);
+		Sound_CreateAtEntity("PumpAirLeadOut", "Entities_OceanBottom/airlock/air/pump/pump_end", "PumpsSource", 0.0f, false, 1.0f);
+		AirlockEffectsTurnOnPumps();
+	}
+	
+	void AirlockEffectsTurnOnPumps()
+	{
+		//airlock not full, play non-underwater idle sound
+		Sound_CreateAtEntity("Pump_Idle_Loop_Air", "Entities_OceanBottom/airlock/air/pump/idle_loop", "PumpsSource", 1.0f, false, 1.0f); 
+	}
+		
+	//-------------------------------------------------------
+	//Escape Sequence
+	void StartPodEscape()
+	{
+		Sound_CreateAtEntity("EscapePodLiftOff", "02_02_ms_curie_inside/SFX/escape_pod/escape_pod_startup_sequence", "Player");
+		Sound_Stop("BigSiren", 13.0f);
+		Sound_FadeGlobalVolume(0.0f, 13.0f);
+		Map_AddTimer("StartUpScreenShake", 3.2f, "StartUpScreenShake");
+		Map_AddTimer("DockingScreenShake", 7.75f, "DockingScreenShake");
+		Map_AddTimer("EndingMusic", 5.0f, "EndingMusic");
+	}
+	
+	void StartUpScreenShake(const tString &in asTimer)
+	{
+		Effect_Shake_Start(0.0075, 15.0, 1.0f, 3.0f);
+	}
+	
+	void DockingScreenShake(const tString &in asTimer)
+	{
+		Effect_Shake_Start(0.05, 0.5, 0.1, 0.1);
+		Sound_Stop("BigAlarm", 5.0f);
+		Map_RemoveTimer("timer_alarmloop");
+		Sound_FadeGlobalVolume(0,8, eSoundEntryType_All);
+	}
+	
+	void EndingMusic(const tString &in asTimer)
+	{
+		Music_PlayExt("02_02_leaving", false, 0.75f, 1.0, 5.0f, 0.0f, eMusicPrio_BigEvent, false);
+	}
+	
+		
+	//-------------------------------------------------------
+	
+	bool Trigger_RemoveVent(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		Sound_CreateAtEntity("RemoveVent", "03_02_omicron_inside/SFX/vent_hatch_rip", "Player");	
+		return false;
+	}
+	
+	//-------------------------------------------------------
+	
+	void StartAmbientCurieMusic(float afFadeIn=0.0f)
+	{
+		/* Note for Sam - this method is actually called in a few places. 
+		 * One, when you leave the starting room.
+		 * Two, when you enter the escape pod we have similar cutting in/out of the ambient music like we do in 3.2 containment.
+		 * Three, the power room also cuts the music in the same fashion as the escape pod.
+		 */
+		 
+		Music_PlayExt(gsCurieMusicLevel,true,1.0f,1.0f,afFadeIn,0.0f,eMusicPrio_BgAmb,true);
+	}
+	
+	//-------------------------------------------------------
+	
+	void StopAmbientCurieMusic(float afFadeTime=5.0f)
+	{
+		Music_Stop(afFadeTime,eMusicPrio_BgAmb);
+	}
+	
+	//-------------------------------------------------------
+	
+	bool CollideAreaPowerRoomMusicStop(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		if (mbFinalChaseInProgress) return false;
+		
+		Entity_SetActive("AreaPowerRoomMusicResume*",true);
+		StopAmbientCurieMusic();
+		
+		return true;
+	}
+	
+	//-------------------------------------------------------
+	
+	bool CollideAreaPowerRoomMusicResume(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (mbFinalChaseInProgress) return false;
+		if (alState != 1) return true;
+		
+		Entity_SetActive("AreaPowerRoomMusicResume*", false);
+		StartAmbientCurieMusic(5.0f);
+		
+		return true;
+	}
+	
+	//-------------------------------------------------------
+	
+	//} END AUDIO
+
+	/////////////////////////////////////////
+	// MAIN CALLBACKS
+	/////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	void Setup()
+	{
+		cLux_AddDebugMessage("ENTERED SETUP");
+		GetBase().SetDisplayNameEntry("02-02-ms-curie-inside");
+	}
+	
+	//-------------------------------------------------------
+	
+	
+	////////////////////////////
+	// Run first time starting map
+	void OnStart()
+	{	
+		cLux_AddDebugMessage("ENTERED ONSTART");
+		
+		////////////////////////////
+		// Preload sounds
+		Sound_PreloadCoreSounds();
+		Sound_PreloadCoreUWSounds();
+		Sound_PreloadCoreUWInteractions();
+		Sound_PreloadCoreInteractions();
+		Sound_PreloadProject("level_amb_shared_underwater");
+		Sound_PreloadGroup("02_02_ms_curie_inside/SFX", true);
+		Sound_PreloadGroup("02_02_ms_curie_inside/AMB", true);
+		//Sound_SetGlobalVolume(0.0f, eSoundEntryType_WorldAll);
+		StartMorseCodeSound();
+	//	Music_FadeVolumeMul(0.0f, 0.5f);
+		
+		////////////////////////////
+		// Setup scenes
+		SetupScenes();
+		
+		//////////////////////////////////////////
+		// Player setup
+		Player_SetAmbientLight_Indoors();
+		
+		PlayerHands_SetHandModel_Diving();
+		
+		Map_SetUnderwater(true);
+		
+		//----DEBUG----//
+		if(cLux_ScriptDebugOn())
+		{
+			//Add any debug stuff here
+			//Entity_SetActive("TriggerArea_EscapePodExit*",true);
+			//Entity_SetActive("TriggerArea_EscapePodDoor*",true);
+			
+			//Fade in!
+		//	Effect_Fade_In(1);
+		//	Sound_FadeGlobalVolume(1.0f, 3.0f, eSoundEntryType_WorldAll);
+		//	Music_FadeVolumeMul(1.0f, 3.0f);
+		}
+		else
+		{
+			///////////////////////
+			// Fade level in from black
+		//	Effect_Fade_Out(0);
+		//	Map_AddTimer("timer_fadein",0.2,"TimerFadeIn");
+			StartIntro();
+		}
+		
+		mlID_Player = Map_GetEntityID("Player",eLuxEntityType_Player);	
+		
+		//////////////////////////////////////////
+		// Entity setup
+		Tool_PickUp("cath_box_tool", false, false); // Get Catherine
+		SetEmergencyLampsActive(false);
+		PhysicsSlideDoor_SetLocked("shipwreck_slidedoor_medium_17", false, false); //otherwise locked when transition from 2.1
+	}
+	
+	//-------------------------------------------------------
+
+	////////////////////////////
+	// Run when entering map
+	void OnEnter()
+	{	
+		cLux_AddDebugMessage("ENTERED ONENTER");
+		//////////////////////////////////////////
+		// Setup checkpoint
+		CheckPoint_Setup("Floor1Checkpoint");
+		
+		//Map_SetUnderwater(true);
+		cLux_GetCurrentMap().GetWorld().SetFogUnderwater(true);
+		Effect_DoF_Start(0, 6, 0.5, 0);
+	    float fFadeTime = 0.5;
+
+		Effect_Bloom_FadeBrightPass(0.00001, 0); //set so pixels that are over 127 (255 * 0.5) contributes to bloom.
+		Effect_Bloom_FadeBloomWidth(160, 0); //sets 128 pixels in bloom width, looks best between 32 - 512 pixels
+		Effect_Bloom_FadeBloomTint(0.3, 0.3, 0.3, 0); //sets a red tint on bloom
+	}
+	
+	void Floor1Checkpoint(int alRecentDeaths, const tString& in asSource)
+	{
+		Entity_SetActive(asSource, false);
+	}
+	
+	//-------------------------------------------------------
+
+	////////////////////////////
+	// Run when leaving map
+	void OnLeave()
+	{
+	}
+	
+	//-------------------------------------------------------
+	
+	void SetupScenes()
+	{
+		cLux_AddDebugMessage("Setting up scenes");
+		
+		Light_SetVisible("Spotlight_Welder",false);
+		Entity_SetEffectBaseColor("cath_box_tool", cColor_Green);
+		
+		SetupEnterCargoBay();
+		SetupElectricsTentacles();
+		
+	
+	
+	}
+	
+	//-------------------------------------------------------
+	
+/*	void Update(float afTimeStep)
+	{
+		cCamera@ pCam = cLux_GetPlayer().GetCamera();
+		cVector3f vNorm;
+		iPhysicsBody@ pBody = cLux_GetClosestBody(pCam.GetPosition(), pCam.GetForward(), 100, 0, vNorm);
+		if (pBody != null)
+		{
+			cLux_AddDebugMessage(pBody.GetName());
+		}
+	}*/
+	
+	
+	//-------------------------------------------------------
+	////////////////////////////
+	// To get when player makes input (mostly used for debug)
+	void OnAction(int alAction, bool abPressed)
+	{	
+		if(abPressed==false) return;
+	
+		if(alAction == eAction_Test1)
+		{
+			//Entity_SetActive("Reactor_Flesher_1",true);
+			//Map_AddTimer("timer_debugreactorflesher",1.0,"TimerFleshersOpenReactorDoor");
+			//Map_AddTimer("timer_seq_drainwater",1.0f,"SequenceDrainWater");
+			//Entity_SetActive("Agent_Flesher_Electrics", false);
+			
+			/*cLux_AddDebugMessage("Activating flesher");
+			Entity_SetActive("agent_flesher_finalchase",true);
+			Flesher_HuntPlayer("agent_flesher_finalchase");*/
+			
+			OpenChaseDoors();
+		}
+		
+		if(alAction == eAction_Test2)
+		{
+			/*mbFinalChaseInProgress = true;
+			SetEmergencyLampsActive(true);
+			SlideDoor_SetOpenAmount("CargoBayDoor",1.0f,true);
+			SlideDoor_SetOpenAmount("StorageRoomDoor",1.0f,true);
+			SlideDoor_SetOpenAmount("StorageRoomDoor_1",0.0f,true);*/
+			
+			//Entity_SetActive("Agent_Flesher_Chase",true);
+			//Flesher_HuntPlayer("Agent_Flesher_Chase");
+			
+			//SetupEscapeSequence();
+			
+			mbWAURemoved = true;
+			CollideAreaEscapeInPod("","",1);
+			
+			
+			//SequenceFallingCylinders("");
+			//Prop_SetStaticPhysics("ElectricFallingCylinder*",false);
+		}
+		
+		
+		if(alAction == eAction_Test3)
+		{
+		//SequenceFlesherBreaksGlass("");
+		////////////////////////////////////////
+		// Hanging cargo box just falls straight down
+		Entity_SetActive("block_box_cargocrate",false);
+		Prop_SetStaticPhysics("CargoBox_1",false);
+		Entity_SetInteractionDisabled("CargoBox_1",true);
+		
+		Entity_SetActive("AreaChaseHangingCrate_*",false);
+		TiltCurieLeft(true);
+		}
+		
+		
+		
+		if (alAction == eAction_Test4)
+		{
+			OnChangeLadderWheel("",1);
+			//Entity_SetActive("BlockBoxEscapePod",false);
+			//SwingDoor_PushOpen("Swingdoor_EscapePod",2.0f,4,0.1f);
+			//SwingDoor_SetDisableAutoClose("Swingdoor_EscapePod*",false);
+			//SwingDoor_SetClosed("Swingdoor_EscapePod*",false,true);
+			//SwingDoor_SetOpenAmount("Swingdoor_EscapePod*",0.1f);
+			
+			
+		}
+		if (alAction == eAction_Test5)
+		{
+			SwingDoor_PushOpen("Swingdoor_EscapePod",-2.0f,6,0.1f);
+			Entity_SetActive("BlockBoxEscapePod",true);
+			//SwingDoor_SetClosed("Swingdoor_EscapePod*",true,true);
+			Entity_SetInteractionDisabled("Swingdoor_EscapePod*",true);
+		}
+		if (alAction == eAction_Test6)
+		{
+			Entity_SetInteractionDisabled("Swingdoor_EscapePod*",false);
+			//Entity_AddImpulse("SwingDoor_EscapePod",cVector3f_Right*10000.0f,true,false);
+			Entity_AddForce("Swingdoor_EscapePod*",cVector3f_Up*50000.0f,true,true);
+		}
+		
+		////////////////////////////
+		//Allow leaving level.
+		if (alAction == eAction_Test8)
+		{
+			OnElectricsPuzzleSolved();
+		}
+	
+		if (alAction == eAction_Test9)
+		{
+			cLux_AddDebugMessage("****************************************************");
+			cLux_AddDebugMessage("****** SKIPPING DIALOGUE! USE THIS WISELY!!! *******");
+			cLux_AddDebugMessage("****************************************************");
+			Voice_SkipCurrentLine("CathMeeting");
+		}
+	}
+	
+	void OnPlayerKilled(int alNumberOfRecentDeaths, const tString &in asSource)
+	{
+		//////////////////////////////////////////
+		// Allow message from Catherine when returning to the pod
+		mbPlayerWasKilled = true;
+		
+		if (mbPlayerKilledMessageAllowed)
+		{
+			Entity_SetActive("AreaActivatePodReturn_*",true);
+		}
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerFadeIn(const tString &in asTimer)
+	{
+		Effect_Fade_In(5.0);
+		Sound_FadeGlobalVolume(1.0f, 5.0f, eSoundEntryType_WorldAll);
+		Music_FadeVolumeMul(1.0f, 5.0f);
+	}
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// MAIN FUNCTIONS
+	/////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	bool mbFinalChaseInProgress = false;
+	bool mbLifeboatAvailable = false;
+	bool mbWAURemoved = false;
+	bool mbCathPluggedIn = false;
+	bool mbFoundPowerRoom = false;
+	bool mbPlayerWasKilled = false;
+	
+	//-------------------------------------------------------
+	
+	bool mbPreloadDone = false;
+	void AttemptPreloadHere()
+	{
+		if (mbPreloadDone) return;
+		
+		if(cLux_ScriptDebugOn()==false)
+		{
+			cLux_AddDebugMessage("Attempt preload issued");
+			Map_Preload("02_03_delta.hpm");
+			mbPreloadDone = true;
+		}
+	}
+	
+	//------------------------------------------------------
+	
+	void SetEmergencyLampsActive(bool abActive)
+	{
+		Lamp_SetLit("warning_lamp_*",abActive,abActive);
+		
+		if (abActive == false)
+		{
+			Entity_StopAnimation("warning_lamp_*");
+		}
+		else
+		{
+			Entity_PlayAnimation("warning_lamp_*","spin",0.1f,true);
+			
+		}
+	}
+	
+	//------------------------------------------------------
+
+	//////////////////////////////////////////
+	// WAU FLOWERS
+	//////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	
+	void DrainAllWauFlowers()
+	{
+		EnergySource_SetEnergy("wau_flower*",0.0f);
+	}
+	
+	//------------------------------------------------------
+	
+	//////////////////////////////////////////
+	// Ship Tilting
+	//////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	void TimerTestTilt(const tString &in asTimer)
+	{
+		if (asTimer == "timer_tilt_1")
+			TiltCurieLeft(true);
+		if (asTimer == "timer_tilt_2")
+			TiltCurieRight(true);
+		if (asTimer == "timer_tilt_3")
+			TiltCurieReset(true);
+			
+		Map_AddTimer("timer_tilt_"+cMath_RandRectl(1,3),5.0f,"TimerTestTilt");
+	}
+	
+	void TiltCurieReset(bool abShake)
+	{
+		//////////////////////////////
+		// We actually want to roll the camera the OPPOSITE direction to the ship
+		Sound_PlayGui("02_02_ms_curie_inside/SFX/curie_tilt/tremor_tilt", 1.0f, eSoundEntryType_GuiWorld);
+		Sound_FadeGlobalVolume(0.25f, 1.5f);
+		Map_AddTimer("TiltMixerReturn", 2.5f, "TiltMixerReturn");
+		StopEscapeAlarms(1.5f);
+		StartAlarmSequence();
+		Sound_Fade("BigAlarm", 0.25f, 0.5f);
+		Music_FadeVolumeMul(0.55f, 1.5f);
+		
+		Player_FadeRollTo(0.0f,15.0f,7.0f);
+		Effect_Shake_Start(0.1,2.0f,1.0f,1.0f);
+	}
+	
+	void TiltCurieLeft(bool abShake)
+	{
+		//////////////////////////////
+		// We actually want to roll the camera the OPPOSITE direction to the ship
+		Sound_PlayGui("02_02_ms_curie_inside/SFX/curie_tilt/tremor_tilt", 1.0f, eSoundEntryType_GuiWorld);
+		Sound_FadeGlobalVolume(0.25f, 0.5f);
+		Map_AddTimer("TiltMixerReturn", 2.5f, "TiltMixerReturn");
+		StopEscapeAlarms(1.5f);
+		StartAlarmSequence();
+		Sound_Fade("BigAlarm", 0.25f, 1.5f);
+		Music_FadeVolumeMul(0.55f, 1.5f);
+		
+		Player_FadeRollTo(-15.0f,5.0f,5.0f);
+		Effect_Shake_Start(0.025,2.0f,1.0f,1.0f);
+	}
+	
+	void TiltCurieRight(bool abShake)
+	{
+		//////////////////////////////
+		// We actually want to roll the camera the OPPOSITE direction to the ship
+		Sound_PlayGui("02_02_ms_curie_inside/SFX/curie_tilt/tremor_tilt", 1.0f, eSoundEntryType_GuiWorld);
+		Sound_FadeGlobalVolume(0.25f, 0.5f);
+		Map_AddTimer("TiltMixerReturn", 2.5f, "TiltMixerReturn");
+		StopEscapeAlarms(1.5f);
+		StartAlarmSequence();
+		Sound_Fade("BigAlarm", 0.25f, 1.5f);
+		Music_FadeVolumeMul(0.55f, 1.5f);
+		
+		Player_FadeRollTo(15.0f,5.0f,5.0f);
+		Effect_Shake_Start(0.025,2.0f,1.0f,1.0f);
+	}
+	
+	void TiltMixerReturn (const tString &in asTimer)
+	{
+		Sound_FadeGlobalVolume(1.0f, 6.5f);
+		Sound_Fade("BigAlarm", 1.0f, 3.0f);
+		Music_FadeVolumeMul(1.0f, 3.0f);
+		StartEscapeAlarms(2.0f);
+		Depth_Audio_Fear_HighIntensity(12.0f, 5.0f, 1, false, true);
+	}
+		
+	//-----------------------------------------------------------------------------------------
+	
+	bool OnCollideCrateFall(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState == -1) return true;
+		
+		cLux_AddDebugMessage("Child = " + asChild);
+		
+		//Prop_StopMovement(asChild);
+		
+		Prop_SetStaticPhysics(asChild,false);
+		Entity_AddImpulse(asChild,cVector3f(5,0,0),false,true);
+		
+		return false;
+	}
+	
+	//-----------------------------------------------------------------------------------------
+	
+	bool OnCollideAreaChaseHangingCrate(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		if (!mbFinalChaseInProgress) return true;
+		
+		////////////////////////////////////////
+		// Hanging cargo box just falls straight down
+		Entity_SetActive("block_box_cargocrate",false);
+		Prop_SetStaticPhysics("CargoBox_1",false);
+		Entity_SetInteractionDisabled("CargoBox_1",true);
+		Entity_SetActive("falling_crate_cable_*",false);
+		
+		Entity_SetActive("AreaChaseHangingCrate_*",false);
+		TiltCurieLeft(true);
+		
+		///////////////////////////
+		// Begin the chase
+		
+		
+		//Map_AddTimer("timer_cratecables",0.75f,"TimerCrateCables");
+		
+		return false;
+	}
+	
+	void TimerCrateCables(const tString &in asTimer)
+	{
+		Prop_SetStaticPhysics("falling_crate_cable_*",false);
+	}
+	
+	//-----------------------------------------------------------------------------------------
+	
+	bool OnCollideAreaTiltCurie(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		if (!mbFinalChaseInProgress) return true;
+		
+		// Get uservar from area
+		tString sDirection = Entity_GetVarString(asChild,"");
+		
+		////////////////////////////
+		// Tilt left/right, with or without shake
+		if (sDirection == "left")
+		{
+			TiltCurieLeft(true);
+		}
+		else if (sDirection == "right")
+		{
+			TiltCurieRight(true);
+		}
+		else if (sDirection == "leftnoshake")
+		{
+			TiltCurieRight(false);
+		}
+		else if (sDirection == "rightnoshake")
+		{
+			TiltCurieRight(false);
+		}
+		
+		///////////////////////////
+		// When in the bridge room (floor 1)
+		else if (sDirection == "lockers")
+		{
+			TiltCurieRight(false);
+			SwingDoor_PushOpen("locker_bridge_1",5.0f,4,0.1f);
+			SwingDoor_PushOpen("locker_bridge_2",3.0f,4,0.1f);
+			SwingDoor_PushOpen("locker_bridge_3",2.0f,4,0.1f);
+		}
+		
+		///////////////////////////
+		// Fall through to reset camera to middle
+		else
+		{
+			TiltCurieReset(false);
+		}
+		
+		return false;
+	}
+	
+	//-------------------------------------------------------
+	
+	bool OnCollideAreaChaseSlidingCrates(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		if (!mbFinalChaseInProgress) return true;
+		
+		TiltCurieRight(true);
+		Prop_MoveLinearTo("cargo_crate_19","cargo_crate_19_target",0.75f,0.75f,0.75f,false);
+		return false;
+	}
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// LOOPING VOICE (FIRST FLOOR)
+	/////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	void TimerLoopingVoiceFirstFloor(const tString &in asTimer)
+	{
+		///////////////////////////////////
+		// If player is in the area, play voice and add a long timer
+		if (Entity_GetCollide("Player","AreaNearAutomatedVoice"))
+		{
+			cLux_AddDebugMessage("Play message");
+			Voice_SetSource("AutomatedVoice","AreaStaticVoice",5.0f,10.0f,false);
+			Voice_Play("1_StaticVoice");
+			Map_AddTimer("timer_loopingvoicerepeat",cMath_RandRectf(5.0f,7.0f),"TimerLoopingVoiceFirstFloor");
+		}
+		
+		///////////////////////////////////
+		// Otherwise make it a bit more frequent.
+		else
+		{
+			Map_AddTimer("timer_loopingvoicerepeat",6.0f,"TimerLoopingVoice");
+		}
+	}
+	
+	//-------------------------------------------------------
+	
+	bool OnCollideLoopingVoice(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState == 1)
+		{
+			cLux_AddDebugMessage("Kicked off first floor looping voice");
+			
+			//////////////////////////////
+			// Play looping static voice on first floor
+			Map_AddTimer("timer_loopingvoice",1.0f,"TimerLoopingVoiceFirstFloor");
+			return false;
+		}
+		
+		return true;
+	}
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// LOOPING VOICE (BRIDGE - SECOND FLOOR)
+	/////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	
+	void TimerLoopingVoiceBridge(const tString &in asTimer)
+	{
+		///////////////////////////////////
+		// If player is in the area, play voice and add a long timer
+		if (Entity_GetCollide("Player","AreaBridgeDeck"))
+		{
+			cLux_AddDebugMessage("Play message");
+			Voice_SetSource("Captain","AreaBridgeVoiceSource",5.0f,10.0f,false);
+			Voice_Play("CaptainDialog_1");
+			Map_AddTimer("timer_loopingvoicebridgerepeat",cMath_RandRectf(5.0f,7.0f),"TimerLoopingVoiceBridge");
+		}
+		
+		///////////////////////////////////
+		// Otherwise make it a bit more frequent.
+		else
+		{
+			Map_AddTimer("timer_loopingvoicebridgerepeat",6.0f,"TimerLoopingVoiceBridge");
+		}
+	}
+	
+	//-------------------------------------------------------
+	
+	bool OnCollideAreaBridgeDeck(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState == 1)
+		{
+			cLux_AddDebugMessage("Kicked off bridge looping voice");
+			
+			//////////////////////////////
+			// Play looping static voice on first floor
+			Map_AddTimer("timer_loopingbridgedeck",1.0f,"TimerLoopingVoiceBridge");
+			return false;
+		}
+		return true;
+	}
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// LOOPING VOICE (COMM ROOM - THIRD FLOOR)
+	/////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	void TimerLoopingVoiceCommRoom(const tString &in asTimer)
+	{
+		///////////////////////////////////
+		// If player is in the area, play voice and add a long timer
+		if (Entity_GetCollide("Player","AreaCommRoom"))
+		{
+			cLux_AddDebugMessage("Play message");
+			Voice_SetSource("Captain","AreaCommRoomVoiceSource",5.0f,10.0f,false);
+			Voice_Play("CaptainDialog_2");
+			Map_AddTimer("timer_loopingvoicecommroomrepeat",cMath_RandRectf(5.0f,7.0f),"TimerLoopingVoiceCommRoom");
+		}
+		
+		///////////////////////////////////
+		// Otherwise make it a bit more frequent.
+		else
+		{
+			Map_AddTimer("timer_loopingvoicecommroomrepeat",6.0f,"TimerLoopingVoiceCommRoom");
+		}
+	}
+	
+	//-------------------------------------------------------
+	
+	bool OnCollideAreaCommRoom(const tString &in asParent, const tString &in asChild, int alState)
+	{	
+		if (alState == 1)
+		{
+			cLux_AddDebugMessage("Kicked off Comm Room looping voice");
+			
+			//////////////////////////////
+			// Play looping static voice on first floor
+			Map_AddTimer("timer_loopingvoicecommroomrepeat",1.0f,"TimerLoopingVoiceCommRoom");
+			return false;
+		}
+		return true;
+	}
+	
+	//-------------------------------------------------------
+	
+	//////////////////////////////////////////
+	//========================================
+	// FLESHER ENCOUNTERS & SIGHTINGS
+	//========================================
+	//{///////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	//-------------------------------------------------------
+	
+	//////////////////////////////////////////
+	//========================================
+	// FLESHER ENCOUNTERS - FLOOR 1
+	//========================================
+	//{///////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	//-------------------------------------------------------
+	
+	//////////////////////////////////////////
+	// FLESHER IS SEEN THROUGH WINDOW AND BEGINS PATROL
+	//{///////////////////////////////////////
+	
+	//-------------------------------------------------------
+	bool mbWindowFlesherPatrolStarted = false;
+	//-------------------------------------------------------
+		
+	bool WindowFlesherAppear(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState == 1)
+		{
+			//////////////////////////////////
+			// Flesher staring in through the window at the player
+			Entity_SetActive("agent_flesher_floor1",true);
+			Entity_SetActive("WindowFlesherLookAt",true);
+		
+			////////////////////////////////////////////////////////////////////
+			// Activate flesher triggers for return trip
+			Entity_SetActive("Floor1_FlesherTrigger_Walkby",true);
+			Entity_SetActive("Floor1_FlesherTrigger_ActivateSenses",true);
+			
+			return false;
+		}
+		
+		return true;
+	}
+	
+	//-------------------------------------------------------
+
+	void WindowFlesherLookAt_OnPlayerLookAt(const tString &in asEntity, int alState)
+	{
+		////////////////////////////////////////////
+		// The first way the player is able to activate the flesher, looking at it and seeing it in the window
+		if (alState == 1)
+		{
+			Map_AddTimer("timer_removewindowflesher",1.1f,"TimerBeginWindowFlesherPatrol");
+		}
+	}
+	
+	//-------------------------------------------------------
+	
+	bool CollideAreaForceFlesherPatrol(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		////////////////////////////////////////////
+		// If the player goes too far up the corridor, we need to kick off the flesher event too
+		if (alState == 1)
+		{
+			Map_AddTimer("timer_removewindowflesher",1.1f,"TimerBeginWindowFlesherPatrol");
+			return false;
+		}
+		
+		return true;
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerBeginWindowFlesherPatrol(const tString &in asTimer)
+	{
+		if (mbWindowFlesherPatrolStarted) return;
+		
+		mbWindowFlesherPatrolStarted = true;
+		
+		////////////////////////////////////////////////
+		// Make flesher walk by the window for build up when player leaves the area
+		Pathfinder_Track_Clear("agent_flesher_floor1");
+		
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_488");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_564");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_565");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_566");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_571");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_577");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_579");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_587");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_588");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_591");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_593");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_33");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_2");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_187");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_221");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_496");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_497");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_499");
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_507");
+		
+		Pathfinder_Track_Start("agent_flesher_floor1",true,1,"");
+		
+		///////////////////////////////////////////
+		// Delay the activation of senses
+		Map_AddTimer("timer_fleshersenses",5.0f,"TimerActivateWindowFlesherSenses");
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerActivateWindowFlesherSenses(const tString &in asTimer)
+	{
+		Agent_SetSensesActive("agent_flesher_floor1",true);
+		AttackMeter_SetAttackerTeleportPosition("SpawnFloor1Flesher_*");
+	}
+	
+	//}-(End Window Flesher)---------------------------------
+	
+	//-------------------------------------------------------
+	
+	//////////////////////////////////////////
+	// FLESHER MOVES TOWARDS THE LADDER AREA WHEN SIMON IS NEAR THE LADDER
+	//{///////////////////////////////////////
+	
+	//-------------------------------------------------------
+	//-------------------------------------------------------
+	
+	bool CollideAreaMoveFlesherToLadder(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState == -1) return true;
+		
+		Pathfinder_Track_Stop("agent_flesher_floor1");
+		Pathfinder_Track_Clear("agent_flesher_floor1");
+		
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_145", 3.0f, 5.0f);
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_224", 3.0f, 5.0f);
+			Pathfinder_Track_Add("agent_flesher_floor1", "PathNodeArea_128", 3.0f, 5.0f);
+			
+		Pathfinder_Track_Start("agent_flesher_floor1",true,1,"");
+		
+		return false;
+	}
+	
+	//-------------------------------------------------------
+	
+	bool CollideAreaDisableLadderFlesher(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState == -1) return true;
+		
+		Agent_SetAutoDisableWhenOutOfSightActive("agent_flesher_floor1",true,6.0f);
+		
+		return false;
+	}	
+		
+	//}-(end ladder flesher)---------------------------------
+	
+	//}-(end flesher encounters)-----------------------------
+	
+	//-------------------------------------------------------
+	
+	//////////////////////////////////////////
+	// FLOOR 2 FLESHER
+	//{///////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	bool CollideAreaMoveKitchenFlesher(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != -1) return true;
+		
+		Entity_SetActive("agent_flesher_floor2",true);
+		Agent_SetSensesActive("agent_flesher_floor2",true);
+		
+		AttackMeter_SetAttackerTeleportPosition("SpawnFloor2Flesher_*");
+		cLux_AddDebugMessage("Floor 2 Flesher activated");
+		
+		
+		/////////////////////////////////////
+		// Move the flesher outside of the kitchen
+		Pathfinder_Track_Clear("agent_flesher_floor2");
+			
+			// new path:
+			//PathNodeArea_409
+			//PathNodeArea_411
+			//PathNodeArea_271
+			//PathNodeArea_274
+			//PathNodeArea_425
+			//PathNodeArea_279
+			//PathNodeArea_281 // wait here - then go back.. but also activate the remove@distance thing
+			
+			Pathfinder_Track_Add("agent_flesher_floor2","PathNodeArea_409", 3.0f, 5.0f);
+			Pathfinder_Track_Add("agent_flesher_floor2","PathNodeArea_411");
+			Pathfinder_Track_Add("agent_flesher_floor2","PathNodeArea_271");
+			Pathfinder_Track_Add("agent_flesher_floor2","PathNodeArea_274");
+			Pathfinder_Track_Add("agent_flesher_floor2","PathNodeArea_425");
+			Pathfinder_Track_Add("agent_flesher_floor2","PathNodeArea_279");
+			Pathfinder_Track_Add("agent_flesher_floor2","PathNodeArea_281", 3.0f, 5.0f);
+		
+		
+		Pathfinder_Track_Start("agent_flesher_floor2", true);
+		
+		Entity_SetActive("AreaMoveKitchenFlesher_*",false);
+		return false;
+	}
+	
+	//-------------------------------------------------------
+	
+	bool OnCollideAreaDisableSecondFlesher(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		
+		/////////////////////////////////////
+		// Make kitchen flesher teleport away when out of range
+		Agent_SetAutoDisableWhenOutOfSightActive("agent_flesher_floor2",true,6.0f);
+		
+		return false;
+	}
+	
+	//-------------------------------------------------------
+	
+	bool OnCollideAreaDisableFlesherF2(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		Agent_SetAutoDisableWhenOutOfSightActive("agent_flesher_floor2",true,10.0f);
+		
+		return false;
+	}
+	
+	//}-(end floor 2 flesher)-------------------------------
+	
+	//------------------------------------------------------
+	
+	////////////////////////////////////////////////////////
+	// SCENE 3 EVENT A - ENCOUNTER - FLESHER AFTER TENTACLE REMOVAL
+	////////////////////////////////////////////////////////
+	
+	//------------------------------------------------------
+	bool mbPlayerHidingInVent = false;
+	//------------------------------------------------------
+	
+	void TimerFlesherElectrics(const tString &in asTimer)
+	{
+		Entity_SetActive("Agent_Flesher_Electrics", true);
+		Effect_VideoDistortion_Start(1.0f,2.75f,0.05f,0.05f,1.0f);
+		
+		Music_Play("02_01_flesher_examine", 0.5f, true, eMusicPrio_BigEvent);
+		
+		Pathfinder_Track_Clear("Agent_Flesher_Electrics");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_68");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_348");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_347");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_69");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_70");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_78"); 
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_75");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_77");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_316");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_333");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_334");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_231");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_336");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_232");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_340");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_342");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_233");
+			Pathfinder_Track_Add("Agent_Flesher_Electrics", "PathNodeArea_89");
+		Pathfinder_Track_Start("Agent_Flesher_Electrics",true,1,"");
+	}
+		
+	//------------------------------------------------------
+	
+	bool mbElectricFlesherSweetenerSoundTriggered = false;
+	void LookAtElectricFlesher(const tString &in asEntity, int alState)
+	{
+		if(mbElectricFlesherSweetenerSoundTriggered == false)
+		{
+			Sound_CreateAtEntity("FlesherElectricSweetener", "02_02_ms_curie_inside/SFX/flesher_sweeteners/ladder_flesher_waiting", "Player");
+			mbElectricFlesherSweetenerSoundTriggered = true;
+		}
+	}
+		
+	//------------------------------------------------------
+	
+	bool CollideAreaInsideVent(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		mbPlayerHidingInVent = alState == 1 ? true : false;
+		Entity_SetActive("TransformersVentRepel",mbPlayerHidingInVent);
+		return true;
+	}
+	
+	//------------------------------------------------------
+	
+	bool OnCollideAreaDisableElectricsFlesher(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != -1) return true;
+		
+		Agent_SetAutoDisableWhenOutOfSightActive("Agent_Flesher_Electrics",true,15.0f);
+		Music_Stop(5.0f, eMusicPrio_BigEvent);
+		return false;
+	}
+	
+	
+	
+	//-------------------------------------------------------
+	
+	///////////////////////////////////////////
+	// FLESHER CHASE
+	///////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	void SetupFinalChase()
+	{
+		/////////////////////////////////////////
+		// Activate the flesher but leave senses turned off for now
+		Entity_SetActive("agent_flesher_finalchase",true);
+		Agent_SetSensesActive("agent_flesher_finalchase",false);
+		
+		OpenChaseDoors();
+	}
+	
+	//-------------------------------------------------------
+	
+	void OpenChaseDoors()
+	{
+		/////////////////////////////
+		// Help the players flow by forcing these doors to be open
+		SwingDoor_SetOpenAmount("swingdoor_gate_electrical_1",1.0f);
+		
+		
+		PhysicsSlideDoor_AutoMoveToState("CargoBayDoor",1);
+		PhysicsSlideDoor_AutoMoveToState("shipwreck_slidedoor_medium_1",1);
+		PhysicsSlideDoor_AutoMoveToState("shipwreck_slidedoor_medium_4",1);
+		SlideDoor_SetOpenAmount("Floor3Door_Middle",1.0f,true);
+		PhysicsSlideDoor_AutoMoveToState("Floor2Door",1);
+	}
+	
+	//-------------------------------------------------------
+	
+	void BeginFinalChase()
+	{
+		StartEscapeMusic();
+		
+		/////////////////////////////
+		// Kick off the chase
+		Flesher_SetHuntOnlyAttackWhenLooking("agent_flesher_finalchase", true);
+		Agent_SetSensesActive("agent_flesher_finalchase",true);
+		Map_AddTimer("timer_finalchase",1.0f,"TimerFinalChase");
+		
+		//////////////////////////////
+		// Make Flesher scream
+		cLux_AddTodoMessage("SOUND: Player MUST hear the flesher screech here to alert the player that danger is near");
+		Sound_CreateAtEntity("sfx_scream_finalchase","NPC_Creatures/Vocalisations/InWorld/Flesher/ladder_scream","agent_flesher_finalchase",0.0f, false, 1.0f);
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerFinalChase(const tString &in asTimer)
+	{
+		Agent_RevealPlayerPosition("agent_flesher_finalchase");
+		Flesher_HuntPlayer("agent_flesher_finalchase");
+		Map_AddTimer("timer_finalchase",0.5f,"TimerFinalChase");
+	}
+	
+	//-------------------------------------------------------
+	
+	void StopFinalChase()
+	{
+		Map_RemoveTimer("timer_finalcahse");
+		Entity_SetActive("agent_flesher_finalchase",false);
+	}
+
+	//}------------------------------------------------------
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// SCENE 1 - FIRST FLOOR
+	/////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	void StartIntro()
+	{
+		Map_AddTimer("timer_intronarration",3.0f,"TimerIntroMessage");
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerIntroMessage(const tString &in asTimer)
+	{
+		Voice_Play("1_EnterLevel");
+	}
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// Scene 1 - Begin music
+	/////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	bool CollideAreaBeginMusic(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		
+		cLux_AddTodoMessage("SOUND/MUSIC : Enter the survival horror");
+		StartAmbientCurieMusic();
+		
+		return false;
+	}
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// Scene 1 - Open locker, debris comes out
+	/////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	bool CollisionDebrisLockerOpened(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if(cScript_GetGlobalVarBool("2.1LockerSceneOccured") == true) return false; //Locker is in 2.1 transfer area
+		
+		for (int i = 1; Entity_Exists("LockerDebris_" + i); i++)
+		{
+			Prop_SetStaticPhysics("LockerDebris_" + i, false);
+			cVector3f vImpulse = cVector3f(1.f, cMath_RandRectf(-0.5f, 0.5f), cMath_RandRectf(-0.5f, 0.5f));
+			vImpulse.Normalize();
+			Entity_AddImpulse("LockerDebris_" + i, vImpulse * 0.3f, false, true);
+		}
+		
+		return false;
+	}
+	
+	//-------------------------------------------------------
+	
+	void PlayerInteract_EntranceDoor(const tString &in asEntity)
+	{
+		/////////////////////////////////////
+		// Feedback to indicate that the entrance door is locked and player cannot go back
+		if(Map_TimeHasPassed("EntranceDoor",2)==false) return;
+		
+		Sound_CreateAtEntity("JammedDoor", "Entities_Station/doors/electrical_doors/door_heavy_jam", asEntity, 0.1f, false);
+	}
+	
+	
+	
+	//-------------------------------------------------------
+	
+	//////////////////////////////////////////////////
+	// Scene 1 - Event b - Find and interact with the wheel
+	//////////////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	void InteractLadderWheel(const tString &in asEntity)
+	{
+	
+	}
+	
+	//-------------------------------------------------------
+	
+	int mlWelderFootsteps = 0;
+	
+	//-------------------------------------------------------
+
+	/////////////////////////////////////////////////////
+	// Scene 1 - Shark outside of window
+	/////////////////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	bool Collide_SharkActivate(const tString&in asParent, const tString&in asChild, int alState)
+	{
+		Entity_SetActive("shark_scalloped_hammerhead_1", alState==1);
+		
+		return true;
+	}
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////////////////
+	// Scene 1 - Event D * Notice sounds: Look up ceiling tunnel
+	/////////////////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////////////////////
+	// Scene 1 - Event H2 - TURN WHEEL, LOWER LADDER
+	/////////////////////////////////////////////////////////
+	
+	//--------------------------------------------------------
+	
+	void OnChangeLadderWheel(const tString &in asEntity, int alState)
+	{
+		if (alState != 1) return;
+		
+		
+		MoveObject_SetStateExt("CrewQuarterLadder", 1.f, 2, 1, 0, false);
+		
+		//Sound
+		Sound_CreateAtEntity("LadderDrop", "02_02_ms_curie_inside/SFX/ladder_drop/ladder_drop", "CrewQuarterLadder");
+
+		Map_AddTimer("CrewQuarterLadderSoundTimer", 4, "TimerAcivateLadderArea");
+		
+		Map_AddTimer("timer_flesher_ladder",5.0f,"TimerFlesherLadder");
+	}
+
+	//-------------------------------------------------------
+		
+	void TimerAcivateLadderArea(const tString &in asTimer)
+	{
+		Entity_SetActive("CrewQuarterLadderArea", true);
+	}
+			
+	//-------------------------------------------------------
+	
+	///////////////////////////////////////////////
+	// Scene 1 - Glove comes out of cabinet
+	///////////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	bool CollisionPushOutGlove(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		Entity_AddImpulse("BaseballGlove", cVector3f_Back * 1.f, false, true);
+		return true;
+	}
+	
+	//-------------------------------------------------------
+	
+	////////////////////////////////////////////////
+	// Scene 1 - Player detaches tentacle from console on lower floor
+	///////////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	void WauCable_Lower_Detach(const tString &in asStickyArea, const tString &in asBodyName)
+	{
+		///////////////////////////////
+		// Cabin light goes out as does terminal
+		Terminal_SetGuiActive("TerminalCabin",false,3.0f);
+		Map_RemoveTimer("timer_loopingvoice");
+		Map_AddTimer("timer_disablesideroom",3.0f,"TimerDisableSideRoomElectrics");
+		
+		Effect_Shake_Start(cMath_RandRectf(0.025f,0.05f),0.5f,0.2f,0.2f);
+		ParticleSystem_CreateAtEntity("ps_sparks_lower","elec_spark_medium_oneshot","EffectAreaLowerConsole",true);
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerDisableSideRoomElectrics(const tString &in asTimer)
+	{
+		Lamp_SetLit("warninglight_lower_consoleroom",false,true);
+		Lamp_SetLit("ceiling_large_single_consoleroom",false,true);
+		Voice_StopAll();
+		
+		Effect_Shake_Start(cMath_RandRectf(0.025f,0.05f),1.5f,0.2f,0.2f);
+		ParticleSystem_CreateAtEntity("ps_sparks_lower","elec_spark_medium_oneshot","EffectAreaLowerConsole",true);
+	}
+	
+	//-------------------------------------------------------
+	
+	////////////////////////////////////////////////
+	// Scene 1 - Player uses WAU flower in screen room
+	////////////////////////////////////////////////
+
+	//-------------------------------------------------------
+	
+	void WauFlower_ScreenRoom_Callback(const tString &in asEntity)
+	{
+		Effect_Shake_Start(cMath_RandRectf(0.025f,0.05f),1.5f,0.2f,0.2f);
+		//Terminal_SetGuiActive("terminal_screenroom_1",false,3.0f);
+		ParticleSystem_CreateAtEntity("ps_sparks_lower","elec_spark_medium_oneshot","EffectAreaScreenRoom",true);
+		//Map_AddTimer("timer_disablesideroom2",3.0f,"TimerDisableScreenRoomElectrics");
+		
+		DrainAllWauFlowers();
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerDisableScreenRoomElectrics(const tString &in asTimer)
+	{
+		Terminal_SetGuiActive("terminal_screenroom_2",false,5.0f);
+		Effect_Shake_Start(cMath_RandRectf(0.025f,0.05f),1.5f,0.2f,0.2f);
+		
+		ParticleSystem_CreateAtEntity("ps_sparks_lower","elec_spark_medium_oneshot","EffectAreaScreenRoom",true);
+		
+		Lamp_SetLit("warninglight_screenroom",false,true);
+	}
+	
+	//-------------------------------------------------------
+	
+	///////////////////////////////////////////////
+	// Fish comes out of closet
+	///////////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	bool CollisionFishLeavesCloset(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		Entity_AddImpulse("FishLocker", cVector3f_Forward*3, true, true);
+		Entity_SetActive("LockerFish", true);
+		cLux_AddTodoMessage("Sound: Somewhat loud metal slam sound.");
+		Sound_CreateAtEntity("LockerFishEmerge", "physics/metal/hollow/impact", "LockerFish", 0, false);
+		return false;
+	}
+	
+	//-------------------------------------------------------
+	
+	bool CollisionLockerFishTarget(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		// Simple path for locker fish
+		
+		if (asParent == "LockerFishTarget_1")
+			Critter_SetGroupEntity(asChild, "LockerFishTarget_2");
+		else if (asParent == "LockerFishTarget_2")
+			Critter_SetGroupEntity(asChild, "LockerFishTarget_3");
+		else if (asParent == "LockerFishTarget_3")
+			Critter_SetGroupEntity(asChild, "LockerFishTarget_4");
+		return false;
+	}
+	
+	//-------------------------------------------------------
+	
+	void LookAtLockerFish(const tString &in asEntity, int alState)
+	{
+		if (alState == 1)
+		{
+			Map_RemoveTimer("LockerFishRemoveTimer");
+		}
+		else
+		{
+			// Delay removal slightly so player has a chance to turn around as it goes behind him
+			Map_AddTimer("LockerFishRemoveTimer", 2.f, "TimerRemoveLockerFish");
+		}
+		
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerRemoveLockerFish(const tString &in asTimer)
+	{
+		Entity_SetActive("LockerFish", false);
+	}
+	
+	//------------------------------------------------------
+	
+	///////////////////////////////////////////
+	// SCENE 2 - Floor 2 - Bridge Deck
+	//{////////////////////////////////////////
+	
+	//------------------------------------------------------
+	
+	bool mbPlayerDiedSecondFloor = false;
+	
+	//------------------------------------------------------	
+	
+	void WauFlowerDrained_Floor1(const tString &in asEntity)
+	{
+		Lamp_SetLit("WauFlowerLamp_F1_*", false, false);
+		
+		DrainAllWauFlowers();
+	}
+	
+	//------------------------------------------------------
+	
+	///////////////////////////////////////////
+	// SCENE 2 - Event A - Plug Catherine in to Lifeboat
+	///////////////////////////////////////////
+	
+	//------------------------------------------------------
+	
+	
+	
+	//------------------------------------------------------
+	
+	bool cath_box_tool_CanBeUsed(const tString &in asTool, const tString &in asEntity)
+	{
+		if (asEntity == "Area_PlaceCatherine_Pod") return true;
+		return false;
+	}
+	
+	//-------------------------------------------------------
+
+	tString msPlacedCathboxEntity = "";
+	bool cath_box_tool_OnUse(const tString &in asTool, const tString &in asEntity)
+	{
+		cLux_AddTodoMessage("SCRIPT: Activate Catherine!");
+		
+		////////////////////////////////////////
+		// Disable triggers
+		Entity_SetActive("Area_PlaceCatherine_*",false);
+		
+		/////////////////////////////////////////
+		// Insert Catherine
+		CathTool_Insert("cath_box_tool","cath_terminal_escapepod_3");
+		
+		////////////////////////////////////////
+		// Start dialogue
+		Dialog_StopAll();
+		
+		//////////////////////////////////
+		// Activate the escape pod screens
+		mbCathPluggedIn = true;
+		
+		//////////////////////////////////
+		// Start dialog with Catherine based on situation
+		Voice_StopAll();
+		Map_AddTimer("timer_cathconversation",0.5f,"TimerStartCathConversation");
+		
+		CloseEscapePodDoor();
+		
+		cLux_AddTodoMessage("SCRIPT/ART: Match interior of escape pod to that of 2.3 including lamps");
+		Lamp_SetLit("EscapePodLamp",true,true);
+		
+		return true;
+	}
+	
+	//------------------------------------------------------
+	
+	void TimerStartCathConversation(const tString &in asTimer)
+	{
+		if (mbWAURemoved)
+		{
+			cLux_AddDebugMessage("Catherine plugged in AFTER player messes with power");
+			
+			//////////////////////////////
+			// Play this dialogue if electrics room already done
+			Dialog_StartConversation("Catherine", "PodDisplay_2", 0.5f);
+			Dialog_Begin("Catherine");
+					Dialog_AddBranchAndSubject("3C_LifeBoatEscape_Branch2","","PodEscape");
+			Dialog_End();
+			
+			Entity_SetActive("Agent_*",false);
+			
+			SealPodDoors();
+		}
+		else
+		{
+			cLux_AddDebugMessage("Catherine plugged in BEFORE player messes with power");
+			
+			/////////////////////////////////////
+			// Attempt Preload 02_03 at this point
+			AttemptPreloadHere();
+		
+			//////////////////////////////
+			// Play this dialogue if player plugs in Catherine before electrics room puzzle
+			Dialog_StartConversation("Catherine", "PodDisplay_2", 0.5f);
+			Dialog_Begin("Catherine");
+					Dialog_AddBranchAndSubject("2A_PlugInCatherine","","OnCathIntroOver");
+			Dialog_End();
+			
+			
+		}
+	}
+	
+	//------------------------------------------------------
+	
+	void OnCathIntroOver(const tString&in asSubject, bool abStartOfSubject)
+	{
+		//////////////////////////////////////
+		// Callback from dialogue after plugging in Catherine
+		cLux_AddTodoMessage("SCRIPT: Cath intro over");
+		Entity_SetActive("AreaActivatePodReturn_*",true);
+		
+		/////////////////////////////////////
+		// Enable hints if electrics room not yet complete
+		if (mbWAURemoved == false)
+		{
+			CathTool_SetHintsEnabled("cath_box_tool",true);
+			CathTool_SetHintsCallback("cath_box_tool","OnCathHints");
+			Entity_SetActive("BlockBoxEscapePod",false);
+		}
+	}
+	
+	//------------------------------------------------------
+	
+	///////////////////////////////////////////
+	// SCENE 2 - Event B - Return to Lifeboat
+	///////////////////////////////////////////
+	
+	//------------------------------------------------------
+	
+	int mlReturnToPodConversation = 1;
+	bool mbReturnedToPodFromPowerRoom = false;
+	bool mbPlayerKilledMessageAllowed = true;
+	
+	//------------------------------------------------------
+	
+	tString OnCathHints(const tString& in asEntityName) 
+	{
+		//////////////////////////////////
+		// If player has found power room, give hints to wreck it
+		if (mbFoundPowerRoom)
+		{
+			return "HintEscapePod_WreckPowerRoom";
+		}
+		
+		//////////////////////////////////
+		// Otherwise hint to go find it
+		return "HintEscapePod_LookForPowerRoom";
+	}
+	
+	//------------------------------------------------------
+	
+	bool CollideAreaActivatePodReturn(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		if (mbLifeboatAvailable) return false;
+		
+		cLux_AddDebugMessage("Return to pod area active");
+		
+		//////////////////////////////////
+		// Activate the area to return to the escape pod when the player passes through these zones
+		Entity_SetActive("AreaReturnToPod*",true);
+		Entity_SetActive("AreaActivatePodReturn_*",false);
+		
+		return true;
+	}
+	
+	//------------------------------------------------------
+		
+	bool CollideAreaReturnToPod(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		if (mbLifeboatAvailable) return true;
+		
+		cLux_AddDebugMessage("Returning to lifeboat..");
+		
+		////////////////////////////////////////
+		// Swap areas so the player cannot just run in and out of the door and trigger
+		// dialogue.
+		Entity_SetActive("AreaReturnToPod",false);
+		Entity_SetActive("AreaActivatePodReturn_*",true);
+		
+		////////////////////////////////////
+		// If player returns after being killed by a flesher and final chase is not active
+		if (mbPlayerWasKilled && mbPlayerKilledMessageAllowed)
+		{
+			Voice_Play("2C_EnterLifeboatAfterDeath");
+			mbPlayerKilledMessageAllowed = false;
+			return true;
+		}
+		
+		
+		////////////////////////////////////
+		// If player returns after finding the power room and hasn't yet destroyed it, play this once
+		if (mbFoundPowerRoom && !mbReturnedToPodFromPowerRoom && !mbWAURemoved)
+		{
+			Voice_StopAll();
+			Voice_Play("2B_ReturnToLifeboat_PRoom");
+			mbReturnedToPodFromPowerRoom = true;
+			return true;
+		}
+		
+		////////////////////////////////////
+		// Do not play if three conversations have been had
+		if (mlReturnToPodConversation > 3) return true;
+		
+		cLux_AddDebugMessage("Triggering conversation");
+		
+		Voice_StopAll();
+		Voice_Play("2B_ReturnToLifeboat_"+mlReturnToPodConversation);
+		mlReturnToPodConversation++;
+		
+		return true;
+	}
+
+	//------------------------------------------------------
+	
+	///////////////////////////////////////////
+	// SCENE 2 - Event C - Flesher Climbs up
+	///////////////////////////////////////////
+	
+	//------------------------------------------------------
+	
+	bool mbFlesherInPodWarningGiven = false;
+
+	//------------------------------------------------------
+	
+	/*bool CollideAreaFlesherClimbsLadder(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		
+		//////////////////////////////////////
+		// We hear the player climbing up the ladder
+		cLux_AddTodoMessage("SOUND: Flesher is climbing ladder");
+		
+		///////////////////////////////////////
+		// Activate flesher
+		Entity_SetActive("Agent_Flesher_Ladder",true);
+		
+		//////////////////////////////////////
+		// Activate area to make the sound stop if the player goes back (Flesher should be at top of ladder so we dont break the illusion)
+		Entity_SetActive("AreaStopLadderSound",true);
+		
+		//////////////////////////////////////
+		// Add a timer to start the flesher patrolling (Sync the time on this with the sound)
+		cLux_AddTodoMessage("SOUND/SCRIPT: Sync the flesher starting his patrol with climbing sound");
+		Map_AddTimer("timer_flesherpatrol",4.0f,"TimerBeginLadderFlehserPatrol");
+		
+		
+			
+		return false;
+	}
+	
+	//------------------------------------------------------
+	
+	bool CollideAreaStopLadderSound(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		
+		cLux_AddTodoMessage("SOUND: Stop the flesher climbing sound if the player goes back this far");
+		cLux_AddTodoMessage("SOUND/SCRIPT: Start the flesher patrol early if sound is interrupted");
+		
+		//////////////////////////////////////////////////
+		// Remove existing timer and start a new one
+		Map_RemoveTimer("timer_flesherpatrol");
+		Map_AddTimer("timer_flesherpatrol",0.1f,"TimerBeginLadderFlehserPatrol");
+		
+		return false;
+	}
+	
+	//------------------------------------------------------
+	
+	void TimerBeginLadderFlehserPatrol(const tString &in asTimer)
+	{
+		////////////////////////////////////////////
+		// Door is locked behind 
+		SwingDoor_SetClosed("LadderPathHatch_Open",true,true);
+		SwingDoor_SetLocked("LadderPathHatch_Open",true,true);
+		
+		///////////////////////////////////////////
+		// Deactivate area that interrupts ladder sound since he's now patrolling
+		Entity_SetActive("AreaStopLadderSound",false);
+		
+		//////////////////////////////////////////
+		// Start Flesher patrol
+		Pathfinder_Track_Clear("Agent_Flesher_Ladder");
+			Pathfinder_Track_Add("Agent_Flesher_Ladder", "PathNodeArea_184");
+			Pathfinder_Track_Add("Agent_Flesher_Ladder", "PathNodeArea_190");
+			Pathfinder_Track_Add("Agent_Flesher_Ladder", "PathNodeArea_491");
+			Pathfinder_Track_Add("Agent_Flesher_Ladder", "PathNodeArea_195");
+			Pathfinder_Track_Add("Agent_Flesher_Ladder", "PathNodeArea_197");
+			Pathfinder_Track_Add("Agent_Flesher_Ladder", "PathNodeArea_198");
+			Pathfinder_Track_Add("Agent_Flesher_Ladder", "PathNodeArea_492");
+			Pathfinder_Track_Add("Agent_Flesher_Ladder", "PathNodeArea_431");
+			Pathfinder_Track_Add("Agent_Flesher_Ladder", "PathNodeArea_196");
+			Pathfinder_Track_Add("Agent_Flesher_Ladder", "PathNodeArea_281");
+		Pathfinder_Track_Start("Agent_Flesher_Ladder",true,1,"");
+	}*/
+	
+	//------------------------------------------------------
+	
+	bool CollideFlesherEntersPod(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		/////////////////////////////////////////////////////////
+		// Player needs to be inside the pod for this to happen and the warning must not have been played
+		if (Entity_GetCollide("Player","PodArea") == false) return true;
+		if (mbFlesherInPodWarningGiven) return false;
+			
+		//////////////////////////////////////////
+		// It is possible that this flesher gets inside the escape pod while Simon is in there
+		cLux_AddTodoMessage("SCRIPT/DIALOG: Look out Simon!");
+		Voice_Play("2C_FlesherEntersLifeboat");
+		
+		mbFlesherInPodWarningGiven = true;
+		
+		return false;
+	}
+	
+	//------------------------------------------------------
+	
+	bool CollideFlesherPodWarning(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		/////////////////////////////////////////////////
+		// Flesher must be inside pod and the warning must not have been played
+		if (Entity_GetCollide("Agent_Flesher_Ladder","PodArea") == false) return true;
+		if (mbFlesherInPodWarningGiven) return false;
+		
+		/////////////////////////////////////////////////
+		// If the flesher is already inside the pod when Simon enters we also play a warning
+		Voice_Play("2C_FlesherEntersLifeboat");
+		
+		mbFlesherInPodWarningGiven = true;
+		return false;
+	}
+	
+	//------------------------------------------------------
+	
+	//} END OF SCENE 2
+	
+	//------------------------------------------------------
+		
+	///////////////////////////////////////////
+	// SCENE 3 - Floor 3 
+	///////////////////////////////////////////
+		
+	//------------------------------------------------------
+	
+	void SetupEnterCargoBay()
+	{
+		// Setup breakable glass
+		Entity_SetVarString("BreakableGlass_1", "NextBrokenStep", "BreakableGlass_1_Minor");
+		Entity_SetVarString("BreakableGlass_1_Minor", "NextBrokenStep", "BreakableGlass_1_Damaged");
+		Entity_SetVarString("BreakableGlass_1_Damaged", "NextBrokenStep", "BreakableGlass_1_Broken");
+		Entity_SetVarString("BreakableGlass_2", "NextBrokenStep", "BreakableGlass_2_Minor");
+		Entity_SetVarString("BreakableGlass_2_Minor", "NextBrokenStep", "BreakableGlass_2_Damaged");
+		Entity_SetVarString("BreakableGlass_2_Damaged", "NextBrokenStep", "BreakableGlass_2_Broken");
+	}
+	
+	//------------------------------------------------------
+	
+	///////////////////////////////////
+	// SCENE 3 - Entering floor 3    //
+	///////////////////////////////////
+	
+	//------------------------------------------------------
+	
+	bool CollisionEnterFloor3(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		
+		
+		////////////////////////////////////
+		// Ensure welder is turned off
+		Entity_SetEffectsActive("WeldingFlare_Electrics",false,false);
+		Entity_SetActive("WeldingFlare_Electrics",false);
+		
+		////////////////////////////////////
+		// Enable Catherine Radio Area in Electrics
+		Entity_SetActive("TriggerArea_ElectricRoom",true);
+		
+		
+		return false;
+	}
+	
+	//------------------------------------------------------
+
+	void WauFlowerDrained_Floor2(const tString &in asEntity)
+	{
+		Lamp_SetLit("WauFlowerLamp_F2_*", false, false);
+		
+		DrainAllWauFlowers();
+	}
+	
+	//------------------------------------------------------
+	
+	///////////////////////////////////////////////////////
+	// SCENE 3 EVENT A Remove WAU stuff in Power Room
+	///////////////////////////////////////////////////////
+	
+	//------------------------------------------------------
+	
+	int mlTentaclesDetached = 0;
+	tString msRespawnPoint = "post_flesher_spawn";
+	
+	//------------------------------------------------------
+	
+	void SetupElectricsTentacles()
+	{
+		StickyArea_AttachBody("CylinderWauCable_1_Sticky","CylinderWauCable_1_Body_11");
+		StickyArea_AttachBody("CylinderWauCable_2_Sticky","CylinderWauCable_2_Body_11");
+		StickyArea_AttachBody("CylinderWauCable_3_Sticky","CylinderWauCable_3_Body_11");
+		StickyArea_AttachBody("CylinderWauCable_4_Sticky","CylinderWauCable_4_Body_11");
+		StickyArea_AttachBody("CylinderWauCable_5_Sticky","CylinderWauCable_5_Body_11");
+		StickyArea_AttachBody("CylinderWauCable_6_Sticky","CylinderWauCable_6_Body_11");
+		
+		ParticleSystem_SetActive("PS_Electric_Squirt_*",false);
+	}
+	
+	//------------------------------------------------------
+	
+	bool EnterElectricRoom(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		mbFoundPowerRoom = true;
+		
+		/////////////////////////////////////
+		// Attempt Preload 02_03 at this point
+		AttemptPreloadHere();
+			
+		return false;
+	}
+	
+	//------------------------------------------------------
+	
+	void CylinderWauCable_Sticky_Detach(const tString &in asStickyArea, const tString &in asBodyName)
+	{
+		
+		cLux_AddDebugMessage("STICK AREA : " +asStickyArea);
+		
+		////////////////////////////////////////////////
+		// Which tentacle is being detached? Specify terminal
+		int lTerminalNumber = -1;
+		
+		if (asStickyArea == "CylinderWauCable_1_Sticky")
+			lTerminalNumber = 1;
+		if (asStickyArea == "CylinderWauCable_2_Sticky")
+			lTerminalNumber = 2;
+		if (asStickyArea == "CylinderWauCable_3_Sticky")
+			lTerminalNumber = 3;
+		if (asStickyArea == "CylinderWauCable_4_Sticky")
+			lTerminalNumber = 4;
+		if (asStickyArea == "CylinderWauCable_5_Sticky")
+			lTerminalNumber = 5;
+		if (asStickyArea == "CylinderWauCable_6_Sticky")
+			lTerminalNumber = 6;
+		
+
+		///////////////////////////////////////////////
+		// Spray structure gel
+		cLux_AddTodoMessage("TODO: DETACH EFFECTS FOR " + lTerminalNumber);
+		Map_AddTimer("EffectAreaSquirt_"+lTerminalNumber,0.1f,"TimerGeneratorOil");
+		ParticleSystem_CreateAtEntity("ps_oil_splash_"+lTerminalNumber,"oil_splash_small_oneshot.ps","EffectAreaSquirt_"+lTerminalNumber,true);
+		
+		
+		// Sound at spark area
+		Sound_CreateAtEntity("Unplug_"+lTerminalNumber, "02_02_ms_curie_inside/SFX/wau_boiler/unplug", "EffectAreaSquirt_"+lTerminalNumber);
+		Sound_Stop("wau_boiler_"+lTerminalNumber, 0.25f);
+		
+		Map_AddTimer("EffectAreaSparks_A_"+lTerminalNumber,cMath_RandRectf(1.0f,2.0f),"TimerGeneratorSparks");
+		Map_AddTimer("EffectAreaSparks_B_"+lTerminalNumber,cMath_RandRectf(2.0f,3.0f),"TimerGeneratorSparks");
+		Map_AddTimer("EffectAreaSparks_C_"+lTerminalNumber,cMath_RandRectf(2.5f,3.5f),"TimerGeneratorSparks");
+		
+		///////////////////////////////////////////////
+		// Increment # of tentacles detached, trigger puzzle solved when all three are detached
+		++mlTentaclesDetached;
+		if (mlTentaclesDetached >= 3)
+		{
+			OnElectricsPuzzleSolved();
+		}
+		
+		//////////////////////////////
+		// Begin Flesher encounter
+		if (mlTentaclesDetached == 1)
+		{
+			Map_AddTimer("timer_flesherelectrics",4.5f,"TimerFlesherElectrics");
+		}
+		
+		////////////////////////////////////////////////
+		// Delay on effects
+		Map_AddTimer("timer_detachWau_"+mlTentaclesDetached,cMath_RandRectf(1.0f,2.0f),"TimerDetachWau");
+	}
+		
+	//------------------------------------------------------
+	
+	void Timer_ElectricsPuzzleSolved(const tString &in asTimer)
+	{
+		OnElectricsPuzzleSolved();
+	}
+	
+	//------------------------------------------------------
+	
+	void TimerGeneratorOil(const tString &in asTimer)
+	{
+		ParticleSystem_CreateAtEntity("ps_oil_splash_"+asTimer,"oil_splash_small_oneshot.ps",asTimer,true);
+		
+		// Loop timer
+		Map_AddTimer(asTimer,cMath_RandRectf(0.75f,2.25f),"TimerGeneratorOil");
+	}
+	
+	//------------------------------------------------------
+	
+	void TimerGeneratorSparks(const tString &in asTimer)
+	{
+		ParticleSystem_CreateAtEntity("ps_sparks_"+asTimer,"elec_spark_medium_oneshot",asTimer,true);
+		ParticleSystem_CreateAtEntity("ps_sparks_"+asTimer,"elec_spark_physics_few_oneshot",asTimer,true);
+		
+		// Loop timer
+		Map_AddTimer(asTimer,cMath_RandRectf(2.0f,3.0f),"TimerGeneratorSparks");
+	}
+	
+	//------------------------------------------------------
+	
+	void TimerShipShakes(const tString &in asTimer)
+	{
+		float fTime = 3.0f;
+		Effect_Shake_Start(cMath_RandRectf(0.025f,0.05f),fTime,0.2f,0.2f);
+		
+		Map_AddTimer("timer_shipshakes",fTime + 0.5f,"TimerShipShakes");
+	}
+	
+	//------------------------------------------------------
+	
+	void TimerDetachWau(const tString &in asTimer)
+	{
+		// Number of tentacles detached is passed as timer name and we cast this to a float
+		int lPhase = mlTentaclesDetached;
+		float fModifier = mlTentaclesDetached * 0.015f;
+		
+		// Three different phases of tentacle removal
+		cLux_AddDebugMessage("Phase: " + lPhase);
+		switch (lPhase)
+		{
+			////////////////////////////
+			// First tentacle is detached
+			case 1:
+				Sound_CreateAtEntity("ReactorBlow1", "02_02_ms_curie_inside/SFX/wau_boiler/reactor_explosions/explosion_01", "Player");
+				Sound_FadeGlobalVolume(0.25f, 0.05f);
+				Map_AddTimer("ReactorFadeIn", 0.5f, "ReactorFadeIn");
+				Effect_Shake_Start(0.05f + fModifier,1.0f,0.2f,0.2f);
+			break;
+			
+			////////////////////////////
+			// Second tentacle is detached
+			case 2:
+				Map_AddTimer("SecondTentacle", 1.0f, "ReactorShake");
+			break;
+			
+			////////////////////////////
+			// Third tentacle is detached
+			case 3:
+				Map_AddTimer("ThirdTentacle", 1.0f, "ReactorShake");
+			break;
+			
+			default:
+			/* Not used */
+			break;
+		}
+	}
+	
+	//------------------------------------------------------
+	
+	void ReactorShake(const tString &in asTimer)
+	{
+		if(asTimer=="SecondTentacle")
+		{
+			Sound_CreateAtEntity("ReactorBlow2", "02_02_ms_curie_inside/SFX/wau_boiler/reactor_explosions/explosion_02", "Player");
+			Sound_Stop("ReactorBlow1", 0.05f);
+			Sound_FadeGlobalVolume(0.2f, 0.05f);
+			Map_AddTimer("ReactorFadeIn", 0.5f, "ReactorFadeIn");
+			Effect_Shake_Start(0.1, 0.3, 0.1, 0.3);
+			Player_FadeRollTo(-5.0f,2.0f,3.0f);
+		}
+		if(asTimer=="ThirdTentacle")
+		{
+			Sound_CreateAtEntity("ReactorBlow3", "02_02_ms_curie_inside/SFX/wau_boiler/reactor_explosions/explosion_03", "Player");
+			Sound_Stop("ReactorBlow2", 0.05f);
+			Sound_FadeGlobalVolume(0.2f, 0.05f);
+			Map_AddTimer("ReactorFadeIn", 0.6f, "ReactorFadeIn");
+			Effect_Shake_Start(0.15, 0.3, 0.1, 0.2);
+		}
+	}
+		
+	//------------------------------------------------------
+	
+	void ReactorFadeIn(const tString &in asTimer)
+	{
+		Sound_FadeGlobalVolume(1.0f, 4.0f);
+	}
+	
+	//------------------------------------------------------
+	
+	bool OnCollideSetBlackoutSpawn(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState == 1)
+		{
+			msRespawnPoint = Entity_GetVarString(asChild,"");
+			cLux_AddDebugMessage("Respawn point set to : " + msRespawnPoint);
+		}
+		
+		return true;
+	}
+
+	//------------------------------------------------------
+	
+	void OnElectricsPuzzleSolved()
+	{
+		if (mbWAURemoved) return;
+		
+		cLux_AddTodoMessage("SCRIPT: Catherine Radio transmission. Get to da lifeboat!!");
+		cLux_AddTodoMessage("SCRIPT: Creepier lighting!");
+		mbLifeboatAvailable = true;
+		mbWAURemoved = true;
+		mbPlayerKilledMessageAllowed = false;
+		
+		//////////////////////////////////////
+		// Disable return to pod areas
+		Entity_SetActive("AreaReturnToPod*",false);
+		Entity_SetActive("AreaActivatePodReturn_*",false);
+		
+		// Enable chasing flesher
+		SetupFinalChase();
+		
+		//////////////////////////////////////
+		// Activate area to trigger escape
+		// (Note that player will have to plug Catherine in to start the escape if they havent already)
+		Entity_SetActive("AreaEscapeInPod",true);
+		
+		
+		
+		Map_AddTimer("timer_knockout",0.1f,"SequenceElectricsKnockout");
+		
+		//SequenceFlesherKnockout("");
+		
+		/* We want to progress in to Scene 3 Event B now - some sequences to add tension there */
+		SetupEscapeSequence();
+		
+		mbFinalChaseInProgress = true;
+			
+	}
+	
+	//------------------------------------------------------
+	
+	cSequenceStatesData mSequenceElectricsKnockout;
+	void SequenceElectricsKnockout(const tString &in asTimer)
+	{
+		Sequence_Begin("SequenceElectricsKnockout", mSequenceElectricsKnockout);
+		
+		if (Sequence_DoStepAndWait(0.25f))
+		{
+			cLux_AddTodoMessage("SOUND: Big bang!");
+			
+			Effect_Shake_Start(0.8f,0.25f,0.0f,0.0f);
+			Effect_Flash_Start(0.1,0.15f,0.0f);
+			
+			
+		}
+		else if (Sequence_DoStepAndWait(1.5f))
+		{
+			cLux_AddTodoMessage("SOUND: Get knocked out!");
+			
+			Sound_PlayGui("Player/UI/death_hit", 1.0f);
+			Effect_Fade_Out(0.0f);
+			
+			Entity_SetActive("Agent_Flesher_Electrics",false);
+			
+			
+			cLux_AddTodoMessage("SOUND: Drop out the audio here");
+			Sound_FadeGlobalVolume(0.0f,1.5f);
+		}
+		else if (Sequence_DoStepAndWait(1.0f))
+		{
+			//////////////////////////////////////
+			// Set player knocked down and move to start pos
+			Player_Teleport(msRespawnPoint,true);
+			
+			if (Map_TimerExists("timer_flesherelectrics"))
+				Map_RemoveTimer("timer_flesherelectrics");
+			
+			
+			
+			
+			
+			
+			Player_FadeRollTo(78,10,100);
+			Player_SetForceCrawling(true);
+			Player_SetCrouching(true,true,true);
+			Player_SetStandDisabled(true);
+			Player_SetMoveSpeedMul(0.0f);
+			
+			
+			Entity_SetActive("agent_flesher_finalchase",true);
+			Agent_SetSensesActive("agent_flesher_finalchase",false);
+		}
+		else if (Sequence_DoStepAndWait(2.0f))
+		{
+			cLux_AddTodoMessage("SOUND: Bring audio back in");
+			Sound_FadeGlobalVolume(1.0f,3.0f);
+			
+			Effect_Fade_In(3.0f);
+			Player_SetSlowStandupMotion(true);
+			Player_SetForceCrawling(false);
+			Player_SetStandDisabled(false);
+			Player_SetCrouching(false);
+			Player_SetStandDisabled(true);
+			Player_FadeMoveSpeedMulTo(1.0f,3.0f);
+			Player_SetAfterDamageCrawl(false);
+			Player_FadeRollTo(0,8,30);
+			Player_FadeMoveSpeedMulTo(1.0f,3.0f);
+			
+			//////////////////////////////////////
+			// Set emergency states and start falling cylinders
+			
+			SlideDoor_SetClosed("CargoBayDoor",false,true);
+			SlideDoor_SetClosed("StorageRoomDoor",false,true);
+			SlideDoor_SetClosed("StorageRoomDoor_1",true,true);
+			Entity_SetActive("falling_crate_cable_*",false);
+			
+			SequenceFallingCylinders("");
+			SetEmergencyLampsActive(true);			
+		}
+		else if (Sequence_DoStepAndWait(2.0f))
+		{
+			Player_SetStandDisabled(false);
+			Player_SetSlowStandupMotion(false);
+		}
+		else if (Sequence_DoStepAndWait(0.0f))
+		{
+			/////////////////////////////////
+			// Begin Hunt!
+			Agent_SetSensesActive("agent_flesher_finalchase",true);
+			BeginFinalChase();
+		}
+	
+		Sequence_End();
+	}
+	
+	//------------------------------------------------------
+	
+	void TimerAwakenAfterPuzzle(const tString &in asTimer)
+	{
+		
+	}
+	
+	//------------------------------------------------------
+	
+	///////////////////////////////////////////////////////
+	// SCENE 3 - Cylinders Fall
+	///////////////////////////////////////////////////////
+	
+	//------------------------------------------------------
+	
+	bool OnCollideAreaFallingCylinder(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		Effect_Shake_Start(0.015f,1.0f,0.2f,0.2f);
+		ParticleSystem_CreateAtEntity("ps_bubbles_"+asParent,"oneshot_waterbubbles_explosion.ps",asParent,true);
+		//oneshot_waterbubbles_big.ps
+		
+		if(asChild=="ElectricFallingCylinder_1")
+		{
+			Sound_CreateAtEntity("CylinderFall_1", "02_02_ms_curie_inside/SFX/curie_tilt/cylinder_drops/metal_cylinder_drop_03", asChild);
+		}
+		else if(asChild=="ElectricFallingCylinder_2")
+		{
+			Sound_CreateAtEntity("CylinderFall_2", "02_02_ms_curie_inside/SFX/curie_tilt/cylinder_drops/metal_cylinder_drop_02", asChild);
+		}
+		else if(asChild=="ElectricFallingCylinder_3")
+		{
+			Sound_CreateAtEntity("CylinderFall_3", "02_02_ms_curie_inside/SFX/curie_tilt/cylinder_drops/metal_cylinder_drop_01", asChild);
+		}
+		return false;
+	}
+	
+	//----------------------------------------------------------------------
+	
+	cSequenceStatesData mSequenceFallingCylinders;
+		
+	void SequenceFallingCylinders(const tString &in asTimer)
+	{
+		Sequence_Begin("SequenceFallingCylinders", mSequenceFallingCylinders);
+	
+		if (Sequence_DoStepAndWait(1.5f))
+		{
+			
+		}
+		else if (Sequence_DoStepAndWait(3.0f))
+		{
+			Sound_Stop("wau_boiler_*", 0.05f);
+			TiltCurieRight(true);
+			OpenEscapePodDoor();
+			StopMorseCodeSound();
+			ParticleSystem_CreateAtEntity("ps_bubbles_detach_ElectricFallingCylinder_1","oneshot_waterbubbles_explosion.ps","ElectricFallingCylinder_1",false);
+			Prop_SetStaticPhysics("ElectricFallingCylinder_1",false);
+			
+		}
+		else if (Sequence_DoStepAndWait(2.25f))
+		{
+			ParticleSystem_CreateAtEntity("ps_bubbles_detach_ElectricFallingCylinder_2","oneshot_waterbubbles_explosion.ps","ElectricFallingCylinder_2",false);
+			Prop_SetStaticPhysics("ElectricFallingCylinder_2",false);
+		}
+		else if (Sequence_DoStepAndWait(2.25f))
+		{
+			ParticleSystem_CreateAtEntity("ps_bubbles_detach_ElectricFallingCylinder_3","oneshot_waterbubbles_explosion.ps","ElectricFallingCylinder_3",false);
+			Prop_SetStaticPhysics("ElectricFallingCylinder_3",false);
+		}
+		
+		Sequence_End();
+	}
+	
+	
+	
+	//------------------------------------------------------
+	
+	///////////////////////////////////////////////////////
+	// SCENE 3 EVENT B Run to Lifeboat
+	///////////////////////////////////////////////////////
+	
+	//------------------------------------------------------
+	
+	int mlCargoFlesherPatrols = 0;
+	int mlCargoFlesherWindowCount = 0;
+	
+	//------------------------------------------------------
+	
+	void SetupEscapeSequence()
+	{
+		// Some lights are failing
+		Lamp_SetFlickerActive("spotlight_tripod_flesher_lamp_2",true);
+		Lamp_SetLit("sunken_warning*",false,true);
+		Lamp_SetLit("StorageRoomDoorLamp",false,true);
+		
+		cLux_AddTodoMessage("ART: CONNECT ALL LIGHTS AND BILLBOARDS ON RED WARNING LAMPS");
+		
+		///////////////////////////////////////
+		// Activate triggers for return journey
+		//Entity_SetActive("AreaFlesherBreakIn",true);
+			
+	}
+	
+	bool mbIsAlarmSequenceActive = false;
+	void StartAlarmSequence()
+	{
+		if(mbIsAlarmSequenceActive == false)
+		{
+			///////////////////////////////////
+			// Begin alarm and light escape lamps
+			StartEscapeAlarms();
+			Lamp_SetLit("EscapeLamp_*",true,true);
+			mbIsAlarmSequenceActive = true;
+		}
+
+	}
+	
+	//------------------------------------------------------
+	
+	bool CollideAreaFlesherBreakIn(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		//////////////////////////////////////////////////
+		// When player leaves the Electrics room, a Flesher will break in to the Cargo bay
+		if (alState != 1) return true;
+		
+		//////////////////
+		// Disable both areas
+		Entity_SetActive("AreaFlesherBreakIn*",false);
+		
+		//////////////////
+		// Sound/Music
+		cLux_AddTodoMessage("MUSIC: Stringer as Flesher attempts to break in");
+		Music_Play("02_01_fleshervehicle.ogg",1.0f,false,eMusicPrio_BigEvent);
+		
+		/* Determine how the Flesher will get in here */
+		
+		///////////////////////////////////////
+		// First Priority - the Cargo bay doors..
+		if (PhysicsSlideDoor_GetClosed("CargoBayDoor") == false)
+		{
+			
+			Entity_SetActive("Agent*",false);
+			Entity_SetActive("Agent_flesher_windowbreak",true);
+			Entity_PlaceAtEntity("Agent_flesher_windowbreak","Agent_Flesher_WindowDestination",cVector3f_Zero,true);
+			Agent_SetSensesActive("Agent_flesher_windowbreak",true);
+			Map_AddTimer("timer_flesher_startpatrol",1.0f,"TimerCargoFlesherPatrol");
+		}
+		//////////////////////////////////////
+		// Second priority - route via the storage room
+		else if (PhysicsSlideDoor_GetClosed("StorageRoomDoor") == false && PhysicsSlideDoor_GetClosed("StorageRoomDoor_1") == false)
+		{
+			Entity_SetActive("Agent*",false);
+			Entity_SetActive("Agent_flesher_windowbreak",true);
+			Entity_PlaceAtEntity("Agent_flesher_windowbreak","Agent_Flesher_WindowDestination",cVector3f_Zero,true);
+			Agent_SetSensesActive("Agent_flesher_windowbreak",true);
+			Map_AddTimer("timer_flesher_startpatrol",1.0f,"TimerCargoFlesherPatrol");
+		}
+		/////////////////////////////////////
+		// Third priority - it'll break through the window
+		else
+		{
+			SequenceFlesherBreaksGlass("");
+		}
+		
+		return false;
+	}
+	
+	//------------------------------------------------
+	
+	cSequenceStatesData mSequenceFlesherBreaksGlass;
+		
+	void SequenceFlesherBreaksGlass(const tString &in asTimer)
+	{
+		Sequence_Begin("SequenceFlesherBreaksGlass", mSequenceFlesherBreaksGlass);
+	
+		if (Sequence_DoStepAndWait(1.0f))
+		{
+		
+			Entity_SetActive("Agent*",false);
+			Entity_SetActive("Agent_flesher_windowbreak",true);
+			Agent_SetSensesActive("Agent_flesher_windowbreak",false);
+		}
+		if (Sequence_DoStepAndWait(2.25f))
+		{
+			///////////////////////////
+			// First impact..
+			cLux_AddTodoMessage("SOUND:/JUICE: Glass breaking..");
+			Sound_CreateAtEntity("HammerGlassBroken", "flesher/door/breaking", "AreaSFXBreakGlass", 0, false);
+			Entity_SetActive("BreakableGlass_2",false);
+			Entity_SetActive("BreakableGlass_2_Minor",true);
+		}
+		else if (Sequence_DoStepAndWait(2.25f))
+		{
+			Sound_CreateAtEntity("HammerGlassBroken", "flesher/door/breaking", "AreaSFXBreakGlass", 0, false);
+			Entity_SetActive("BreakableGlass_2_Minor",false);
+			Entity_SetActive("BreakableGlass_2_Damaged",true);
+		}
+		else if (Sequence_DoStepAndWait(2.25f))
+		{
+			Sound_CreateAtEntity("HammerGlassBroken", "flesher/door/breaking", "AreaSFXBreakGlass", 0, false);
+			Entity_SetActive("BreakableGlass_2_Damaged",false);
+			Entity_SetActive("BreakableGlass_2_Broken",true);
+		}
+		else if (Sequence_DoStepAndWait(0.0f))
+		{
+			/////////////////////////////////////////
+			// Forcably teleport the Flesher inside this room
+			Entity_PlaceAtEntity("Agent_flesher_windowbreak","Agent_Flesher_WindowDestination",cVector3f_Zero,true);
+			Agent_SetSensesActive("Agent_flesher_windowbreak",true);
+			Map_AddTimer("timer_flesher_startpatrol",1.0f,"TimerCargoFlesherPatrol");
+		}
+		
+		Sequence_End();
+	
+	}
+	
+	//------------------------------------------------------
+	
+	void TimerCargoFlesherPatrol(const tString &in asTimer)
+	{
+		Map_AddTimer("timer_cargoflesherdistortion",cMath_RandRectf(1.0f,2.0f),"TimerCargoFlesherDistortion");
+		
+		Pathfinder_Track_Clear("Agent_flesher_windowbreak");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_522");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_525");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_524");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_523");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_526", 4.0f,7.0f);	// Wait!
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_535");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_537");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_534");
+			
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_530", 4.0f,7.0f); // Wait!
+			
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_534");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_537");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_535");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_526", 4.0f,7.0f);	// Wait!
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_523");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_524");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_525");
+			Pathfinder_Track_Add("Agent_flesher_windowbreak", "PathNodeArea_522");
+		Pathfinder_Track_Start("Agent_flesher_windowbreak",true,1,"");
+	}
+	
+	//------------------------------------------------------
+	
+	void OnCargoFlesherEndPath(const tString& in asEntityName)
+	{
+		++mlCargoFlesherPatrols;
+		cLux_AddDebugMessage("AI/SCRIPT: Flesher ended his path.. " + mlCargoFlesherPatrols + " times..");
+	}
+	
+	//------------------------------------------------------
+	
+	void TimerCargoFlesherDistortion(const tString &in asTimer)
+	{
+		//Map_AddTimer("timer_cargoflesherdistortion",cMath_RandRectf(10.0f,15.0f),"TimerCargoFlesherDistortion");
+	}
+	
+	bool CollideAreaFlesherWindow(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		
+		++mlCargoFlesherWindowCount;
+		cLux_AddDebugMessage("AI/SCRIPT: Flesher was by window.. " + mlCargoFlesherWindowCount + " times..");
+		
+		if (mlCargoFlesherWindowCount >= 4)
+		{
+			////////////////////////////
+			// We should teleport the Flesher away now..
+			//Effect_VideoDistortion_Start(1.0f,0.1f,0.05f,0.05f,1.0f);
+			Entity_SetActive("Agent_flesher_windowbreak",false);
+		}
+		return true;
+	}
+	
+	//------------------------------------------------------
+	
+	///////////////////////////////////////////////////////
+	// SCENE 3 EVENT C Enter lifeboat and escape
+	///////////////////////////////////////////////////////
+	
+	//------------------------------------------------------
+	
+	tString msWaterDrainBranch = "3C_WaterDrained";
+	bool mbDoorClosed = true;
+	int mlDoorPoundRepeats = 0;
+	
+	//------------------------------------------------------
+	
+	bool CollideAreaEscapeInPod(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		if (alState != 1) return true;
+		
+		SealPodDoors();
+		StopEscapeAlarms_Small(3.5f);
+		StopEscapeMusic(3.5f);
+		StopFinalChase();
+		Map_AddTimer("EscapeMusicStop", 3.5f, "EscapeMusicStopTimer");
+		Player_FadeRollTo(0.0f,15.0f,3.0f);
+		
+		if (mbCathPluggedIn)
+		{
+			Map_AddTimer("timer_escapeentry",1.0f,"TimerEscapeOnPodEntry");
+		}
+		
+		Map_AddTimer("timer_sequenceBangPod",1.75f,"SequenceMonsterBangingPod");
+		
+		return false;
+	}
+	
+	void EscapeMusicStop(const tString &in asTimer)
+	{
+		StopEscapeMusic(2.0f, true);
+	}
+	
+	//------------------------------------------------------
+	
+	cSequenceStatesData mSequenceMonsterBangingPod;
+	void SequenceMonsterBangingPod(const tString &in asTimer)
+	{
+		Sequence_Begin("SequenceMonsterBangingPod", mSequenceMonsterBangingPod);
+		
+		if (Sequence_DoStepAndWait(1.0f))
+		{
+			cLux_AddTodoMessage("SOUND: Robot monster is pounding on the door");
+			Sound_CreateAtEntity("sfx_doorpound","02_07_theta_exit_a/SFX/akers_door_smash/akers_door_smash","AreaPodDoorPoundEffect");	
+			
+			Effect_Shake_Start(0.1f,0.2f,0.0f,0.0f);
+		}
+		else if (Sequence_DoStepAndWait(1.0f))
+		{
+			cLux_AddTodoMessage("SOUND: Robot monster is pounding on the door");
+			Sound_CreateAtEntity("sfx_scream","NPC_Creatures/Vocalisations/InWorld/Flesher/scream","AreaPodDoorPoundEffect");	
+		}
+		else if (Sequence_DoStepAndWait(2.0f))
+		{
+			cLux_AddTodoMessage("SOUND: Robot monster is pounding on the door");
+			Sound_CreateAtEntity("sfx_doorpound2","02_07_theta_exit_a/SFX/akers_door_smash/akers_door_smash","AreaPodDoorPoundEffect");	
+			
+			Effect_Shake_Start(0.1f,0.2f,0.0f,0.0f);
+		}
+		else if (Sequence_DoStepAndWait(3.0f))
+		{
+			cLux_AddTodoMessage("SOUND: Robot monster is pounding on the door");
+			Sound_CreateAtEntity("sfx_scream","NPC_Creatures/Vocalisations/InWorld/Flesher/scream","AreaPodDoorPoundEffect");	
+		}
+		else if (Sequence_DoStepAndWait(1.0f))
+		{
+			cLux_AddTodoMessage("SOUND: Robot monster is pounding on the door");
+			Sound_CreateAtEntity("sfx_doorpound","02_07_theta_exit_a/SFX/akers_door_smash/akers_door_smash","AreaPodDoorPoundEffect");	
+			
+			Effect_Shake_Start(0.1f,0.2f,0.0f,0.0f);
+		}
+		else if (Sequence_DoStepAndWait(1.0f))
+		{
+			cLux_AddTodoMessage("SOUND: Robot monster is pounding on the door");
+			Sound_CreateAtEntity("sfx_scream","NPC_Creatures/Vocalisations/InWorld/Flesher/scream","AreaPodDoorPoundEffect");	
+		}
+		else if (Sequence_DoStepAndWait(4.0f))
+		{
+			cLux_AddTodoMessage("SOUND: Robot monster is pounding on the door");
+			Sound_CreateAtEntity("sfx_doorpound2","02_07_theta_exit_a/SFX/akers_door_smash/akers_door_smash","AreaPodDoorPoundEffect");	
+			
+			Effect_Shake_Start(0.1f,0.2f,0.0f,0.0f);
+		
+		}
+		
+		Sequence_End();
+	}
+	
+	//------------------------------------------------------
+	
+	void PodEscape(const tString&in asSubject, bool abStartOfSubject)
+	{
+		if (abStartOfSubject) return;
+		
+		//////////////////////////////////////
+		// Callback from dialogue after Catherine initiates escape sequence
+		cLux_AddTodoMessage("SCRIPT: Pod Escape Sequence");
+		msWaterDrainBranch = "3C_WaterDrained_Branch2";
+		Map_AddTimer("timer_seq_drainwater",1.0f,"SequenceDrainWater");
+	}
+	
+	//------------------------------------------------------
+		
+	void OpenEscapePodDoor()
+	{
+		Entity_SetActive("BlockBoxEscapePod",false);
+		SwingDoor_PushOpen("Swingdoor_EscapePod",2.0f,4,0.1f);
+		mbEscapePodSweetenerPlayed = false;
+	}
+	
+	//------------------------------------------------------
+	
+	bool mbEscapePodSweetenerPlayed = false;
+	void CloseEscapePodDoor()
+	{
+		bool bClosed = SwingDoor_GetClosed("Swingdoor_EscapePod");
+		SwingDoor_PushOpen("Swingdoor_EscapePod",-2.0f,6,0.1f);
+		Entity_SetActive("BlockBoxEscapePod",true);
+		if(bClosed == false && mbEscapePodSweetenerPlayed == false)
+		{
+			//escape pod sweetener sound to tell the player they've successfully escaped
+			Sound_CreateAtEntity("CloseEscapePod", "02_02_ms_curie_inside/SFX/escape_pod/escape_pod_door_close", "Swingdoor_EscapePod");
+			mbEscapePodSweetenerPlayed = true;
+		}
+	}
+	
+	//------------------------------------------------------
+		
+	void SealPodDoors()
+	{
+		//////////////////////////////////////////////////////////
+		// Close door and disable interaction when it is almost closed
+		Entity_SetActive("BlockBoxEscapePod",true);
+		CloseEscapePodDoor();
+		Entity_SetInteractionDisabled("Swingdoor_EscapePod*",true);
+		mbDoorClosed = true;
+		Map_AddTimer("EscapePodAlarm", 1.0f, "EscapePodAlarm");
+		Sound_FadeGlobalVolume(1.0f, 3.5f);
+		
+		/////////////////////////////////////////////
+		// Disable the fleshers
+		Entity_SetActive("Flesher*",false);
+		Entity_SetActive("Agent*",false);
+		Effect_VideoDistortion_FadeOut(-1,1.0);
+		
+		Music_Stop(2.0f,eMusicPrio_BigEvent);
+	}
+	
+	void EscapePodAlarm (const tString &in asTimer)
+	{
+		Sound_CreateAtEntity("EscapePodAlarm", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/escape_pod", "EscapePodAlarmSource");
+		Map_AddTimer("EscapePodAlarm", 0.75f, "EscapePodAlarm");
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerEscapeOnPodEntry(const tString &in asTimer)
+	{
+		//////////////////////////////////////////
+		// Used when the player runs to the pod, after having already plugged Cath in
+		//Dialog_StartConversation("Catherine", "PodDisplay_2", 0.5f);
+		//Dialog_StartConversation()
+		Dialog_Begin("Catherine");
+				Dialog_AddBranchAndSubject("3C_LifeboatEscape","","OnCathDrainWater");
+		Dialog_End();
+	}
+	
+	//------------------------------------------------------
+	
+	void OnCathDrainWater(const tString&in asSubject, bool abStartOfSubject)
+	{
+		if (abStartOfSubject) return;
+		
+		//////////////////////////////////////
+		// Callback from dialogue after Catherine starts to drain water
+		cLux_AddTodoMessage("SCRIPT: Cath drains water - play the sequence!");
+		Map_AddTimer("timer_seq_drainwater",1.0f,"SequenceDrainWater");
+	}
+	
+	//------------------------------------------------------
+	
+	cSequenceStatesData mSequenceDrainWater;
+		
+	void SequenceDrainWater(const tString &in asTimer)
+	{
+		Sequence_Begin("SequenceDrainWater", mSequenceDrainWater);
+	
+		if (Sequence_DoStepAndWait(3.25f))
+		{
+			mbEscapePodScreensActive = true;
+			Sound_CreateAtEntity("Pump_Idle_Loop_Underwater", "Entities_OceanBottom/airlock/uw/pump/idle_loop", "PumpsSource", 1.0f, false, 1.0f);
+			Sound_CreateAtEntity("EscapePodDrainSweet", "02_02_ms_curie_inside/SFX/escape_pod/drain_sweetener", "Player", 1.0f, false, 1.0f);
+			mfEscapePodGaugeMaxValue = 1.0f;
+		}
+		else if (Sequence_DoStepAndWait(5.0f))
+		{
+			AirlockEffectsFlushWater();
+			Map_SetEnvironmentParticlesActive(false);
+			LiquidArea_MoveLinearTo("LiquidArea_EscapePod_1","AreaWaterDrainTarget",0.1, 1, 0.5, false);
+		}
+		else if (Sequence_DoStepAndWait(3.0))
+		{
+			Map_SetUnderwater(false,true);
+			Entity_SetActive("AMB_Pre_EscapePodUW", false);
+			Entity_SetActive("AMB_Post_Global", false);
+			Entity_SetActive("AMB_Pre_EscapePodAir", true);
+			Sound_Stop("EscapePodDrainSweet", 1.0f);
+		}
+		else if (Sequence_DoStepAndWait(4.0f))
+		{
+			StartPodEscape();
+			
+			////////////////////////////////////////
+			// Play dialog for escape
+			Voice_Play(msWaterDrainBranch,-1,"",0);
+		}
+		else if (Sequence_DoStepAndWait(4.0f))
+		{
+			Effect_Fade_Out(6.0f);
+		}
+		else if (Sequence_DoStepAndWait(13.0f))
+		{
+			//wait for sound to end
+		}
+		else if (Sequence_DoStepAndWait(0))
+		{
+			ExitLevel();
+		}
+
+		Sequence_End();
+	}
+
+	
+	//------------------------------------------------------
+	
+	//////////////////////////////////////////////////
+	// Breaking glass sequence
+	//////////////////////////////////////////////////
+	
+	//------------------------------------------------------
+	
+	tString msGlassToBreak;
+	cSequenceStatesData mBreakGlassSequence;
+	bool mbGlassBrokenFlesherSoundTriggered = false;
+		
+	void SequenceBreakGlass(const tString &in asTimer)
+	{
+		Sequence_Begin("SequenceBreakGlass", mBreakGlassSequence);
+		if (Sequence_DoStepAndWait(0.2))
+		{
+			Player_UnequipTool();
+			Entity_SetInteractionDisabled("BreakableGlass_*", true);
+		}
+		else if (Sequence_DoStepAndWait(0.1f))
+		{
+			tString sNextBrokenStep = Entity_GetVarString(msGlassToBreak, "NextBrokenStep");
+			Entity_SetActive(msGlassToBreak, false);
+			Entity_SetActive(sNextBrokenStep, true);
+			
+			// Window broken
+			if (cString_GetFirstStringPos(sNextBrokenStep, "_Broken") >= 0)
+			{
+				Sound_CreateAtEntity("HammerGlassBroken", "level_02_02/events/cabin_window/hit_hammer_break", sNextBrokenStep, 0, false);
+				
+				/////////////////////////////////////////////////////////////////////////
+				// Enable player to climb through window and make moaning voices clearer
+				if (sNextBrokenStep == "BreakableGlass_1_Broken")
+				{
+					Entity_SetActive("CargoRoomClimb_1_*", true);
+					mbVoicesClearer = true;
+				}
+				if (sNextBrokenStep == "BreakableGlass_2_Broken")
+				{
+					Entity_SetActive("CargoRoomClimb_2_*", true);
+					mbVoicesClearer = true;
+				}
+				
+				cVector3f vImpulse;
+				for (int i = 1; i <= 7; i++)
+				{
+					vImpulse = cVector3f(cMath_RandRectf(-0.5f, 0.5f), cMath_RandRectf(-0.5f, 0.5f), -1);
+					vImpulse.Normalize();
+					Body_AddImpulse(sNextBrokenStep + "_shard_body_" + i, vImpulse*0.3, true);
+					
+				}
+				
+				//Activate and push extra shards
+				Entity_SetActive(sNextBrokenStep + "_Extra", true);
+				Map_AddTimer(sNextBrokenStep + "_Extra", 3.f, "TimerInactivateEntity");
+				for (int i = 1; i <= 23; i++)
+				{
+					vImpulse = cVector3f(cMath_RandRectf(-0.5f, 0.5f), cMath_RandRectf(-0.5f, 0.5f), -1);
+					vImpulse.Normalize();
+					Body_AddImpulse(sNextBrokenStep + "_Extra_Body_" + i, vImpulse*0.3, true);
+					
+				}
+			}
+			else
+			{
+				Sound_CreateAtEntity("HammerGlassCrack", "level_02_02/events/cabin_window/hit_hammer", sNextBrokenStep, 0, false);
+			}
+									
+		}
+		else if (Sequence_DoStepAndWait(0.3f))
+		{
+			Player_ReEquipTool(0.3f);
+		}
+		else if (Sequence_DoStepAndWait(0))
+		{
+			Entity_SetInteractionDisabled("BreakableGlass_*", false);
+		}
+		Sequence_End();
+	}
+
+	//------------------------------------------------------
+	
+	////////////////////////////////////////////////////
+	// 3G BABBLING CORPSES
+	////////////////////////////////////////////////////
+	
+	//------------------------------------------------------
+	
+	bool mbEnteredCargoBay = false;
+	bool mbVoicesClearer = false;
+	int mlWindowClicks = 0;
+	
+	//------------------------------------------------------
+	
+	///////////////////////////////////////////////////
+	// 3H. ENTER CARGO BAY                           //
+	///////////////////////////////////////////////////
+	
+	//-----------------------------------------------------------------
+	
+	bool CollisionEnteredCargoBay(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		cLux_AddDebugMessage("Entered Cargo Bay");
+		
+		///////////////////////////////
+		// Player enters the cargo bay
+		mbEnteredCargoBay = true;
+				
+		///////////////////////////////
+		// Fleshers pull box with body up to the hatch
+		SequencePullCrate("");
+		
+		///////////////////////////////////////////////
+		//Sound for crate yank up
+		Sound_CreateAtEntity("CoffinPull", "02_02_ms_curie_inside/SFX/coffin_pulley/coffin_pulley", "Sound_CoffinSoundArea", 0.0, false, 1.0f);
+		
+		return false;
+	}
+	
+	//-----------------------------------------------------------------
+	
+	int mlCratePulls = 0;
+	cSequenceStatesData mSequencePullCrate;
+		
+	void SequencePullCrate(const tString &in asTimer)
+	{
+		Sequence_Begin("SequencePullCrate", mSequencePullCrate);
+			
+		///////////////////////////////////////////////
+		// Fleshers yank the crate up in a few pulls
+		if (Sequence_DoStepWaitAndRepeat(4,3.0))
+		{
+			mlCratePulls++;
+			Prop_MoveLinearTo("BodyCrate","Area_CrateTarget_"+mlCratePulls,1.0,2.0,1.0,false);
+		}
+
+		Sequence_End();
+	}
+	
+	//-----------------------------------------------------------------
+	
+	bool TriggerArea_CrateHatch(const tString &in asParent, const tString &in asChild, int alState)
+	{
+		///////////////////////////////////////////////
+		// Close hatch door when box is pulled through
+		if (alState == 1)
+		{
+			SlideDoor_SetClosed("CargoBayCeilingDoor",true,false);
+			return false;
+		}
+		return true;
+	}
+	
+	//-----------------------------------------------------------------
+	
+	////////////////////////////////////////
+	// CATHERINE COMMUNICATION SEQUENCE   //
+	////////////////////////////////////////
+	
+	//-----------------------------------------------------------------
+	
+	cSequenceStatesData mCatherineElectricsTalk;
+	void SequenceCatherineElectricsTalk(const tString &in asTimer)
+	{
+		Sequence_Begin("SequenceCatherineElectricsTalk", mCatherineElectricsTalk);
+	
+		if (Sequence_DoStepAndWait(0.75f))
+		{
+			//Player_SetMoveSpeedMul(0);
+			Sound_CreateAtEntity("RadioStart", "level_amb_shared_machines/signals/burst", "CathContactSpeaker_Lamp_Electrics", 0, false);
+			Sound_CreateAtEntity("RadioCrackle", "level_amb_shared_machines/signals/crackling", "CathContactSpeaker_Lamp_Electrics", 0.75, true);
+			
+			Lamp_SetLit("CathContactSpeaker_Lamp_Electrics", true, true);
+		}
+		else if (Sequence_DoStepAndWait(1.5f))
+		{
+			Voice_SetSource("Catherine", "CathContactSpeaker_Lamp_Electrics", 3, 10, true, 10);
+			
+			Voice_Play("19_EnterElectricsA",-1,"SubjectEnterElectricsOver");
+			
+			Lamp_SetFlickerActive("CathContactSpeaker_Lamp_Electrics", true);
+		}
+		else if (Sequence_DoStepAndWait(3.0f))
+		{
+			cLux_AddTodoMessage("Violent roar from flesher!\n");
+			
+			Sound_CreateAtEntity("FlesherHowl", "02_04_theta_outside/spot/mind_coral/distant_call", "FlesheTransmissions_4");
+		
+		}
+		else if (Sequence_DoStepAndPause(0.5f))
+		{
+			Voice_Play("19_EnterElectricsB",-1,"SubjectCatherineElectricsOver");
+		}
+		else if (Sequence_DoStepAndWait(1.5))
+		{
+			Sound_Stop("RadioCrackle", 1.5f);		
+			Lamp_SetLit("CathContactSpeaker_Lamp_Electrics", false, true);
+			
+			///////////////////////////
+			// Explosion particles
+			cLux_AddTodoMessage("Sound: Radio panel shorts out");
+			Sound_CreateAtEntity("RadioShortcircuit","shipwreck/doors/cabin_door_panel/malfunction","CathContactSpeaker_Lamp_Electrics",0,false,1.0f);
+			ParticleSystem_CreateAtEntity("elec_spark_huge_oneshot","elec_spark_huge_oneshot.ps","CathContactSpeaker_Lamp_Electrics",false);
+		}
+		else if (Sequence_DoStepAndWait(0.0))
+		{
+			//////////////////////////////
+			// Simon curses
+			Dialog_Begin();
+				Dialog_AddBranch("19_EnterElectrics");
+				Dialog_AddSubject("19_EnterElectricsC","");
+			Dialog_End();
+			
+			/////////////////////////////
+			// Remove blockbox on door
+			Entity_SetActive("TransformerRoomBlocker",false);
+		}
+		
+		Sequence_End();
+	}	
+	
+	//-----------------------------------------------------------------
+		
+	///////////////////////////////////////////////////////
+	// 3I PLAYER FINDS AND ENTER VENTILATION ENTRANCE
+	///////////////////////////////////////////////////////
+		
+	//-----------------------------------------------------------------
+	
+	void OnChangeTransformerVent(const tString &in asEntity, int alState)
+	{
+		if (alState != 1) return;
+		
+		Player_ChangeStateToNormal();
+		Player_SetLookSpeedMul(0);
+		Player_FadeLookSpeedMulTo(1, 0.5);
+		
+		Entity_SetActive(asEntity, false);
+		Entity_SetActive(asEntity + "_Grab", true);
+		Entity_PlaceAtEntity(asEntity + "_Grab", asEntity);
+		
+		Entity_AddImpulse(asEntity + "_Grab", cVector3f_Forward*1.5, true, true);
+		
+		Map_RemoveTimer(asEntity);
+		Sound_Stop("TransformerVentStress", 0.05f);
+		cLux_AddTodoMessage("Sound: Vent torn open");
+		Sound_CreateAtEntity("TransformerVentTornOpen", "level_01_02/tech/lever_metallic/start", asEntity + "_Grab", 0, false);
+		
+		Effect_Shake_Start(0.015, 0.3f, 0.0f, 0.1f);
+	}
+	
+	//-------------------------------------------------------
+	
+	void InteractTransformerVent(const tString &in asEntity)
+	{
+		// Play sound
+		cLux_AddTodoMessage("Sound: Hinges of panel under stress");
+		Sound_CreateAtEntity("TransformerVentStress", "level_01_02/tech/lever_metallic/loop", asEntity, 0.5f, true);
+		Map_AddTimer(asEntity, 0.25f, "TimerCheckTransformerVentInteraction");
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerCheckTransformerVentInteraction(const tString &in asTimer)
+	{
+		// Player has stopped interacting
+		if (!Entity_IsInteractedWith(asTimer))
+		{
+			Sound_Stop("TransformerVentStress", 0.05f);
+			return;
+		}
+		
+		// Check again in x secs
+		Map_AddTimer(asTimer, 0.25f, "TimerCheckTransformerVentInteraction");
+	}
+		
+	//------------------------------------------------------
+	
+	void InteractReactorVentGrate(const tString &in asEntity)
+	{
+		cLux_AddTodoMessage("Sound: Vent torn open");
+		Sound_CreateAtEntity("TransformerVentTornOpen", "level_01_02/tech/lever_metallic/start", asEntity, 0, false);
+		
+		Prop_SetStaticPhysics(asEntity, false);
+		Entity_AddImpulse(asEntity, cVector3f_Forward*1.5, true, true);
+		Player_ChangeStateToNormal();
+		
+		Effect_Shake_Start(0.015, 0.3f, 0.0f, 0.1f);
+	}
+	
+	//------------------------------------------------------
+	
+	void ExitLevel()
+	{
+		cLux_AddDebugMessage("Change level!");
+		Map_ChangeMap("02_03_delta.hpm", "escape_pod_functional", "", "");
+	}
+	
+	//-------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GENERIC TIMERS
+	/////////////////////////////////////////
+	
+	//-------------------------------------------------------
+	
+	void TimerInactivateEntity(const tString &in asTimer)
+	{
+		Entity_SetActive(asTimer, false);
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	void TimerLightLamp(const tString &in asTimer)
+	{
+		Lamp_SetLit(asTimer, true, true);
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	void TimerTurnOffLamp(const tString &in asTimer)
+	{
+		Lamp_SetLit(asTimer, false, true);
+	}
+	
+	//-----------------------------------------------------------------------------
+
+	/////////////////////////////////////////
+	// TERMINALS
+	/////////////////////////////////////////
+	
+	//-----------------------------------------------------------------------------
+	
+	//-----------------------------------------------------------------------------
+	
+	void OnGuiCreepyImages(const tString&in asEntityName, float afTimeStep)
+	{
+		float fStaticTime = ImGui_GetStateFloat("CreepyStaticMax",0.0f);
+		float fTimer = ImGui_GetStateFloat("CreepyStaticTimer", 0.0f);
+		fTimer += afTimeStep;
+		
+		//bigscreen_L
+		//desaster01
+		
+		//bigscreen_R
+		//desaster02
+		
+		
+		int lCreepyImageLoop = ImGui_GetStateInt("CreepyImageLoop",0);
+		bool bCycleCreepyImage = false;
+		tString sImageName = Entity_GetVarString(asEntityName,"");
+		
+		cVector2f vDimensions = cVector2f(-1,-1);
+		
+		//////////////////////////////////////////
+		// Occasional bursts of static
+		bool bStaticBurst = false;
+		if (fTimer > fStaticTime)
+		{
+			bStaticBurst = true;
+			TerminalStatic();
+		}
+		
+		/////////////////////////////////////////
+		// Communal Room first floor
+		else if (sImageName == "CommunalRoom")
+		{
+			vDimensions = cVector2f(1.35,1);
+			sImageName = "desaster00";
+		}		
+		
+		else if (sImageName == "bigscreen_L")
+		{
+			sImageName = "desaster01";
+			vDimensions = cVector2f(1.35,1);
+			bCycleCreepyImage = true;
+		}
+		
+		else if (sImageName == "bigscreen_R")
+		{
+			sImageName = "desaster02";
+			vDimensions = cVector2f(1.35,1);
+			bCycleCreepyImage = true;
+		}
+		
+		////////////////////////////////////
+		// Kitchen
+		else if (sImageName == "kitchen_1")
+		{
+			sImageName = "desaster03";
+			vDimensions = cVector2f(1.35,1);
+			bCycleCreepyImage = true;
+		}
+		else if (sImageName == "kitchen_2")
+		{
+			sImageName = "desaster04";
+			vDimensions = cVector2f(1.35,1);
+			bCycleCreepyImage = true;
+		}
+		
+		////////////////////////////////////
+		// Bridge Deck
+		else if (sImageName == "bridgedeck_1")
+		{
+			sImageName = "desaster05";
+			vDimensions = cVector2f(1.35,1);
+			bCycleCreepyImage = true;
+		}
+		else if (sImageName == "bridgedeck_2")
+		{
+			sImageName = "desaster06";
+			vDimensions = cVector2f(1.35,1);
+			bCycleCreepyImage = true;
+		}
+		
+		
+				
+		//////////////////////////////////////////
+		// Comm Room Screens
+		else if (sImageName == "commroom_big_L1")
+		{
+			sImageName = "desaster07";
+			vDimensions = cVector2f(1.35,1);
+		}
+		else if (sImageName == "commroom_big_L2")
+		{
+			sImageName = "desaster08";
+			vDimensions = cVector2f(1.35,1);
+		}
+		else if (sImageName == "commroom_big_R1")
+		{
+			sImageName = "desaster09";
+			vDimensions = cVector2f(1.35,1);
+		}
+		else if (sImageName == "commroom_big_R2")
+		{
+			sImageName = "desaster10";
+			vDimensions = cVector2f(1.35,1);
+		}
+		
+		
+		//////////////////////////////////////////
+		// Power Room Screens
+		else if (sImageName == "powerroom_big_L")
+		{
+			sImageName = "desaster11";
+			vDimensions = cVector2f(1.35,1);
+		}
+		else if (sImageName == "powerroom_big_M")
+		{
+			TerminalStatic();
+		}
+		else if (sImageName == "powerroom_big_R")
+		{
+			sImageName = "desaster12";
+			vDimensions = cVector2f(1.35,1);
+		}
+		
+		///////////////////////////////////////////
+		// Show image when the static is not visible
+		if (bStaticBurst == false)
+		{
+			ImGui_DoImage(cImGuiGfx(sImageName, eImGuiGfx_Texture), cVector3f(0,0,0), ImGui_NrmSize(vDimensions));
+			StationGuiBG_Scanlines();
+			TerminalStatic(0.1f);
+		}
+		
+		//////////////////////////////////////
+		// Reset static so we can see the image
+		if (fTimer > (fStaticTime+0.5f))
+		{
+			fTimer = 0.0f;
+			fStaticTime = cMath_RandRectf(1.25f,3.25f);
+			ImGui_SetStateFloat("CreepyStaticMax",fStaticTime);
+		}
+		
+
+		float fImageCycle = ImGui_GetStateFloat("CreepyImageTimer",0.0f);
+		fImageCycle += afTimeStep;
+		if (fImageCycle > 3.0f)
+		{
+			lCreepyImageLoop++;
+			if (lCreepyImageLoop >= 3)
+			{
+				lCreepyImageLoop = 0;
+				cLux_AddDebugMessage("Reset!");
+			}
+				
+			fImageCycle = 0;
+		}
+		ImGui_SetStateInt("CreepyImageLoop",lCreepyImageLoop);
+		ImGui_SetStateFloat("CreepyImageTimer",fImageCycle);
+		
+			
+		ImGui_SetStateFloat("CreepyStaticTimer",fTimer);
+		
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	void TerminalStatic(float afAlpha=1.0f, tString asEntity="")
+	{
+		tString sTag = "";
+		
+		if (asEntity != "")
+		{
+			sTag = Entity_GetVarString(asEntity,"");
+		}
+		
+		cVector2f vSize;
+		cVector3f vPos=ImGui_NrmPosGroup(cVector3f(0.0f, 0.0f, 2.0f));
+				
+		cImGuiGfx imageGfx;
+		if (ImGui_RepeatTimer("StaticIndex", 0.1))
+		{
+			ImGui_SetStateInt("StaticImageIndex", cMath_RandRectl(0, 1));
+			ImGui_SetStateInt("AnimationRotation", cMath_RandRectl(0, 1));
+		}
+		imageGfx.SetFile("static_"+ImGui_GetStateInt("StaticImageIndex", 0)+".tga");
+		imageGfx.mColor = cColor(0.5f, 0.5f, 0.5f, afAlpha);
+		vSize = ImGui_NrmSizeGroup(cVector2f(1.0, 1.0f));
+					
+		ImGui_SetModRotateAngle(ImGui_GetStateInt("AnimationRotation", 0)*180);
+		
+		ImGui_GroupBegin(vPos, vSize);
+			ImGui_DoImage(imageGfx, 0, ImGui_NrmSizeGroup(1));
+		ImGui_GroupEnd();
+		ImGui_SetModRotateAngle(0);
+		
+	}
+	
+	void TerminalCabin_OnGui(const tString&in asEntityName, float afTimeStep)
+	{
+		TerminalStatic();
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	void OnGuiSafetyProcedures(const tString&in asEntityName, float afTimeStep)
+	{
+		ImGui_SetTransCategory("02_02_ms_curie_inside");
+		
+		//////////////////////////////
+		// Widget data
+		cImGuiWindowData window = StationGui_CreateDefaultWindowData();
+		window.mColorBase = gStationGuiColor_Normal;
+		cImGuiTextFrameData textData = ImGui_GetDefaultTextFrame();
+		textData.mbUseBackgroundGfx = false;
+		textData.mFont.mvSize = cVector2f(18);
+		
+		StationGuiBG_Scanlines();
+		StationGuiBG_Backdrop();
+		
+		ImGui_DoWindowStart("", window, ImGui_NrmPosGroup(cVector3f(0.05, 0.05, 1)), ImGui_NrmSizeGroup(cVector2f(0.9, 0.9)));
+			ImGui_DoTextFrameExt("SafetyProcedures", ImGui_NrmSizeGroup(cVector2f(0.05, 0.05)), 5, 0, textData, 
+								 ImGui_NrmPosGroup(cVector3f(0, 0, 0)), ImGui_NrmSizeGroup(cVector2f(1,1)));
+		ImGui_DoWindowEnd();
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	tString msCaptainsLogMessage = "";
+	float mfCaptainsLogTimer = 0;
+	int mlCaptainsLogChar = 0;
+	int mlCaptainsLogMaxChar = 0;
+	int mlCaptainsLogPage = 1;
+	int mlCaptainsLogMaxPages = 3;
+	float mfCaptainsLogAlpha = 0.0f;
+	bool mbLogTransition = false;
+	
+	void OnGuiCaptainsLog(const tString&in asEntityName, float afTimeStep)
+	{
+		//////////////////////////////////
+		// Pulse recording message
+		/*mfCaptainsLogTimer += afTimeStep;
+		if (fAlpha < 0)
+			fAlpha *= -1;*/
+		
+		
+		mfCaptainsLogAlpha = cMath_InterpolateLinear(mfCaptainsLogAlpha,1.0f,afTimeStep*2.0f);
+		
+		
+		
+		//////////////////////////////
+		// Window data
+		cImGuiWindowData window = StationGui_CreateDefaultWindowData();
+		window.mColorBase = gStationGuiColor_Normal;
+		
+		////////////////////////////
+		// Text
+		cImGuiTextFrameData textData = ImGui_GetDefaultTextFrame();
+		textData.mbUseBackgroundGfx = false;
+		textData.mFont.mvSize = cVector2f(16);
+		textData.mFontAlign = eFontAlign_Left;
+		textData.mFont.mColor.a = mfCaptainsLogAlpha;
+		
+		/////////////////////////////////
+		// Button
+		cImGuiButtonData button = StationGui_CreateDefaultButtonData();
+		
+		/////////////////////////////////
+		// Backdrop
+		StationGuiBG_Scanlines();
+		StationGuiBG_Backdrop();
+		
+		bool bDoPrev = mlCaptainsLogPage > 1 ? true : false;
+		bool bDoNext = mlCaptainsLogPage < mlCaptainsLogMaxPages ? true : false;
+		
+		if (mbLogTransition)
+		{
+			mfCaptainsLogTimer += afTimeStep;
+			mfCaptainsLogAlpha = 0;
+			if (mfCaptainsLogTimer > 0.1f)
+			{
+				mbLogTransition = false;
+			}
+		}
+		
+		ImGui_DoWindowStart("", window, ImGui_NrmPosGroup(cVector3f(0.05, 0.05, 1)), ImGui_NrmSizeGroup(cVector2f(0.9, 0.9)));
+		
+			ImGui_SetTransCategory("");
+			ImGui_DoLabel("["+mlCaptainsLogPage + "/" + ""+mlCaptainsLogMaxPages+"]",ImGui_NrmPosGroup(cVector3f(0.46, 0.4, 0)), ImGui_NrmSizeGroup(cVector2f(1,1)));
+			//ImGui_DoTextFrameExt(, ImGui_NrmSizeGroup(cVector2f(0.8, 0.1)), 5, 0, textData, ));
+			
+			ImGui_SetTransCategory("02_02_ms_curie_inside");
+			ImGui_DoTextFrameExt("CaptainsLog"+mlCaptainsLogPage, ImGui_NrmSizeGroup(cVector2f(0.05, 0.4)), 5, 0, textData, ImGui_NrmPosGroup(cVector3f(0, -0.3, 0)), ImGui_NrmSizeGroup(cVector2f(1,1)));
+								 
+			
+			ImGui_SetTransCategory("");
+			if (bDoPrev)
+			{
+				
+				if (ImGui_DoButtonExt("ButtonPrev","<<",button, ImGui_NrmPosGroup(cVector3f(0.2, 0.8, 1)), ImGui_NrmSizeGroup(cVector2f(0.2, 0.15))))
+				{
+					mlCaptainsLogPage--;
+					mbLogTransition = true;
+					mfCaptainsLogTimer = 0;
+					Sound_PlayGui("Entities_Station/tech/terminal_beeps/terminal_forward",1.0);
+				}
+			}
+			
+			if (bDoNext)
+			{
+				if (ImGui_DoButtonExt("ButtonNext",">>",button, ImGui_NrmPosGroup(cVector3f(0.6, 0.8, 1)), ImGui_NrmSizeGroup(cVector2f(0.2, 0.15))))
+				{
+					mlCaptainsLogPage++;
+					mbLogTransition = true;
+					mfCaptainsLogTimer = 0;
+					Sound_PlayGui("Entities_Station/tech/terminal_beeps/terminal_forward",1.0);
+				}
+			}
+			
+			
+		ImGui_DoWindowEnd();
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	////////////////////////////
+	// Screen Room (Screens showing creepy images)
+	///////////////////////////
+	
+	//-----------------------------------------------------------------------------
+	
+	void terminal_screenroom_OnGui(const tString&in asEntityName, float afTimeStep)
+	{
+		int lImageNumber = ImGui_GetStateInt("ImageNumber",-1);
+		float fTimer = ImGui_GetStateFloat("ImageTimer",0.0f);
+		
+		fTimer += afTimeStep;
+		
+		////////////////////////////
+		// Display Static
+		if (lImageNumber == -1)
+		{
+			TerminalStatic();
+			if (fTimer > 4.0f)
+			{
+				fTimer = 0.0f;
+				lImageNumber = cMath_RandRectl(1,4);
+			}
+		}
+		
+		//////////////////////////
+		// Display image (selected at random between static);
+		else
+		{
+			ImGui_SetTransCategory("");
+			
+			ImGui_DoLabel("TODO:",cVector3f(100.0f,100.0f,100.0f),cVector2f_MinusOne,5.0f);
+			ImGui_DoLabel("CREEPY IMAGE #"+lImageNumber,cVector3f(100.0f,200.0f,100.0f),cVector2f_MinusOne,5.0f);
+			if (fTimer > 5.0f)
+			{
+				fTimer = 0.0f;
+				lImageNumber = -1;
+			}
+		}
+		
+		ImGui_SetStateFloat("ImageTimer",fTimer);
+		ImGui_SetStateInt("ImageNumber",lImageNumber);
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	////////////////////////////
+	// Port map Terminal
+	///////////////////////////
+	
+	//-----------------------------------------------------------------------------
+	
+	tString msPortMapEntry = "PortmapLisbon";
+	
+	//-----------------------------------------------------------------------------
+		
+	void PortMapTerminal_OnGui(const tString&in asEntityName, float afTimeStep)
+	{
+		ImGui_SetTransCategory("02_02_ms_curie_inside");
+		
+		////////////////////////////////////////////
+		// Background
+		cColor ornamentCol = ImGui_FadeOscillateColor("BlueCornerFade",cColor(1, 0.35f), cColor(1, 0.45f), 1.0f);
+		StationGuiBG_Scanlines();
+		StationGuiBG_Backdrop();
+		StationGuiBG_OrnamentBottomRight();
+		StationGuiBG_Taskbar();
+		
+		///////////////////////////////////////////
+		// Text Declarations
+		cImGuiTextFrameData textData = ImGui_GetDefaultTextFrame();
+		textData.mbUseBackgroundGfx = false;
+		textData.mFont.mvSize = cVector2f(18);
+		
+		//////////////////////////////
+		// Definitions for GUI buttons
+		cImGuiButtonData button = StationGui_CreateDefaultButtonData();
+		
+		////////////////////////////////
+		// Image declarations
+		cImGuiGfx gfx_portMap;
+		gfx_portMap.SetFile("station/portmap/portmap.tga");
+		ImGui_DoImage(gfx_portMap,ImGui_NrmPos(cVector3f(0.475,0.05,0.1)),ImGui_NrmSize(cVector2f(0.5,0.5)));
+		
+		///////////////////////////////
+		// Buttons
+		float fLineX = 0.025;
+		float fLineY = 0.075;
+		
+		if (ImGui_DoButtonExt("ButtonMap1","PortmapButton1",button, ImGui_NrmPosGroup(cVector3f(fLineX, fLineY, 1)), ImGui_NrmSizeGroup(cVector2f(0.4, 0.08))))
+		{
+			msPortMapEntry = "PortmapLisbon";
+		}
+		fLineY += 0.09;
+		if (ImGui_DoButtonExt("ButtonMap2","PortmapButton2",button, ImGui_NrmPosGroup(cVector3f(fLineX, fLineY, 1)), ImGui_NrmSizeGroup(cVector2f(0.4, 0.08))))
+		{
+			msPortMapEntry = "PortmapCadiz";
+		}
+		fLineY += 0.09;
+		if (ImGui_DoButtonExt("ButtonMap3","PortmapButton3",button, ImGui_NrmPosGroup(cVector3f(fLineX, fLineY, 1)), ImGui_NrmSizeGroup(cVector2f(0.4, 0.08))))
+		{
+			msPortMapEntry = "PortmapBrest";
+		}
+		fLineY += 0.09;
+		if (ImGui_DoButtonExt("ButtonMap4","PortmapButton4",button, ImGui_NrmPosGroup(cVector3f(fLineX, fLineY, 1)), ImGui_NrmSizeGroup(cVector2f(0.4, 0.08))))
+		{
+			msPortMapEntry = "PortmapCasablanca";
+		}
+		fLineY += 0.09;
+		if (ImGui_DoButtonExt("ButtonMap5","PortmapButton5",button, ImGui_NrmPosGroup(cVector3f(fLineX, fLineY, 1)), ImGui_NrmSizeGroup(cVector2f(0.4, 0.08))))
+		{
+			msPortMapEntry = "PortmapDublin";
+		}
+		fLineY += 0.09;
+		if (ImGui_DoButtonExt("ButtonMap6","PortmapButton6",button, ImGui_NrmPosGroup(cVector3f(fLineX, fLineY, 1)), ImGui_NrmSizeGroup(cVector2f(0.4, 0.08))))
+		{
+			msPortMapEntry = "PortmapPlymouth";
+		}
+		fLineY += 0.09;
+		if (ImGui_DoButtonExt("ButtonMap7","PortmapButton7",button, ImGui_NrmPosGroup(cVector3f(fLineX, fLineY, 1)), ImGui_NrmSizeGroup(cVector2f(0.4, 0.08))))
+		{
+			msPortMapEntry = "PortmapRabat";
+		}
+		fLineY += 0.09;
+		if (ImGui_DoButtonExt("ButtonMap8","PortmapButton8",button, ImGui_NrmPosGroup(cVector3f(fLineX, fLineY, 1)), ImGui_NrmSizeGroup(cVector2f(0.4, 0.08))))
+		{
+			msPortMapEntry = "PortmapTangier";
+		}
+		fLineY += 0.09;
+		if (ImGui_DoButtonExt("ButtonMap9","PortmapButton9",button, ImGui_NrmPosGroup(cVector3f(fLineX, fLineY, 1)), ImGui_NrmSizeGroup(cVector2f(0.4, 0.08))))
+		{
+			msPortMapEntry = "PortmapPathos";
+		}
+		
+		ImGui_DoWindowStart("", StationGui_CreateDefaultWindowData(), ImGui_NrmPosGroup(cVector3f(0.475, 0.6, 5)), ImGui_NrmSizeGroup(cVector2f(0.5, 0.275)));
+			ImGui_DoTextFrameExt(msPortMapEntry, ImGui_NrmSizeGroup(cVector2f(0.05, 0.05)), 5, 0, textData, 
+								 ImGui_NrmPosGroup(cVector3f(0, 0, 0)), ImGui_NrmSizeGroup(cVector2f(1,1)));
+		ImGui_DoWindowEnd();
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	////////////////////////////
+	// Escape Pod Terminals
+	///////////////////////////
+	
+	//-----------------------------------------------------------------------------
+	
+	bool mbEscapePodScreensActive = false;
+	bool mbEscapePodInitializing = true;
+	float mfEscapePodGaugeValue = 0.0f;
+	float mfEscapePodGaugeMaxValue = 0.0f;
+	
+	//-----------------------------------------------------------------------------
+	
+	void DoDialogWindowStart(const tString&in asCaption, const tString&in asText, const cVector2f &in avNrmSize = cVector2f(0.6, 0.2), float afZ=1.5f)
+	{
+		//////////////////////////////////
+		// Setup widget data
+		cImGuiWindowData window = StationGui_CreateDefaultWindowData();
+		cImGuiTextFrameData textData;
+		textData.mbUseBackgroundGfx = false;
+		textData.mFont.mvSize = cVector2f(24, 24);
+		textData.mFontAlign = eFontAlign_Center;
+		textData.mColorText = cColor(0.8, 1);
+		
+		///////////////////////////////////////
+		// Show message 
+		ImGui_DoWindowStart(asCaption, window, ImGui_NrmPosGroup(cVector3f((1.f-avNrmSize.x)*0.5, (1.f-avNrmSize.y)*0.5, afZ)), ImGui_NrmSizeGroup(avNrmSize));
+			
+			ImGui_DoTextFrameExt(asText, ImGui_NrmSizeGroup(cVector2f(0.05, 0)), 0, 0, textData, 
+							  ImGui_NrmPosGroup(cVector3f(0.0, 0.1, 1)), ImGui_NrmSizeGroup(cVector2f(1, 1)));
+	}
+
+	//-------------------------------------------------------
+	
+	void DoDialogWindowEnd()
+	{
+		ImGui_DoWindowEnd();
+	}	
+	
+	//-------------------------------------------------------
+	
+	void DoStatusGaugesHorizontal(int alCount, const cVector3f &in avNrmPos, const cVector2f &in avNrmSize, float afThicknessMul = 0.8, float afMinValue = 0.75, 
+								  float afMaxValue = 1.0f, const cColor &in aFillColor = cColor_White, const tString &in asPrefix = "Horizontal")
+	{
+		afMinValue *= mfEscapePodGaugeValue;
+		afMaxValue *= mfEscapePodGaugeValue;
+				
+		cImGuiGaugeData gauge = StationGui_CreateDefaultGaugeData();
+		gauge.mGfxFill.mColor = aFillColor;
+		cVector2f vSize = ImGui_NrmSizeGroup(avNrmSize);
+		vSize.y = (vSize.y/alCount) * afThicknessMul;
+		cVector3f vOffsetPos = cVector3f(0, avNrmSize.y/alCount, 0);
+		for (int i = 0; i < alCount; i++)
+			ImGui_DoGauge(gauge, Depth_ImGui_GetOscillatingSignalValue(asPrefix, i, eEasing_QuadInOut, afMinValue, afMaxValue), ImGui_NrmPosGroup(avNrmPos + vOffsetPos*i), vSize);
+	}
+
+	//-------------------------------------------------------
+	
+	void DoStatusGaugesVertical(int alCount, const cVector3f &in avNrmPos, const cVector2f &in avNrmSize, float afThicknessMul = 0.8, float afMinValue = 0.75, 
+								float afMaxValue = 1.0f, const cColor &in aFillColor = cColor_White, const tString &in asPrefix = "Vertical")
+	{
+		
+		afMinValue *= mfEscapePodGaugeValue;
+		afMaxValue *= mfEscapePodGaugeValue;
+		
+		cImGuiGaugeData gauge = StationGui_CreateDefaultGaugeData();
+		gauge.mGfxFill.mColor = aFillColor;
+		gauge.mOrientation = eImGuiGaugeOrientation_Vert;
+		cVector2f vSize = ImGui_NrmSizeGroup(avNrmSize);
+		vSize.x = (vSize.x/alCount) * afThicknessMul;
+		cVector3f vOffsetPos = cVector3f(avNrmSize.x/alCount, 0, 0);
+		for (int i = 0; i < alCount; i++)
+			ImGui_DoGauge(gauge, Depth_ImGui_GetOscillatingSignalValue(asPrefix, i, eEasing_QuadInOut, afMinValue, afMaxValue), ImGui_NrmPosGroup(avNrmPos + vOffsetPos*i), vSize);
+	}
+
+	//-------------------------------------------------------
+	
+	void DoRandomNumbers(int alColumns, int alRows, const cVector3f &in avNrmPos, const cVector2f &in avSpacing, int alFontSize = 2, 
+						 int alMinValue = 100, int alMaxValue = 999, const tString &in asPrefix = "Number")
+	{		
+		for (int i = 0; i < alRows*alColumns; i++)
+		{
+			ImGui_DoLabel("" + int(Depth_ImGui_GetOscillatingSignalValue(asPrefix, i, eEasing_QuadInOut, alMinValue, alMaxValue)), 
+						  ImGui_NrmPosGroup(avNrmPos + cVector3f(avSpacing.x*(i%alColumns), avSpacing.y*(i/alColumns), 0)), cVector2f_MinusOne, alFontSize);
+		}
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	bool DoLoadingWindow(const tString &in asName, const tString &in asCaption, const tString &in asText, float afLoadTime, bool abReset, float afZ=1.5f)
+	{		
+		DoDialogWindowStart(asCaption, asText, cVector2f(0.6, 0.2), afZ);
+			bool bDone = Depth_ImGui_LoadingGauge(asName, afLoadTime, abReset, ImGui_NrmPosGroup(cVector3f(0.1, 0.5, 1)), 
+												  ImGui_NrmSizeGroup(cVector2f(0.8, 0.3)), StationGui_CreateDefaultGaugeData());
+		DoDialogWindowEnd();
+		
+		return bDone;
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	void OnGuiEscapePodMap(const tString&in asEntityName, float afTimeStep)
+	{
+		if (!mbEscapePodScreensActive) return;
+		
+		StationGuiBG_Scanlines();
+		StationGuiBG_Backdrop();
+		StationGuiBG_OrnamentBottomLeft();
+		StationGuiBG_OrnamentBottomRight();
+		StationGuiBG_OrnamentTopRight();
+		
+		if (mbEscapePodInitializing)
+		{
+			if (DoLoadingWindow("pod_init", "Booting", "Standby", 2.0f, true))
+			{
+				mbEscapePodInitializing = false;
+			}
+			return;
+		}
+		
+		ImGui_DoImage(cImGuiGfx("catherine_large.tga"), cVector3f(0,0,1), ImGui_NrmSizeGroup(cVector2f(1, 1)));
+	}
+
+	//-----------------------------------------------------------------------------
+
+	void OnGuiEscapePodStatus(const tString&in asEntityName, float afTimeStep)
+	{
+		//////////////////////////////////////
+		// If pods are not active, display Catherine if appropriate
+		if (!mbEscapePodScreensActive)
+		{
+			OnGuiEscapePodCatherine(asEntityName, afTimeStep);
+			return;		
+		}
+		
+			
+		ImGui_SetTransCategory("");
+		
+		StationGuiBG_Scanlines();
+		StationGuiBG_Backdrop();
+		StationGuiBG_OrnamentBottomLeft();
+		StationGuiBG_OrnamentBottomRight();
+		StationGuiBG_OrnamentTopRight();
+		
+		if (mbEscapePodInitializing)
+		{
+			if (DoLoadingWindow("pod_init", "Booting", "Standby", 2.0f, true))
+			{
+				mbEscapePodInitializing = false;
+			}
+			return;
+		}
+		
+		mfEscapePodGaugeValue = cMath_InterpolateLinear(mfEscapePodGaugeValue,mfEscapePodGaugeMaxValue,afTimeStep);
+		
+		cImGuiWindowData window = StationGui_CreateDefaultWindowData();
+		ImGui_DoWindowStart("Status", window, ImGui_NrmPosGroup(cVector3f(0.1, 0.1, 3)), ImGui_NrmSizeGroup(cVector2f(0.8, 0.8)));
+		
+			DoStatusGaugesHorizontal(5, cVector3f(0.1, 0.1, 1), cVector2f(0.75, 0.525));
+			DoStatusGaugesVertical(4, cVector3f(0.55, 0.7, 1), cVector2f(0.2, 0.19), 0.6, 0.3, 0.9);
+			DoRandomNumbers(3, 2, cVector3f(0.15, 0.7, 1), cVector2f(0.1, 0.1), 2, 10, 99);
+			
+		ImGui_DoWindowEnd();
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	void OnGuiEscapePodCatherine(const tString&in asEntityName, float afTimeStep)
+	{
+		if (mbCathPluggedIn == false) return;
+		
+		/////////////////////////////
+		// Display Catherines face
+		StationGuiBG_Scanlines();
+		StationGuiBG_Backdrop();
+		ImGui_DoImage(cImGuiGfx("catherine_large.tga"), cVector3f(0,0,1), ImGui_NrmSizeGroup(cVector2f(1, 1)));
+
+	}
+	
+	//-----------------------------------------------------------------------------
+	
+	//////////////////////////////////////////
+	// Terminal - Electric room cylinders
+	//////////////////////////////////////////
+	
+	//-----------------------------------------------------------------------------
+	float mfWarningFlash = 0.0f;
+	float mfBigWarningTimer = 0.0f;
+	//-----------------------------------------------------------------------------
+	
+	void CylinderTerminal_OnGui(const tString&in asEntityName, float afTimeStep)
+	{
+		ImGui_SetTransCategory("02_02_ms_curie_inside");
+		//tString sState = Entity_GetVarString(asEntityName,"");
+		
+		StationGuiBG_Scanlines();
+		
+		cImGuiWindowData window = StationGui_CreateDefaultWindowData();
+			
+		cImGuiLabelData label = ImGui_GetDefaultLabel();
+		label.mFontAlign = eFontAlign_Center;
+		label.mFont.mvSize = ImGui_NrmSizeGroupKeepRatio(0.075);
+		ImGui_SetDefaultLabel(label);
+		
+		cImGuiTextFrameData textFrame = ImGui_GetDefaultTextFrame();
+		textFrame.mFont.mvSize = 40.0f;
+		textFrame.mbUseBackgroundGfx = false;
+		textFrame.mFontAlign = eFontAlign_Center;
+		
+		
+		
+		////////////////////////////////
+		// Set warning text
+		tString sTemperatureCat = "CoreTemperatureStable";
+		tString sActionText = "CoreActionStable";
+		cColor colorTemperature = cColor_White;
+		
+		if (mlTentaclesDetached >= 3)
+		{
+			sTemperatureCat = "CoreTemperatureCritical";	
+			sActionText = "CoreActionCritical";
+			colorTemperature = cColor_Red;
+		}
+		else if (mlTentaclesDetached >= 2)
+		{
+			sTemperatureCat = "CoreTemperatureWarning";	
+			sActionText = "CoreActionWarning";
+			colorTemperature = cColor(1,0.75,0,1);
+		}
+		else if (mlTentaclesDetached >= 1)
+		{
+			sTemperatureCat = "CoreTemperatureModerate";	
+			sActionText = "CoreActionModerate";
+			colorTemperature = cColor(0,1,0,1);
+		}
+		
+		cImGuiGaugeData gauge = StationGui_CreateDefaultGaugeData();
+		gauge.mOrientation = eImGuiGaugeOrientation_Vert;
+		gauge.mbUseBackgroundGfx = true;
+		gauge.mGfxFill.mColor = colorTemperature;
+		
+		
+		////////////////////////////////
+		// Set target temperature
+		float fTemperature = 0.1f;
+		fTemperature += mlTentaclesDetached * 0.15f;
+		if (mlTentaclesDetached >= 3) fTemperature = 1.0f;
+		
+		float fCurrentTemp = ImGui_GetStateFloat("CoreTemperature",0.0f);
+		fCurrentTemp = cMath_InterpolateLinear(fCurrentTemp, fTemperature, afTimeStep * 2.0f);
+		ImGui_SetStateFloat("CoreTemperature",fCurrentTemp);
+		
+		/////////////////////////////
+		// Periodically flash a really big warning
+		float fWarningTimer = ImGui_GetStateFloat("BigWarningTimer",0.0f);
+		fWarningTimer += afTimeStep;
+		if (fWarningTimer > 6.0f) fWarningTimer = 0.0f;
+		ImGui_SetStateFloat("BigWarningTimer", fWarningTimer);
+		
+		if (sTemperatureCat == "CoreTemperatureCritical" && fWarningTimer > 3.0f)
+		{
+			GuiAbandonShip(sActionText, afTimeStep);
+			return;
+		}
+
+		
+		ImGui_DoWindowStart("", window, ImGui_NrmPosGroup(cVector3f(0.05, 0.05, 3)), ImGui_NrmSizeGroup(cVector2f(0.95, 0.95)));
+		
+			///////////////////////////
+			// Show temperature gauge
+			ImGui_DoGauge(gauge,fCurrentTemp,ImGui_NrmPosGroup(cVector3f(0.1,0.1,3)), ImGui_NrmSizeGroup(cVector2f(0.1f,0.8f)));
+			
+			ImGui_DoLabel("CoreTemperature",ImGui_NrmPosGroup(cVector3f(0.1,-0.4,3)),ImGui_NrmSizeGroup(1.0f,1.0f));
+			
+			ImGui_SetModColorMul(colorTemperature);
+			ImGui_DoLabel(sTemperatureCat,ImGui_NrmPosGroup(cVector3f(0.1,-0.3,3)),ImGui_NrmSizeGroup(1.0f,1.0f));
+			
+			ImGui_SetModColorMul(cColor_White);
+			ImGui_DoLabel("CoreAction",ImGui_NrmPosGroup(cVector3f(0.1,-0.1,3)),ImGui_NrmSizeGroup(1.0f,1.0f));
+			
+			float fWarningFlash = ImGui_GetStateFloat("WarningFlash",0.0f);
+			fWarningFlash += afTimeStep;
+			if (fWarningFlash > 1.0f) fWarningFlash = 0.0f;
+			ImGui_SetStateFloat("WarningFlash",fWarningFlash);
+			
+			if (mlTentaclesDetached >= 2 && fWarningFlash > 0.5f)
+			{
+				ImGui_SetModColorMul(cColor_Red);
+				ImGui_DoLabel(sActionText,ImGui_NrmPosGroup(cVector3f(0.1,-0.0,3)),ImGui_NrmSizeGroup(1.0f,1.0f));	
+			}
+			else if (mlTentaclesDetached < 2)
+			{
+				ImGui_SetModColorMul(cColor_White);
+				ImGui_DoLabel(sActionText,ImGui_NrmPosGroup(cVector3f(0.1,-0.0,3)),ImGui_NrmSizeGroup(1.0f,1.0f));	
+			}
+			
+		ImGui_DoWindowEnd();
+	}
+	
+	//------------------------------------------
+	
+	void GuiAbandonShip(tString asActionText, float afTimeStep)
+	{
+
+		cImGuiLabelData label = ImGui_GetDefaultLabel();
+		label.mFontAlign = eFontAlign_Center;
+		label.mFont.mvSize = ImGui_NrmSizeGroupKeepRatio(0.15f);
+		ImGui_SetDefaultLabel(label);
+		
+		ImGui_SetModColorMul(cColor_Red);
+		ImGui_DoLabel(asActionText,ImGui_NrmPosGroup(cVector3f(0.0,-0.12,3)),ImGui_NrmSizeGroup(1.0f,1.0f));	
+	}
+	
+}
