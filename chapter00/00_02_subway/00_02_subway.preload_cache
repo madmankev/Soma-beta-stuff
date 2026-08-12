@@ -1,0 +1,52 @@
+<PreloadCache>
+    <Materials>
+        <Material Path="D:/Work/studio/Frictional Games/Depth/redist/billboards/halo_anamorphic.mat" />
+        <Material Path="entities/character/player/legs/legs_human.mat" />
+        <Material Path="entities/character/urban/receptionist/RECEPTIONIST.mat" />
+        <Material Path="entities/character/urban/receptionist/RECEPTIONIST_HAIR.mat" />
+        <Material Path="entities/character/urban/subway_bum/subway_bum.mat" />
+        <Material Path="entities/character/urban/subway_bum/subway_bum_hair.mat" />
+        <Material Path="entities/character/urban/subway_bum/subway_bum_head.mat" />
+        <Material Path="entities/character/urban/subway_business_man/subway_business_man.mat" />
+        <Material Path="entities/character/urban/subway_business_man/subway_business_man_head.mat" />
+        <Material Path="entities/character/urban/subway_girl/subway_girl_body.mat" />
+        <Material Path="entities/character/urban/subway_girl/subway_girl_hair.mat" />
+        <Material Path="entities/station/lamp/fluorescent_wall_small/fluorescent_wall_small.mat" />
+        <Material Path="entities/subway/lamp/fluorescent_subway_ceiling/fluorescent_subway_ceiling.mat" />
+        <Material Path="entities/subway/ornament/newspaper_toronto_daily/newspaper_toronto_daily.mat" />
+        <Material Path="entities/subway/ornament/trash/can/subway_trash.mat" />
+        <Material Path="entities/subway/ornament_wall/ad_subway_xx/ad_subway_foodchain.mat" />
+        <Material Path="entities/subway/ornament_wall/ad_subway_xx/ad_subway_newnano.mat" />
+        <Material Path="entities/subway/ornament_wall/ad_subway_xx/ad_subway_rock.mat" />
+        <Material Path="entities/subway/ornament_wall/ad_subway_xx/ad_subway_travel.mat" />
+        <Material Path="entities/subway/ornament_wall/ad_subway_xx/ad_subway_university.mat" />
+        <Material Path="entities/subway/ornament_wall/signs_station/signs_station.mat" />
+        <Material Path="entities/subway/special/00_02_station_screen/00_02_next_station_osgoode.mat" />
+        <Material Path="entities/subway/special/00_02_station_screen/00_02_next_station_sheppard.mat" />
+        <Material Path="entities/technical/block_box/block_box.mat" />
+        <Material Path="entities/urban/desk/desk_paper_crumbled/desk_paper_crumbled.mat" />
+        <Material Path="entities/urban/desk/note_internet_notice/note_internet_notice_crumbled.mat" />
+        <Material Path="entities/urban/grocery/botte_of_juice/botte_of_juice_empty.mat" />
+        <Material Path="entities/urban/grocery/botte_of_juice/botte_of_juice_empty_cap.mat" />
+        <Material Path="entities/urban/tech/cellphone/cellphone_smartphone.mat" />
+        <Material Path="entities/urban/tech/cellphone/cellphone_smartphone_screen.mat" />
+        <Material Path="entities/urban/tech/cellphone/hands_human_shirt.mat" />
+        <Material Path="entities/urban/tech/cellphone/hands_human_skin.mat" />
+        <Material Path="entities/urban/tech/tablet_reader/tablet_reader.mat" />
+        <Material Path="lampglow_cone01.mat" />
+        <Material Path="lampglow_generic_no_depth.mat" />
+        <Material Path="particles/dust/materials/dust_light_tiny.mat" />
+        <Material Path="static_objects/subway/special/00_02_graffiti/graffiti.mat" />
+        <Material Path="static_objects/subway/special/00_02_outside/00_02_outside.mat" />
+        <Material Path="static_objects/subway/special/00_02_station_wall/00_02_station_wall.mat" />
+        <Material Path="static_objects/subway/special/subway_carriage.mat" />
+        <Material Path="static_objects/subway/special/subway_carriage_floor.mat" />
+        <Material Path="static_objects/subway/special/subway_carriage_window.mat" />
+        <Material Path="static_objects/urban/floor/waitingroom_linoleum.mat" />
+        <Material Path="textures/decals/dirt/dirt_stain01-04.mat" />
+        <Material Path="textures/decals/dirt/dirt_stain01-04_gray.mat" />
+        <Material Path="textures/decals/effects/shadow_round.mat" />
+        <Material Path="textures/decals/rust/rust_leaking_pipe.mat" />
+        <Material Path="textures/decals/urban/graffiti_subway.mat" />
+    </Materials>
+</PreloadCache>

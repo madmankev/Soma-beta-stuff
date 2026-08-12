@@ -1,0 +1,664 @@
+#include "interfaces/Map_Interface.hps"
+#include "base/Inputhandler_Types.hps"
+
+#include "helpers/helper_map.hps"
+#include "helpers/helper_entity.hps"
+#include "helpers/helper_props.hps"
+#include "helpers/helper_effects.hps"
+#include "helpers/helper_general.hps"
+#include "helpers/helper_audio.hps"
+#include "helpers/helper_imgui.hps"
+#include "helpers/helper_sequences.hps"
+#include "helpers/helper_game.hps"
+#include "helpers/helper_modules.hps"
+
+//--------------------------------------------------
+ 
+/*Place any global values here. These must be const variables as they will not be saved*/
+/*This is also the place for enums and classes, but these should be avoided whenever possible*/
+
+//--------------------------------------------------
+
+class iSlideShowElement
+{
+	iSlideShowElement()
+	{
+		mfStartTime = 0.0f;
+	}
+	iSlideShowElement(float afStartTime)
+	{
+		mfStartTime = afStartTime;
+	}
+	
+	float mfStartTime;
+}
+
+class cSlide : iSlideShowElement
+{
+	cSlide()
+	{
+		mfFadeTime = 0.0f;
+	}
+	cSlide(const tString &in asFile, float afStartTime, float afFadeTime, const cColor &in aCol=cColor_White)
+	{
+		super(afStartTime);
+		
+		mImage.SetFile(asFile);
+		mImage.mColor = aCol;
+		mfFadeTime = afFadeTime;
+	}
+	
+	cImGuiGfx mImage;
+	float mfFadeTime;
+};
+
+class cSlideShowVoice : iSlideShowElement
+{
+	cSlideShowVoice()
+	{}
+	
+	cSlideShowVoice(const tString &in asSubject, float afStartTime)
+	{
+		super(afStartTime);
+		
+		msSubject = asSubject;
+	}
+	
+	tString msSubject;
+};
+
+class cSlideShowSound : iSlideShowElement
+{
+	cSlideShowSound()
+	{
+		mfVolume = 0.0f;
+	}
+	
+	cSlideShowSound(const tString &in asFile, float afStartTime, float afVolume)
+	{
+		super(afStartTime);
+		
+		msFile = asFile;
+		mfVolume = afVolume;
+	}
+	
+	tString msFile;
+	float mfVolume;
+}
+
+class cSlideShowEvent : iSlideShowElement
+{
+	cSlideShowEvent()
+	{
+	}
+	
+	cSlideShowEvent(const tString &in asFunc, float afStartTime)
+	{
+		super(afStartTime);
+		
+		msFunc = asFunc;
+	}
+	
+	tString msFunc;
+}
+ 
+//--------------------------------------------------
+ 
+class cScrMap : iScrMap
+{
+	//--------------------------------------------
+
+	/////////////////////////////////////////
+	// ==============
+	// MAIN CALLBACKS
+	// ==============
+	/////////////////////////////////////////
+
+	//-------------------------------------------------------
+
+	////////////////////////////
+	// Set up map environment
+	void Setup()
+	{
+		AddSlide("introslide1.jpg", 	0.0f, 1.0f);											//0.0
+		AddSlide("introslide2.jpg", 	+3.7f, 1.0f);											//3.7
+		AddVoice("Intro_0", 			+0.3f);													//4.0
+		AddSlide("introslide3.jpg", 	+4.4f, 1.0f);											//8.4
+		AddSlide("introslide4.jpg", 	+8.3f, 1.0f);              								//16.7
+		AddSlide("introslide5.jpg", 	+2.3f, 0.25f);              							//19.0
+		AddVoice("Intro_1", 			+0.5f);                     							//19.5
+		AddSlide("introslide6.jpg", 	+0.5f, 1.0f);               							//20.0
+		AddVoice("Intro_2", 			+3.0f);                     							//23.0
+		AddSlide("introslide7.jpg", 	+1.67f, 1.0f);              							//24.6
+		AddSlide("introslide8.jpg", 	+4.46f, 0.8f);              							//29.1
+		AddSlide("introslide9.jpg", 	+4.07f, 0.8f);               							//33.2
+		AddVoice("Intro_3", 			+1.8f);                     							//35.0
+		AddSlide("introslide10.jpg", 	+0.8f, 0.8f);               							//35.8
+		AddSlide("introslide11.jpg", 	+2.8f, 0.8f);               							//38.6
+		AddSlide("introslide12.jpg", 	+5.9f, 0.8f);               							//44.5
+		AddVoice("Intro_4", 			+0.5f);                     							//45.0
+		AddSlide("introslide13.jpg", 	+1.0f, 0.8f);               							//46.0
+		AddVoice("Intro_5", 			+1.0f);                     							//47.0
+		AddSlide("introslide14.jpg",	+2.5f, 0.8f); // Honk sounds? Near crash?               //50.5
+		AddVoice("Intro_6", 			+2.5f);                                                 //53.0
+		AddSlide("introslide9.jpg", 	+2.33f, 0.8f);                                          //55.3
+		AddSound("Entities_Urban/tech/cellphone/vibrating_wood", +5.67f, 1.0f);					//61.0
+		AddVoice("Intro_7", 			+1.0f);                                                 //62.0
+		AddSlide("introslide15.jpg", 	+1.0f, 0.8f);                                           //63.0
+		AddSlide("introslide16.jpg", 	+2.0f, 0.8f);                                           //65.0
+		AddVoice("Intro_8", 			+2.5f);                                                 //68.5
+		AddSlide("introslide17.jpg", 	+1.5f, 1.0f);		                                    //70.0
+		AddVoice("Intro_9", 			+0.0f);                                                 //70.0
+		AddSlide("", 					+2.0f, 1.0f); // Crash sound + Fade to white            //72.0
+		AddEvent("Event_EndSlideShow",	+3.0f);	// Change map                                   //75.0
+		
+		//mfDebugStartTime = 61.0f;
+	}
+	
+	void Event_EndSlideShow(const tString &in asTimer)
+	{
+		////////////////////////////////////////
+		// Load next map
+		Map_ChangeMap("00_01_apartment.hpm","PlayerStartArea_1","","");
+	}
+	
+	//-------------------------------------------------------
+
+	////////////////////////////
+	// Run first time starting map
+	void OnStart()
+	{
+		/////////////////////////
+		// Debug
+		if(cLux_ScriptDebugOn())
+		{
+			//Add any debug stuff here
+			cLux_SetDebugInfoWindowText("Text that should show up when pressing F1");
+		}
+
+		if(cLux_ScriptDebugOn()==false)
+			Map_Preload("00_01_apartment.hpm");
+			
+		Player_SetFlashlightDisabled(true);
+		
+		PlayerHands_SetHandModel_Human();
+	}
+
+	//-------------------------------------------------------
+
+	////////////////////////////
+	// Run when entering map
+	void OnEnter()
+	{	
+		GetBase().SetDisplayNameEntry("00-00-intro");
+				
+		mbSlideshowComplete = false;
+		//Effect_Fade_Out(0);
+		SequenceSlideshow();
+	}
+
+	//-------------------------------------------------------
+
+	////////////////////////////
+	// Run when leaving map
+	void OnLeave()
+	{
+	}
+
+	//-------------------------------------------------------
+
+	////////////////////////////
+	// The player has died.
+	void OnPlayerKilled(int alRecentDeaths, const tString&in asSource)
+	{
+	}
+
+	//-------------------------------------------------------
+
+	////////////////////////////
+	// To get when player makes input (mostly used for debug)
+	void OnAction(int alAction, bool abPressed) 
+	{
+		if(abPressed==false) return;
+		
+		if(alAction == eAction_Test1)
+		{
+			//Debug stuff when pressing key 1
+		}
+		
+		if (mbSlideshowComplete)
+		{
+			
+			if (alAction == eAction_Interact)
+			{
+				if (mbNextLevelInitiated == false)
+				{
+					mbNextLevelInitiated = true;
+					GoToNextLevel();
+				}
+			}
+		}
+	}
+
+	//-------------------------------------------------------
+
+	////////////////////////////
+	// This only used for pure debug purposes when info needs to printed.
+	float DrawDebugOutput(cGuiSet @apSet,iFontData @apFont,float afY)
+	{
+		//afY = cLux_DrawDebugText("My Debug value:"+..., afY);
+		return afY;
+	}
+
+	//-------------------------------------------------------
+
+	/////////////////////////////////////////
+	// ==============
+	// MAIN FUNCTIONS
+	// ==============
+	/////////////////////////////////////////
+
+	//-------------------------------------------------------
+
+	int mlSlideNumber;
+	int mlFinalSlideNumber = 9;
+	tString msTempSlideText = "TODO: Slide Number ";
+	bool mbNextLevelInitiated = true;
+	
+	bool mbSlideShowRunning = false;
+	float mfSlideShowTimer = 0.0f;
+	float mfSlideShowLength = 0.0f;
+	
+	float mfSlideFadeTimer = 0.0f;
+	int mlCurrentSlideIndex = -1;
+	array<cSlide> mvSlides;
+	
+	int mlCurrentVoiceIndex = -1;
+	array<cSlideShowVoice> mvVoices;
+	
+	int mlCurrentSoundIndex = -1;
+	array<cSlideShowSound> mvSounds;
+	
+	array<cSlideShowEvent> mvEvents;
+	
+	// Debug stuff
+	float mfFlashRedTimer = 0.0f;
+	float mfDebugStartTime = 0.0f;
+	
+	//-------------------------------------------------------
+	
+	void StartSlideShow()
+	{
+		mbSlideShowRunning = true;
+		mfSlideShowTimer = 0.0f;
+		mfSlideFadeTimer = 0.0f;
+		mlCurrentSlideIndex = -1;
+		mlCurrentVoiceIndex = -1;
+		mlCurrentSoundIndex = -1;
+		
+		if(cLux_ScriptDebugOn())
+		{
+			mfSlideShowTimer = mfDebugStartTime;
+						
+			for(int i=-1; i<mvSlides.length()-1; ++i)
+			{
+				cSlide @nextSlide = mvSlides[i+1];
+				if(mfSlideShowTimer<nextSlide.mfStartTime)
+				{
+					mlCurrentSlideIndex = i;
+					break;
+				}
+			}
+			
+			for(int i=-1; i<mvVoices.length()-1; ++i)
+			{
+				cSlideShowVoice @nextVoice = mvVoices[i+1];
+				if(mfSlideShowTimer<nextVoice.mfStartTime)
+				{
+					mlCurrentVoiceIndex = i;
+					break;
+				}
+			}
+			
+			for(int i=-1; i<mvSounds.length()-1; ++i)
+			{
+				cSlideShowSound @nextSound = mvSounds[i+1];
+				if(mfSlideShowTimer<nextSound.mfStartTime)
+				{
+					mlCurrentSoundIndex = i;
+					break;
+				}
+			}
+			
+			for(int i=0; i<mvEvents.length(); ++i)
+			{
+				cSlideShowEvent @event = mvEvents[i];
+				float fEventStartTime = event.mfStartTime-mfSlideShowTimer;
+				if(fEventStartTime>0.0f)
+					Map_AddTimer("", fEventStartTime, event.msFunc);
+			}
+		}
+		else
+		{
+			for(int i=0; i<mvEvents.length(); ++i)
+			{
+				cSlideShowEvent @event = mvEvents[i];
+				Map_AddTimer("", event.mfStartTime, event.msFunc);
+			}
+		}
+	}
+
+	//-------------------------------------------------------
+	
+	void Update(float afTimeStep)
+	{
+		if(mbSlideShowRunning)
+		{
+			///////////////////////////////////////////
+			// Update timers
+			mfSlideShowTimer += afTimeStep;
+			
+			if(mfSlideFadeTimer>0.0f)
+				mfSlideFadeTimer -= afTimeStep;
+				
+			///////////////////////////////////////////
+			// Update slide changes
+			if(mlCurrentSlideIndex<mvSlides.length()-1)
+			{
+				cSlide @nextSlide = mvSlides[mlCurrentSlideIndex+1];
+				if(mfSlideShowTimer>=nextSlide.mfStartTime)
+				{
+					++mlCurrentSlideIndex;
+					mfSlideFadeTimer = nextSlide.mfFadeTime;
+					if(mlCurrentSlideIndex<mvSlides.length()-1)
+					{
+						cSlide @currentSlide = nextSlide;
+						@nextSlide = mvSlides[mlCurrentSlideIndex+1];
+						mfSlideFadeTimer = cMath_Min(mfSlideFadeTimer, nextSlide.mfStartTime-currentSlide.mfStartTime);
+					}
+				}
+			}
+			
+			
+			///////////////////////////////////////////
+			// Update voice playback
+			if(mlCurrentVoiceIndex<mvVoices.length()-1)
+			{
+				cSlideShowVoice @nextVoice = mvVoices[mlCurrentVoiceIndex+1];
+				if(mfSlideShowTimer>=nextVoice.mfStartTime)
+				{
+					++mlCurrentVoiceIndex;
+					//Voice_PlayWhenPossible(nextVoice.msSubject, "Subject_ConditionToPlay", 0.0f, 1.0f, "Subject_OnDone");
+					Voice_PlayWhenPossible(nextVoice.msSubject, "Subject_ConditionToPlay", -1.0f, 0.0f, "Subject_OnDone");
+					if(cLux_ScriptDebugOn())
+					{
+						if(Voice_AnySceneIsActive())
+							mfFlashRedTimer = 0.25f;
+						//if(Voice_Play(nextVoice.msSubject, -1, "Subject_OnDone"))
+						//{
+							cLux_AddDebugMessage("Voice subject '" + nextVoice.msSubject + "' +started at second " + mfSlideShowTimer);
+							Log("Subject '" + nextVoice.msSubject + "' started at second " + mfSlideShowTimer + "\n");
+							mlEnqueuedPlayingVoiceIndex = mlCurrentVoiceIndex;
+						//}
+						//else
+						//{
+						//	Error("Subject '" + nextVoice.msSubject + "' failed to start at second " + mfSlideShowTimer);
+						//}
+					}
+				}
+			}
+			
+			///////////////////////////////////////////
+			// Update sound playback
+			if(mlCurrentSoundIndex<mvSounds.length()-1)
+			{
+				cSlideShowSound @nextSound = mvSounds[mlCurrentSoundIndex+1];
+				if(mfSlideShowTimer>=nextSound.mfStartTime)
+				{
+					++mlCurrentSoundIndex;
+					Sound_PlayGui(nextSound.msFile, nextSound.mfVolume);
+					
+					cLux_AddDebugMessage("Sound '" + nextSound.msFile + "' started at second " + mfSlideShowTimer);
+					Log("Sound '" + nextSound.msFile + "' started at second " + mfSlideShowTimer+"\n");
+				}
+			}
+		}
+	}
+	
+	bool mbVoiceCurrentlyPlaying = false;
+	int mlCurrentPlayingVoiceIndex;
+	int mlEnqueuedPlayingVoiceIndex;
+	tString msCurrentPlayingVoice;
+
+	void OnGui(float afTimeStep)
+	{
+		/****** TEMP! *******/
+		/*
+		cImGuiGfx blackImage("advanced_black.dds", eImGuiGfx_Texture);
+		ImGui_DoImage(blackImage, ImGui_NrmPos(cVector3f(0, 0, 0.0f)), ImGui_NrmSize(cVector2f(1,1)));
+		
+		ImGui_SetTransCategory("");
+		
+		cImGuiLabelData label;
+		label.mFont.SetFile("sansation_medium.fnt");
+		label.mFont.mvSize = cVector2f(32, 32);
+		label.mFontAlign = eFontAlign_Center;
+		*/
+		
+		tString sCurrentSlide;
+		
+		if(mlCurrentSlideIndex>=0)
+		{
+			cSlide @pCurrentSlide = cast<cSlide>(mvSlides[mlCurrentSlideIndex]);
+			
+			if(cLux_ScriptDebugOn())
+				sCurrentSlide = "CurrentSlide: (" + mlCurrentSlideIndex + ") '" + pCurrentSlide.mImage.GetFile() + "'";
+				
+			if(mfSlideFadeTimer>0.0f)
+			{
+				float fCrossFadeAlpha = mfSlideFadeTimer/pCurrentSlide.mfFadeTime;
+				
+				if(mlCurrentSlideIndex>0)
+				{
+					cSlide @pPrevSlide = cast<cSlide>(mvSlides[mlCurrentSlideIndex-1]);
+															
+					ImGui_SetModColorMul(cColor(1.0f, fCrossFadeAlpha));
+					if(pPrevSlide.mImage.GetFile()!="")
+						ImGui_DoImageCorrectAspect(pPrevSlide.mImage, ImGui_NrmPos(0.0f,0.0f,0.0f), ImGui_NrmSize(1.0f, 1.0f));			
+					else
+						ImGui_DoImage(pPrevSlide.mImage, ImGui_NrmPos(0.0f,0.0f,0.0f), ImGui_NrmSize(1.0f, 1.0f));			
+				}
+				
+				ImGui_SetModColorMul(cColor(1.0f, 1.0f-fCrossFadeAlpha));
+			}
+			
+			if(pCurrentSlide.mImage.GetFile()!="")
+				ImGui_DoImageCorrectAspect(pCurrentSlide.mImage, ImGui_NrmPos(0.0f,0.0f,0.0f), ImGui_NrmSize(1.0f, 1.0f));			
+			else
+				ImGui_DoImage(pCurrentSlide.mImage, ImGui_NrmPos(0.0f,0.0f,0.0f), ImGui_NrmSize(1.0f, 1.0f));	
+		
+			ImGui_ResetModifiers();
+		}
+		
+		if(cLux_ScriptDebugOn())
+		{
+			ImGui_SetTransCategory("");
+			ImGui_DoLabel("Time: " + cString_ToString(mfSlideShowTimer,3), ImGui_NrmPos(0,0,2));
+			if(sCurrentSlide!="")
+				ImGui_DoLabel(sCurrentSlide, ImGui_NrmPos(0,0.025f,2));
+			if(mbVoiceCurrentlyPlaying)
+				ImGui_DoLabel("CurrentVoice: (" + mlCurrentPlayingVoiceIndex + ") '" + msCurrentPlayingVoice + "'", ImGui_NrmPos(0,0.05f,2));
+				
+			if(mfFlashRedTimer>0.0f)
+			{
+				mfFlashRedTimer -= afTimeStep;
+				cImGuiGfx red;
+				red.mColor = cColor(1,0,0,mfFlashRedTimer/0.25f);
+				ImGui_DoImage(red, ImGui_NrmPos(0,0,2), ImGui_NrmSize(1.0f, 1.0f));
+			}
+		}
+	}
+
+	
+	//-------------------------------------------------------
+	
+	bool mbSlideshowComplete = false;
+	
+	cSequenceStatesData mSequenceSlideshow;
+	void SequenceSlideshow(const tString& in asName="")
+	{
+		Sequence_Begin("SequenceSlideshow", mSequenceSlideshow);
+		
+		if (Sequence_DoStepAndWait(1.0f))
+		{
+		}
+		else if(Sequence_DoStepAndWait(0.0f))
+		{
+			StartSlideShow();			
+		}
+				
+		Sequence_End();
+	}
+	
+	//-------------------------------------------------------
+	
+	float AddTimeToSlideShow(float afTime)
+	{
+		mfSlideShowLength += afTime;
+		
+		return mfSlideShowLength;
+	}
+	
+	void AddSlide(const tString &in asFile, float afTimelineOffset, float afFadeInTime)
+	{
+		float fStartTime = AddTimeToSlideShow(afTimelineOffset);
+		cSlide newSlide(asFile, fStartTime, afFadeInTime);
+		
+		bool bAdded = false;
+		for(int i=0; i<mvSlides.length(); ++i)
+		{
+			cSlide @pSlide = mvSlides[i];
+					
+			if(newSlide.mfStartTime < pSlide.mfStartTime)
+			{
+				mvSlides.insertAt(i, newSlide);
+				bAdded = true;
+				
+				break;
+			}
+		}
+		
+		if(bAdded==false)
+			mvSlides.insertLast(newSlide);
+	}
+	
+	void AddVoice(const tString &in asSubject, float afTimelineOffset)
+	{
+		float fStartTime = AddTimeToSlideShow(afTimelineOffset);
+		cSlideShowVoice newVoice(asSubject, fStartTime);
+		
+		bool bAdded = false;
+		for(int i=0; i<mvVoices.length(); ++i)
+		{
+			cSlideShowVoice @pVoice = mvVoices[i];
+					
+			if(newVoice.mfStartTime < pVoice.mfStartTime)
+			{
+				mvVoices.insertAt(i, newVoice);
+				bAdded = true;
+				
+				break;
+			}
+		}
+		
+		if(bAdded==false)
+			mvVoices.insertLast(newVoice);
+	}
+	
+	void AddSound(const tString &in asSound, float afTimelineOffset, float afVolume=1.0f)
+	{
+		float fStartTime = AddTimeToSlideShow(afTimelineOffset);
+		cSlideShowSound newSound(asSound, fStartTime, afVolume);
+		
+		bool bAdded = false;
+		for(int i=0; i<mvSounds.length(); ++i)
+		{
+			cSlideShowSound @pSound = mvSounds[i];
+					
+			if(newSound.mfStartTime < pSound.mfStartTime)
+			{
+				mvSounds.insertAt(i, newSound);
+				bAdded = true;
+				
+				break;
+			}
+		}
+		
+		if(bAdded==false)
+			mvSounds.insertLast(newSound);
+	}
+	
+	void AddEvent(const tString &in asFunc, float afTimelineOffset)
+	{
+		float fStartTime = AddTimeToSlideShow(afTimelineOffset);
+		mvEvents.insertLast(cSlideShowEvent(asFunc, fStartTime));
+	}
+		
+	//-------------------------------------------------------
+	
+	bool Subject_ConditionToPlay(const tString& in asSubject)
+	{
+		if(cLux_ScriptDebugOn())
+		{
+			Log("Enqueued subject '" + asSubject + "' started at second " + mfSlideShowTimer + "\n");
+			mbVoiceCurrentlyPlaying = true;
+			msCurrentPlayingVoice = asSubject;
+			mlCurrentPlayingVoiceIndex = mlEnqueuedPlayingVoiceIndex;
+		}
+		return true;
+	}
+	
+	void Subject_OnDone(const tString&in asScene, const tString&in asSubject)
+	{
+		if(cLux_ScriptDebugOn())
+		{
+			Log("Subject '" + asSubject + "' finished at second " + mfSlideShowTimer + "\n");
+			
+			mbVoiceCurrentlyPlaying = false;
+		}
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerEndSlideShow(const tString &in asTimer)
+	{
+		////////////////////////////////////////
+		// Slideshow is done, set conditions to go to next map
+		Effect_Fade_In(1.25f);
+		mbSlideshowComplete = true;
+		
+		GoToNextLevel();
+	}
+	
+	//-------------------------------------------------------
+
+	void GoToNextLevel()
+	{
+		Effect_Fade_Out(2.0f);
+		cLux_AddDebugMessage("Switching scene...");
+		Map_AddTimer("timer_nextmap",2.5f,"TimerNextMap");
+		//cLuxMap@ pMap = cLux_GetLoadedMap("00_01_apartment.hpm");
+		//cLux_SetSubMap(pMap,eLuxSetSubmapPosition_MoveToStartPos,"PlayerStartArea_1");
+	}
+	
+	//-------------------------------------------------------
+	
+	void TimerNextMap(const tString &in asTimer)
+	{
+		////////////////////////////////////////
+		// Load next map
+		Map_ChangeMap("00_01_apartment.hpm","PlayerStartArea_1","","");
+	}
+	
+	//-------------------------------------------------------
+}

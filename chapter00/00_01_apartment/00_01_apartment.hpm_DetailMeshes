@@ -1,0 +1,16 @@
+<HPLMapTrack_DetailMeshes ID="F025EA316DD836A84706407543DECBEFB3C474D" Version="1.00">
+    <DetailMeshes MaxRange="1e+007">
+        <Sections>
+            <Section Name="Snafu@SNAFU-PC" />
+            <Section Name="Aaron@AARON-PC" />
+            <Section Name="Samuel@SAMUEL-PC" />
+            <Section Name="jens@JW2" />
+            <Section Name="SNAFU@SNAFU-PC" />
+            <Section Name="Ian@IANSWORKLAPTOP" />
+            <Section Name="Patrik@POMPERIPOSSA" />
+            <Section Name="Marc@MARC-PC" />
+            <Section Name="Ian@IAN-DESKTOP" />
+            <Section Name="Samuel@SAMUELS-PC" />
+        </Sections>
+    </DetailMeshes>
+</HPLMapTrack_DetailMeshes>

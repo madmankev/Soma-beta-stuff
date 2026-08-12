@@ -1,0 +1,3 @@
+<HPLMapTrack_Terrain ID="9356D470C007CC813CFEFBD46CB364EBA68DF27D" Version="1.00">
+    <Terrain Active="false" GeometryPatchSize="64" TexturePatchSize="64" HeightMapSize="64" MaxHeight="10" UnitSize="1" UndergrowthGridSize="10" UndergrowthFadeStart="18" UndergrowthFadeEnd="20" />
+</HPLMapTrack_Terrain>

@@ -1,0 +1,18 @@
+<HPLMap ID="9356D470C007CC813CFEFBD46CB364EBA68DF27D" Version="1.00">
+    <GlobalSettings>
+        <Fog Active="false" Culling="false" Color="0.784314 0.921569 1 0.0588235" Brightness="1" FadeStart="10" FadeEnd="17" FalloffExp="1.5" Underwater="false" UseSkybox="false" NoiseStrength="0" NoiseSize="0" NoiseTurbulence="0 0 0" SecondaryActive="false" SecondaryColor="0.00196078 0.00196078 0.00196078 0" SecondaryFadeStart="0" SecondaryFadeEnd="0" SecondaryFalloffExp="0" />
+        <SkyBox Active="true" Color="0 0 0 1" Texture="E:/depth/redist/textures/environment/subway_carriage_env.dds" Brightness="0.05" />
+        <DirLight Active="false" ShadowCasterDist="10" DiffuseColor="1 1 1 1" Brightness="1 1 1 1" Gobo="" GoboAnimMode="None" GoboAnimStartTime="0" GoboAnimFrameTime="0" GoboScale="1 1" Direction="0 0 0" CastShadows="false" SkyCol="1 1 1 0" GroundCol="0 0 0 0" ShadowMapBiasMul="3" ShadowMapSlopeScaleBiasMul="2.5" AutoShadowSliceSettings="true" AutoShadowSliceLogTerm="0.9" />
+        <SSAO NormalMap="false" NumOfDirections="0" NumOfSteps="0" AngleBias="0" Power="4.4" Radius="2" BufferSizeDiv="2" />
+        <EnvParticles Color="1 1 1 1" Brightness="1" BoxDistance="2" GravityVelocity="0 0 0" GravitySpeedRandomAmount="0" WindVelocity="0 0 0" WindSpeedRandomAmount="0" WindDirRandomAmount="0" RotateVelocity="0 0 0" RotateSpeedRandomAmount="0" RotateBothDirs="false" NumIterations="1" FadeInStart="0.2" FadeInEnd="1" FadeOutStart="10" FadeOutEnd="20" BoxSize="30" NumParticles="100" ParticleSize="1 1" SubDivUV="1 1" AffectedByLight="false" Texture="" Active="false" />
+        <PostEffects ToneMappingKey="0.5" ToneMappingExposure="0" ToneMappingWhiteCut="3.5" ColorGradingTexture="textures/colorgrading/grading_00_02.dds" />
+        <DistanceCulling Active="false" MinRange="0" ScreenSize="0.05" RandomSize="0.25" />
+    </GlobalSettings>
+    <RegisteredUsers>
+        <User ID="Snafu@SNAFU-PC" RegistrationTimestamp="0" />
+        <User ID="jens@JW2" RegistrationTimestamp="1395855151" />
+        <User ID="Patrik@POMPERIPOSSA" RegistrationTimestamp="1415011368" />
+        <User ID="Aaron@AARON-PC" RegistrationTimestamp="1420555956" />
+        <User ID="Samuel@SAMUELS-PC" RegistrationTimestamp="1421251573" />
+    </RegisteredUsers>
+</HPLMap>

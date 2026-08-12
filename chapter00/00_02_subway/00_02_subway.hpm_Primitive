@@ -1,0 +1,25 @@
+<HPLMapTrack_Primitive ID="9356D470C007CC813CFEFBD46CB364EBA68DF27D" Version="1.00">
+    <Section Name="Snafu@SNAFU-PC">
+        <Objects>
+            <Plane ID="268435461" Name="Plane_2" CreStamp="0" ModStamp="0" WorldPos="-1.957 3.4 -1.192" Rotation="2.35619 -0 0" Scale="1 1 1" Material="entities/subway/ornament_wall/ad_subway_xx/ad_subway_travel.mat" StartCorner="0 0 0" EndCorner="2 0 1" CastShadows="false" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.52 1.1 1.1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 297 268435461" Corner1UV="0 1.1" Corner2UV="0 0" Corner3UV="1.04 0" Corner4UV="1.04 1.1" />
+            <Plane ID="268435462" Name="Plane_3" CreStamp="0" ModStamp="0" WorldPos="0.0475171 3.40002 -1.19206" Rotation="2.35619 -0 0" Scale="1 1 1" Material="entities/subway/ornament_wall/ad_subway_xx/ad_subway_university.mat" StartCorner="0 0 0" EndCorner="2 0 1" CastShadows="false" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.52 1.1 1.1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 295 268435462" Corner1UV="0 1.1" Corner2UV="0 0" Corner3UV="1.04 0" Corner4UV="1.04 1.1" />
+            <Plane ID="268435463" Name="Plane_4" CreStamp="0" ModStamp="0" WorldPos="-3.96054 3.40002 -1.19206" Rotation="2.35619 -0 0" Scale="1 1 1" Material="entities/subway/ornament_wall/ad_subway_xx/ad_subway_rock.mat" StartCorner="0 0 0" EndCorner="2 0 1" CastShadows="false" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.52 1.1 1.1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 298 268435463" Corner1UV="0 1.1" Corner2UV="0 0" Corner3UV="1.04 0" Corner4UV="1.04 1.1" />
+            <Plane ID="268435464" Name="Plane_5" CreStamp="0" ModStamp="0" WorldPos="3.96907 3.39676 1.19979" Rotation="-0.785398 -8.74228e-008 -3.14159" Scale="1 1 1" Material="entities/subway/ornament_wall/ad_subway_xx/ad_subway_newnano.mat" StartCorner="0 0 0" EndCorner="2 0 1" CastShadows="false" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.52 1.1 1.1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 292 268435464" Corner1UV="0 1.1" Corner2UV="0 0" Corner3UV="1.04 0" Corner4UV="1.04 1.1" />
+            <Plane ID="268435465" Name="Plane_6" CreStamp="0" ModStamp="0" WorldPos="1.96551 3.39676 1.19979" Rotation="-0.785398 -8.74228e-008 -3.14159" Scale="1 1 1" Material="entities/subway/ornament_wall/ad_subway_xx/ad_subway_travel.mat" StartCorner="0 0 0" EndCorner="2 0 1" CastShadows="false" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.52 1.1 1.1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 294 268435465" Corner1UV="0 1.1" Corner2UV="0 0" Corner3UV="1.04 0" Corner4UV="1.04 1.1" />
+            <Plane ID="268435466" Name="Plane_7" CreStamp="0" ModStamp="0" WorldPos="-0.0286412 3.39676 1.19979" Rotation="-0.785398 -8.74228e-008 -3.14159" Scale="1 1 1" Material="entities/subway/ornament_wall/ad_subway_xx/ad_subway_foodchain.mat" StartCorner="0 0 0" EndCorner="2 0 1" CastShadows="false" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.52 1.1 1.1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 293 268435466" Corner1UV="0 1.1" Corner2UV="0 0" Corner3UV="1.04 0" Corner4UV="1.04 1.1" />
+            <Plane ID="268435467" Name="Plane" CreStamp="0" ModStamp="0" WorldPos="0 0 -8.76608" Rotation="0 0 0" Scale="1 1 1" Material="static_objects/urban/floor/waitingroom_linoleum.mat" StartCorner="0 0 0" EndCorner="6.5 0 6.73881" CastShadows="false" Collides="true" DiffuseColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 296 268435467" Corner1UV="0 6.73881" Corner2UV="0 0" Corner3UV="6.5 0" Corner4UV="6.5 6.73881" />
+        </Objects>
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="Aaron@AARON-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+</HPLMapTrack_Primitive>

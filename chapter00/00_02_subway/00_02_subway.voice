@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-16"?>
+<VoiceData>
+ <Characters>
+  <Character ID="0" Name="Announcer" DisplayName="Tannoy" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="2" WorldSpace="True" AffectedByReverb="False" TextToSpeechVoice="IVONA 2 Jennifer" DefaultCriteria="" EntryType="World" Volume="1" ReverbVolume="1" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="1" Name="Ashley" DisplayName="Ashley" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="True" AffectedByReverb="False" TextToSpeechVoice="IVONA 2 Kimberly" DefaultCriteria="" EntryType="World" Volume="1" ReverbVolume="1" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="2" Name="Erin" DisplayName="Erin" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="True" AffectedByReverb="False" TextToSpeechVoice="IVONA 2 Salli" DefaultCriteria="" EntryType="World" Volume="1" ReverbVolume="1" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="3" Name="David" DisplayName="David" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="True" AffectedByReverb="False" TextToSpeechVoice="IVONA 2 Eric" DefaultCriteria="" EntryType="World" Volume="1" ReverbVolume="1" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="4" Name="Bum" DisplayName="Vagrant" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="0.5" WorldSpace="True" AffectedByReverb="False" TextToSpeechVoice="IVONA 2 Joey" DefaultCriteria="" EntryType="World" Volume="1" ReverbVolume="1" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="5" Name="Girl" DisplayName="Teenager" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="True" AffectedByReverb="False" TextToSpeechVoice="Microsoft Anna" DefaultCriteria="" EntryType="World" Volume="1" ReverbVolume="1" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="6" Name="Player" DisplayName="Simon" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="False" AffectedByReverb="True" TextToSpeechVoice="IVONA 2 Joey" DefaultCriteria="" EntryType="GUIWorld" Volume="1" ReverbVolume="0.865" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="7" Name="Jesse" DisplayName="Jesse" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="False" AffectedByReverb="False" TextToSpeechVoice="Default" DefaultCriteria="" EntryType="GUIWorld" Volume="0.9" ReverbVolume="1" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+ </Characters>
+ <Effects />
+ <Scenes>
+  <Scene ID="0" Name="Announcer" FocusPrio="2" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+  <Scene ID="1" Name="Phone" FocusPrio="10" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+  <Scene ID="2" Name="Bum" FocusPrio="1" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+  <Scene ID="3" Name="Girl" FocusPrio="1" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+  <Scene ID="4" Name="Comment" FocusPrio="3" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+  <Scene ID="5" Name="Simon" FocusPrio="5" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+ </Scenes>
+ <Subjects>
+  <Subject Name="StationStAndrew" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="St Andrew -- Next station is St Andrew." Timestamp="2013-03-14 02:51" />
+   </Line>
+  </Subject>
+  <Subject Name="StationOsgoode" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="Osgoode -- Next station is Osgoode." Timestamp="2013-03-14 02:51" />
+   </Line>
+  </Subject>
+  <Subject Name="StationStPatrick" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="St Patrick -- Next station is St Patrick." Timestamp="2013-03-14 02:51" />
+   </Line>
+  </Subject>
+  <Subject Name="StationQueensPark" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="Queen's Park -- Next station is Queen's Park." Timestamp="2013-03-14 02:51" />
+   </Line>
+  </Subject>
+  <Subject Name="Phonecall_EmailSent" UseSingleRandomLine="False" SceneId="5" EffectId="-1">
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="Jesse." VoiceOffset="1.25" Volume="0.85" Timestamp="2014-10-16 05:14" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="Hey Simon. I got your email. Just wanted to wish you good luck and let you know I got you covered." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="Thanks, I should be able to come to the store after the scan." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="Don't sweat it. I got Matt and Chris helping me out." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="Matty from S&amp;L?" Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="I guess you didn't hear. He's coming in full time - working the comic section." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="That's Ashley's job." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="Yeah, well. You know..." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="Forget it. Not doing her any favors by leaving an empty spot. Not like she's coming back." Timestamp="2014-11-12 02:46" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="Well, good luck. Hope they find a way reverse the whole... you know... dying thing." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Direction="(laughs)" Prio="0">
+    <Sound Text="Dying thing? You're the worst support ever." Volume="0.85" FileName="simon_phonecall_emailsent_011_player_001" Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Direction="(laughs)" Prio="0">
+    <Sound Text="Well, what should I say?" Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="I'll see you later, Jesse. Don't burn the place down while I'm gone." Volume="0.9" FileName="simon_phonecall_emailsent_013_player_001" Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="Over and out, buddy." Timestamp="2014-10-15 02:22" />
+   </Line>
+  </Subject>
+  <Subject Name="Phonecall_EmailNotSent" UseSingleRandomLine="False" SceneId="5" EffectId="-1">
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="Jesse." VoiceOffset="1.25" Volume="0.75" Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="Simon, what's up? I wanted check if you're coming to the store today." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="Maybe later. I got the brain scan thing, remember?" Volume="0.75" Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Direction="(surprisngly confirming)" Prio="0">
+    <Sound Text="That's today!" Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="Knew you'd forget." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="I'm sorry. Just send me a mail next time. I need these things in writing, you know that?" Timestamp="2015-03-09 10:41" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="You know how we sell calendars? You should get one." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="I have one. I just never write anything in it." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="Maybe I'll swing by later. Depends on how long this scan thing takes." Volume="0.85" Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="That's cool. I'll just get Chris to help me out. Anyway, we're getting a new minion today. Thought you might want to come by and say hi." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="Replacing Ashley already. That was quick." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="No, it really wasn't. We've been understaffed for weeks and you know it." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="I guess it's been a while." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="It really has. Like a month already." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="Anyway, get the scan done. Get good news from the doctor or whatever, come down to the store, say hi to the new guy, and lunch is on me." VoiceOffset="0.25" Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Prio="0">
+    <Sound Text="Thanks, Jesse. I really appreciate your support." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="Don't want to replace another minion." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Direction="(smiling)" Prio="0">
+    <Sound Text="That's not funny." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="It's a little funny." Timestamp="2014-10-15 02:22" />
+   </Line>
+   <Line CharacterId="6" Direction="(still joking around)" Prio="0">
+    <Sound Text="No, no, it's not, bye Jesse." Timestamp="2015-03-09 10:41" />
+   </Line>
+   <Line CharacterId="7" Prio="0">
+    <Sound Text="See you later." Timestamp="2014-10-15 05:09" />
+   </Line>
+  </Subject>
+ </Subjects>
+</VoiceData>

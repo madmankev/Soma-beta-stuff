@@ -1,0 +1,5 @@
+<PreloadCache>
+    <Materials>
+        <Material Path="static_objects/station/floor/concrete_tiled.mat" />
+    </Materials>
+</PreloadCache>

@@ -1,0 +1,37 @@
+<HPLMapTrack_StaticObject ID="9356D470C007CC813CFEFBD46CB364EBA68DF27D" Version="1.00">
+    <Section Name="Snafu@SNAFU-PC">
+        <FileIndex_StaticObjects NumOfFiles="3">
+            <File Id="0" Path="static_objects/subway/special/subway_carriage_connector.dae" />
+            <File Id="1" Path="static_objects/subway/special/00_02_graffiti/graffiti.dae" />
+            <File Id="2" Path="static_objects/subway/special/subway_carriage.dae" />
+        </FileIndex_StaticObjects>
+        <Objects>
+            <StaticObject ID="268435456" Name="special_subway_carriage_1" CreStamp="0" ModStamp="0" WorldPos="0 2.38419e-007 0" Rotation="0 0 0" Scale="1 1 1" FileIndex="2" Collides="false" CastShadows="true" IsOccluder="true" ColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" UID="16 17 268435456" />
+            <StaticObject ID="268435457" Name="special_subway_carriage_connector_1" CreStamp="0" ModStamp="0" WorldPos="-6.5 0 0" Rotation="0 0 0" Scale="1 1 1" FileIndex="0" Collides="true" CastShadows="true" IsOccluder="true" ColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" UID="16 46 268435457" />
+            <StaticObject ID="268435458" Name="special_subway_carriage_connector_2" CreStamp="0" ModStamp="0" WorldPos="7.5 0 0" Rotation="0 0 0" Scale="1 1 1" FileIndex="0" Collides="true" CastShadows="true" IsOccluder="true" ColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" UID="16 47 268435458" />
+            <StaticObject ID="268435459" Name="special/00_02_graffiti_graffiti_1" CreStamp="0" ModStamp="0" WorldPos="-0.00656378 1.75 -2.0674" Rotation="0 0 0" Scale="0.631077 0.75 0.75" FileIndex="1" Collides="true" CastShadows="true" IsOccluder="true" ColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" UID="16 16 268435459" />
+            <StaticObject ID="268435460" Name="special/00_02_graffiti_graffiti_2" CreStamp="0" ModStamp="0" WorldPos="-4.02616 1.75 -2.0674" Rotation="0 0 0" Scale="0.75 0.75 0.75" FileIndex="1" Collides="true" CastShadows="true" IsOccluder="true" ColorMul="1 1 1 1" CulledByDistance="true" CulledByFog="true" UID="16 18 268435460" />
+        </Objects>
+    </Section>
+    <Section Name="jens@JW2">
+        <FileIndex_StaticObjects NumOfFiles="0" />
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <FileIndex_StaticObjects NumOfFiles="0" />
+        <Objects />
+    </Section>
+    <Section Name="Aaron@AARON-PC">
+        <FileIndex_StaticObjects NumOfFiles="2">
+            <File Id="0" Path="static_objects/subway/special/subway_carriage.dae" />
+            <File Id="1" Path="static_objects/subway/special/subway_carriage_poles.dae" />
+        </FileIndex_StaticObjects>
+        <Objects>
+            <StaticObject ID="318767112" Name="special_subway_carriage_2" CreStamp="1420558498" ModStamp="1420558503" WorldPos="0 2.38419e-007 0" Rotation="0 0 0" Scale="1 1 1" FileIndex="1" Collides="false" CastShadows="false" IsOccluder="true" ColorMul="1 1 1 1" CulledByDistance="false" CulledByFog="true" UID="19 17 318767112" />
+        </Objects>
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <FileIndex_StaticObjects NumOfFiles="0" />
+        <Objects />
+    </Section>
+</HPLMapTrack_StaticObject>

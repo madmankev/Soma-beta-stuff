@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-16"?>
+<VoiceData>
+ <Characters>
+  <Character ID="0" Name="Simon" DisplayName="Simon" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="False" AffectedByReverb="False" TextToSpeechVoice="Default" DefaultCriteria="" EntryType="GUIWorld" Volume="0.65" ReverbVolume="1" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+  <Character ID="1" Name="Ashley" DisplayName="Ashley" Actor="" AutoGenVoice="False" AutoGenVoiceFile="" AutoGenVoiceSoundFreq="1" WorldSpace="False" AffectedByReverb="False" TextToSpeechVoice="Default" DefaultCriteria="" EntryType="GUIWorld" Volume="0.65" ReverbVolume="0.96" SpeakerSpread="40" EntitySource="" MinDist="0" MaxDist="0" MinFreq="22000" MaxFreq="22000" MaxListeningDist="-1" FrequencyFilter="None" />
+ </Characters>
+ <Effects />
+ <Scenes>
+  <Scene ID="0" Name="intro" FocusPrio="0" DefaultCriteria="" Volume="1" ReverbVolume="1" />
+ </Scenes>
+ <Subjects>
+  <Subject Name="Intro_0" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="Ashley, you want a ride?" EndPadding="-0.62" FileName="intro_intro_0_001_simon_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="That's yours? I thought you took the train." EndPadding="-0.3" FileName="intro_intro_0_002_ashley_001" Timestamp="2015-01-30 02:35" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="I take the car sometimes when I know it's going to be late. Fridays usually drag on." EndPadding="-0.28" FileName="intro_intro_0_003_simon_001" Timestamp="2015-01-30 02:35" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Well, sure, if you don't mind swinging by Parkdale." EndPadding="-0.3" FileName="intro_intro_0_004_ashley_001" Timestamp="2015-01-30 02:35" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="No problem, hop in." FileName="intro_intro_0_005_simon_001" Timestamp="2015-01-30 02:35" />
+   </Line>
+  </Subject>
+  <Subject Name="Intro_1" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="*ignition key turns*" FileName="intro_intro_1_001_simon_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+  </Subject>
+  <Subject Name="Intro_2" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="0" Direction="(nervous)" Prio="0">
+    <Sound Text="Long day, right?" EndPadding="-0.28" FileName="intro_intro_2_001_simon_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Yeah. So tired right now." EndPadding="-0.6" FileName="intro_intro_2_002_ashley_001" Timestamp="2015-01-30 02:35" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="Liking the job so far?" EndPadding="-0.4" FileName="intro_intro_2_003_simon_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Yeah, I'm having fun. Been a good week." EndPadding="-1" FileName="intro_intro_2_004_ashley_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+  </Subject>
+  <Subject Name="Intro_3" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Are you okay, Simon? I think you're bleeding." EndPadding="-0.8" FileName="intro_intro_3_001_ashley_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="Oh, that's nothing -- it's just my brain can't stop bleeding -- from the accident." EndPadding="-1.4" FileName="intro_intro_3_002_simon_001" Timestamp="2015-01-30 02:35" />
+   </Line>
+  </Subject>
+  <Subject Name="Intro_4" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Here, take this." EndPadding="-0.4" FileName="intro_intro_4_001_ashley_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+  </Subject>
+  <Subject Name="Intro_5" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="No, that's for later - for the scan." EndPadding="-0.3" FileName="intro_intro_5_001_simon_001" Timestamp="2015-01-30 02:35" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="It's green." EndPadding="-1.4" FileName="intro_intro_5_002_ashley_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+  </Subject>
+  <Subject Name="Intro_6" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="0" Direction="(stressed)" Prio="0">
+    <Sound Text="Ashley, I need to tell you something." EndPadding="-0.9" FileName="intro_intro_6_001_simon_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Simon, please don't make this weird--" EndPadding="-0.2" FileName="intro_intro_6_002_ashley_001" Timestamp="2015-03-09 10:26" />
+   </Line>
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="No, it's not like that." EndPadding="-1.2" FileName="intro_intro_6_003_simon_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+  </Subject>
+  <Subject Name="Intro_7" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="0" Direction="(frustrated)" Prio="0">
+    <Sound Text="Why now?" EndPadding="-0.4" FileName="intro_intro_7_001_simon_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="Who's David Munshi?" EndPadding="-1.3" FileName="intro_intro_7_002_ashley_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+   <Line CharacterId="0" Direction="sigh" Prio="0">
+    <Sound Text="Why is there never enough time?!" EndPadding="-0.2" FileName="intro_intro_7_003_simon_001" Timestamp="2015-01-30 02:35" />
+   </Line>
+  </Subject>
+  <Subject Name="Intro_8" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="1" Prio="0">
+    <Sound Text="For what?" EndPadding="0.7" FileName="intro_intro_8_001_ashley_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+  </Subject>
+  <Subject Name="Intro_9" UseSingleRandomLine="False" SceneId="0" EffectId="-1">
+   <Line CharacterId="0" Prio="0">
+    <Sound Text="To say I'm sorry." EndPadding="-1" FileName="intro_intro_9_001_simon_001" Timestamp="2014-10-15 03:34" />
+   </Line>
+  </Subject>
+ </Subjects>
+</VoiceData>

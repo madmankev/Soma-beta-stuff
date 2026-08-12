@@ -1,0 +1,51 @@
+<LANGUAGE>
+    <CATEGORY Name="Voices_00_02_subway">
+        <Entry Name="Announcer_StationStAndrew_001_Announcer_001">St Andrew -- Next station is St Andrew.</Entry>
+        <Entry Name="Announcer_StationOsgoode_001_Announcer_001">Osgoode -- Next station is Osgoode.</Entry>
+        <Entry Name="Announcer_StationStPatrick_001_Announcer_001">St Patrick -- Next station is St Patrick.</Entry>
+        <Entry Name="Announcer_StationQueensPark_001_Announcer_001">Queen&apos;s Park -- Next station is Queen&apos;s Park.</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_001_Player_001">Jesse.</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_002_Jesse_001">Hey Simon. I got your email. Just wanted to wish you good luck and let you know I got you covered.</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_003_Player_001">Thanks, I should be able to come to the store after the scan.</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_004_Jesse_001">Don&apos;t sweat it. I got Matt and Chris helping me out.</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_005_Player_001">Matty from S&amp;L?</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_006_Jesse_001">I guess you didn&apos;t hear. He&apos;s coming in full time - working the comic section.</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_007_Player_001">That&apos;s Ashley&apos;s job.</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_008_Jesse_001">Yeah, well. You know...</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_009_Player_001">Forget it. Not doing her any favors by leaving an empty spot. Not like she&apos;s coming back.</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_010_Jesse_001">Well, good luck. Hope they find a way reverse the whole... you know... dying thing.</Entry>
+        <Entry Name="simon_phonecall_emailsent_011_player_001">Dying thing? You&apos;re the worst support ever.</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_012_Jesse_001">Well, what should I say?</Entry>
+        <Entry Name="simon_phonecall_emailsent_013_player_001">I&apos;ll see you later, Jesse. Don&apos;t burn the place down while I&apos;m gone.</Entry>
+        <Entry Name="Simon_Phonecall_EmailSent_014_Jesse_001">Over and out, buddy.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_001_Player_001">Jesse.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_002_Jesse_001">Simon, what&apos;s up? I wanted check if you&apos;re coming to the store today.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_003_Player_001">Maybe later. I got the brain scan thing, remember?</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_004_Jesse_001">That&apos;s today!</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_005_Player_001">Knew you&apos;d forget.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_006_Jesse_001">I&apos;m sorry. Just send me a mail next time. I need these things in writing, you know that?</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_007_Player_001">You know how we sell calendars? You should get one.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_008_Jesse_001">I have one. I just never write anything in it.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_009_Player_001">Maybe I&apos;ll swing by later. Depends on how long this scan thing takes.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_010_Jesse_001">That&apos;s cool. I&apos;ll just get Chris to help me out. Anyway, we&apos;re getting a new minion today. Thought you might want to come by and say hi.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_011_Player_001">Replacing Ashley already. That was quick.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_012_Jesse_001">No, it really wasn&apos;t. We&apos;ve been understaffed for weeks and you know it.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_013_Player_001">I guess it&apos;s been a while.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_014_Jesse_001">It really has. Like a month already.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_015_Jesse_001">Anyway, get the scan done. Get good news from the doctor or whatever, come down to the store, say hi to the new guy, and lunch is on me.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_016_Player_001">Thanks, Jesse. I really appreciate your support.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_017_Jesse_001">Don&apos;t want to replace another minion.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_018_Player_001">That&apos;s not funny.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_019_Jesse_001">It&apos;s a little funny.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_020_Player_001">No, no, it&apos;s not, bye Jesse.</Entry>
+        <Entry Name="Simon_Phonecall_EmailNotSent_021_Jesse_001">See you later.</Entry>
+    </CATEGORY>
+    <CATEGORY Name="Voices_00_01_subway">
+        <Entry Name="Announcer_StationStAndrew_001_Announcer_001">St Andrew -- Next station is St Andrew.</Entry>
+        <Entry Name="Announcer_StationOsgoode_001_Announcer_001">Osgoode -- Next station is Osgoode.</Entry>
+        <Entry Name="Announcer_StationStPatrick_001_Announcer_001">St Patrick -- Next station is St Patrick.</Entry>
+        <Entry Name="Announcer_StationQueensPark_001_Announcer_001">Queen&apos;s Park -- Next station is Queen&apos;s Park.</Entry>
+        <Entry Name="Simon_IntroPhonecall_1_001_Ashley_001">Where are you going?</Entry>
+        <Entry Name="Simon_IntroPhonecall_1_002_Player_001">Just something I need to do.</Entry>
+    </CATEGORY>
+</LANGUAGE>

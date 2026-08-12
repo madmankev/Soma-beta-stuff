@@ -1,0 +1,49 @@
+<HPLMapTrack_LensFlare ID="E53EFA46941B81EDA7426EA6362DAC75D87AF3" Version="1.00">
+    <Section Name="Snafu@SNAFU-PC">
+        <Objects>
+            <LensFlare ID="268436160" Name="LensFlare_27" CreStamp="0" ModStamp="0" WorldPos="400.679 200 170.896" Rotation="5.46749e-006 0.526506 1.47353e-006" Scale="1 1 1" ActiveAnamorphic="false" MaterialAnamorphic="D:/Projects/depth/redist/lights/lensflare/flare_star_simple.mat" SizeAnamorphic="0.5 0.1" ColorAnamorphic="1 1 0.862745 0.196078" ActiveFlare="true" MaterialFlare="D:/Projects/depth/redist/lights/lensflare/flare_star_simple.mat" SizeFlare="1 1" ColorFlare="1 1 0.667969 0.784314" ActiveMultiIris="true" MaterialMultiIris="D:/Projects/depth/redist/lights/lensflare/multi_iris_simple.mat" SizeMultiIris="0.3 0.3" ColorMultiIris="1 1 0.862745 0.235294" MultiIrisSeed="9260" MultiIrisCount="20" UseParentMeshForOcclusion="true" ShrinkWhenOccluded="true" MulMultiIrisWithGlare="true" SourceSize="0.5 7.5 7" InnerFOV="1.5708" OuterFOV="3.14159" GlareBrightness="0.25" GlareFOV="0" GlareStareAt="0.4" SizeChangeBasedOnDistance="0" MultiIrisTextureAtlasGrid="2 2" RangeMax="0 0" RangeMin="0 0" GlareRange="-1 -1" Brightness="50" CulledByDistance="false" CulledByFog="true" UID="16 87 268436160" />
+        </Objects>
+    </Section>
+    <Section Name="Aaron@AARON-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELSPC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="MrB@BENZIE">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IAN-DESKTOP">
+        <Objects />
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IANS-WINLAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="Luis@WIGGLEWAGGLES">
+        <Objects />
+    </Section>
+</HPLMapTrack_LensFlare>

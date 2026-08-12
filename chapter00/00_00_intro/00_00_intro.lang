@@ -1,0 +1,27 @@
+<LANGUAGE>
+    <CATEGORY Name="Voices_00_00_intro">
+        <Entry Name="intro_intro_0_001_simon_001">Ashley, you want a ride?</Entry>
+        <Entry Name="intro_intro_0_002_ashley_001">That&apos;s yours? I thought you took the train.</Entry>
+        <Entry Name="intro_intro_0_003_simon_001">I take the car sometimes when I know it&apos;s going to be late. Fridays usually drag on.</Entry>
+        <Entry Name="intro_intro_0_004_ashley_001">Well, sure, if you don&apos;t mind swinging by Parkdale.</Entry>
+        <Entry Name="intro_intro_0_005_simon_001">No problem, hop in.</Entry>
+        <Entry Name="intro_intro_1_001_simon_001">*ignition key turns*</Entry>
+        <Entry Name="intro_intro_2_001_simon_001">Long day, right?</Entry>
+        <Entry Name="intro_intro_2_002_ashley_001">Yeah. So tired right now.</Entry>
+        <Entry Name="intro_intro_2_003_simon_001">Liking the job so far?</Entry>
+        <Entry Name="intro_intro_2_004_ashley_001">Yeah, I&apos;m having fun. Been a good week.</Entry>
+        <Entry Name="intro_intro_3_001_ashley_001">Are you okay, Simon? I think you&apos;re bleeding.</Entry>
+        <Entry Name="intro_intro_3_002_simon_001">Oh, that&apos;s nothing -- it&apos;s just my brain can&apos;t stop bleeding -- from the accident.</Entry>
+        <Entry Name="intro_intro_4_001_ashley_001">Here, take this.</Entry>
+        <Entry Name="intro_intro_5_001_simon_001">No, that&apos;s for later - for the scan.</Entry>
+        <Entry Name="intro_intro_5_002_ashley_001">It&apos;s green.</Entry>
+        <Entry Name="intro_intro_6_001_simon_001">Ashley, I need to tell you something.</Entry>
+        <Entry Name="intro_intro_6_002_ashley_001">Simon, please don&apos;t make this weird--</Entry>
+        <Entry Name="intro_intro_6_003_simon_001">No, it&apos;s not like that.</Entry>
+        <Entry Name="intro_intro_7_001_simon_001">Why now?</Entry>
+        <Entry Name="intro_intro_7_002_ashley_001">Who&apos;s David Munshi?</Entry>
+        <Entry Name="intro_intro_7_003_simon_001">Why is there never enough time?!</Entry>
+        <Entry Name="intro_intro_8_001_ashley_001">For what?</Entry>
+        <Entry Name="intro_intro_9_001_simon_001">To say I&apos;m sorry.</Entry>
+    </CATEGORY>
+</LANGUAGE>

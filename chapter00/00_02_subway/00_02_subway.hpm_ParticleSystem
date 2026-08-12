@@ -1,0 +1,24 @@
+<HPLMapTrack_ParticleSystem ID="9356D470C007CC813CFEFBD46CB364EBA68DF27D" Version="1.00">
+    <Section Name="Snafu@SNAFU-PC">
+        <Objects>
+            <ParticleSystem ID="268435531" Name="ParticleSystem_6" CreStamp="0" ModStamp="0" WorldPos="-2.98319 3.15429 0.77415" Rotation="0 0 0" Scale="1 1 1" File="D:/Projects/depth/redist/particles/dust/dust_light_tiny.ps" Color="1 1 0.882353 0.588235" Brightness="1" FadeAtDistance="false" MinFadeDistanceStart="2" MaxFadeDistanceStart="100" MinFadeDistanceEnd="1" MaxFadeDistanceEnd="110" CulledByDistance="true" CulledByFog="true" UID="16 23 268435531" />
+            <ParticleSystem ID="268435532" Name="ParticleSystem_7" CreStamp="0" ModStamp="0" WorldPos="-2.98319 3.15429 -0.724374" Rotation="0 0 0" Scale="1 1 1" File="D:/Projects/depth/redist/particles/dust/dust_light_tiny.ps" Color="1 1 0.882353 0.588235" Brightness="1" FadeAtDistance="false" MinFadeDistanceStart="2" MaxFadeDistanceStart="100" MinFadeDistanceEnd="1" MaxFadeDistanceEnd="110" CulledByDistance="true" CulledByFog="true" UID="16 22 268435532" />
+            <ParticleSystem ID="268435533" Name="ParticleSystem_9" CreStamp="0" ModStamp="0" WorldPos="1.00898 3.15429 -0.724374" Rotation="0 0 0" Scale="1 1 1" File="D:/Projects/depth/redist/particles/dust/dust_light_tiny.ps" Color="1 1 0.882353 0.588235" Brightness="1" FadeAtDistance="false" MinFadeDistanceStart="2" MaxFadeDistanceStart="100" MinFadeDistanceEnd="1" MaxFadeDistanceEnd="110" CulledByDistance="true" CulledByFog="true" UID="16 24 268435533" />
+            <ParticleSystem ID="268435534" Name="ParticleSystem_10" CreStamp="0" ModStamp="0" WorldPos="3.50857 3.15429 -0.724374" Rotation="0 0 0" Scale="1 1 1" File="D:/Projects/depth/redist/particles/dust/dust_light_tiny.ps" Color="1 1 0.882353 0.588235" Brightness="1" FadeAtDistance="false" MinFadeDistanceStart="2" MaxFadeDistanceStart="100" MinFadeDistanceEnd="1" MaxFadeDistanceEnd="110" CulledByDistance="true" CulledByFog="true" UID="16 21 268435534" />
+            <ParticleSystem ID="268435535" Name="ParticleSystem_11" CreStamp="0" ModStamp="0" WorldPos="3.0089 3.15429 0.776692" Rotation="0 0 0" Scale="1 1 1" File="D:/Projects/depth/redist/particles/dust/dust_light_tiny.ps" Color="1 1 0.882353 0.588235" Brightness="1" FadeAtDistance="false" MinFadeDistanceStart="2" MaxFadeDistanceStart="100" MinFadeDistanceEnd="1" MaxFadeDistanceEnd="110" CulledByDistance="true" CulledByFog="true" UID="16 20 268435535" />
+            <ParticleSystem ID="268435536" Name="ParticleSystem_13" CreStamp="0" ModStamp="0" WorldPos="-0.994623 3.15429 0.776692" Rotation="0 0 0" Scale="1 1 1" File="D:/Projects/depth/redist/particles/dust/dust_light_tiny.ps" Color="1 1 0.882353 0.588235" Brightness="1" FadeAtDistance="false" MinFadeDistanceStart="2" MaxFadeDistanceStart="100" MinFadeDistanceEnd="1" MaxFadeDistanceEnd="110" CulledByDistance="true" CulledByFog="true" UID="16 19 268435536" />
+        </Objects>
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="Aaron@AARON-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+</HPLMapTrack_ParticleSystem>
