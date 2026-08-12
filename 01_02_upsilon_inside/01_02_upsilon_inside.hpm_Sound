@@ -1,0 +1,113 @@
+<HPLMapTrack_Sound ID="4F126B871DE805A2E20DC5919C7C9ABB9965DA98" Version="1.00">
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects>
+            <Sound ID="268468634" Name="big_leak_1" CreStamp="0" ModStamp="0" WorldPos="22.8507 17.25 -1.04534" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="01_02_upsilon_inside_02/amb/spot/water_stream_from_roof" MinDistance="10000" MaxDistance="10000" Volume="1" Active="false" UseCustomProperties="false" UID="16 432 268468634" />
+            <Sound ID="268468637" Name="water_leak_1" CreStamp="0" ModStamp="0" WorldPos="22.75 16.75 -4.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="01_02_upsilon_inside_02/amb/spot/water_stream_from_roof" MinDistance="10000" MaxDistance="10000" Volume="1" Active="false" UseCustomProperties="false" UID="16 442 268468637" />
+            <Sound ID="268468652" Name="water_stream1_1" CreStamp="0" ModStamp="1409925329" WorldPos="42.7284 12.5 15.7637" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="01_02_upsilon_inside_02/sfx/water/water_splat" MinDistance="1" MaxDistance="10000" Volume="1" Active="false" UseCustomProperties="false" UID="16 457 268468652" />
+        </Objects>
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects>
+            <Sound ID="285212676" Name="flies_loop" CreStamp="0" ModStamp="1411656781" WorldPos="6.29654 13.5507 0.256989" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="01_02_upsilon_inside_02/amb/spot/flies_int" MinDistance="3" MaxDistance="6" Volume="2" Active="true" UseCustomProperties="true" UID="17 4787 285212676" />
+            <Sound ID="285212687" Name="radar_machine_1" CreStamp="0" ModStamp="0" WorldPos="33.75 18.25 0.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="Entities_Station/tech/radar_machine/radar_machine" MinDistance="1.4" MaxDistance="15" Volume="1" Active="false" UseCustomProperties="false" UID="17 4812 285212687" />
+        </Objects>
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects>
+            <Sound ID="301989905" Name="tunnel_computers_1" CreStamp="1409569470" ModStamp="1409569755" WorldPos="81.25 2 -7" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_machines/tech/desktop_computer/hum" MinDistance="0.5" MaxDistance="6.5" Volume="1" Active="true" UseCustomProperties="false" UID="18 10811 301989905" />
+            <Sound ID="301989906" Name="tunnel_computers_2" CreStamp="1409569798" ModStamp="1409569808" WorldPos="89.5 2 3.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_machines/tech/desktop_computer/hum" MinDistance="0.5" MaxDistance="6.5" Volume="1" Active="true" UseCustomProperties="false" UID="18 10826 301989906" />
+            <Sound ID="301989909" Name="volcanic_pit" CreStamp="1409734868" ModStamp="1409734905" WorldPos="53.5 -4 1.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="01_02_upsilon_inside_02/amb/spot/volcanic_pit" MinDistance="5" MaxDistance="13" Volume="1" Active="false" UseCustomProperties="false" UID="18 10841 301989909" />
+            <Sound ID="301989912" Name="transformer_hum" CreStamp="1409757333" ModStamp="1409757375" WorldPos="42.5 -2.25 30.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="01_02_upsilon_inside_02/special/transformer_sequence/idle_hum" MinDistance="1" MaxDistance="12" Volume="1" Active="true" UseCustomProperties="false" UID="18 10856 301989912" />
+            <Sound ID="301989919" Name="server_sound_upper_1" CreStamp="1409934987" ModStamp="1416663499" WorldPos="36.75 14.75 -6.59729" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_machines/tech/server/hum" MinDistance="10" MaxDistance="10" Volume="1" Active="false" UseCustomProperties="false" UID="18 442 301989919" />
+            <Sound ID="301989925" Name="amb_vent_1" CreStamp="1412333260" ModStamp="1412333632" WorldPos="89.5 2 1" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/vent/creak" MinDistance="2" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 10882 301989925" />
+            <Sound ID="301989926" Name="amb_vent_2" CreStamp="1412333308" ModStamp="1412333621" WorldPos="74.75 2 1" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/vent/creak" MinDistance="2" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 10883 301989926" />
+            <Sound ID="301989927" Name="amb_vent_3" CreStamp="1412333312" ModStamp="1412333623" WorldPos="74.75 2 -7" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/vent/creak" MinDistance="2" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 10881 301989927" />
+            <Sound ID="301989928" Name="amb_vent_4" CreStamp="1412333316" ModStamp="1412333627" WorldPos="80.75 2 -16.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/vent/creak" MinDistance="2" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 10886 301989928" />
+            <Sound ID="301989929" Name="amb_vent_5" CreStamp="1412333346" ModStamp="1412333619" WorldPos="80.5 2 -5.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/vent/movement" MinDistance="2" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 10885 301989929" />
+            <Sound ID="301989930" Name="amb_vent_6" CreStamp="1412333356" ModStamp="1412333628" WorldPos="74.25 2 -16" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/vent/movement" MinDistance="2" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 10880 301989930" />
+            <Sound ID="301989931" Name="amb_vent_7" CreStamp="1412333367" ModStamp="1412333625" WorldPos="67 2 -16" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/vent/creak" MinDistance="2" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 10899 301989931" />
+            <Sound ID="301989932" Name="amb_crt_1" CreStamp="1412337176" ModStamp="1412337242" WorldPos="51.6769 3.27948 -13.1133" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_machines/CRT/Buzz" MinDistance="1" MaxDistance="6" Volume="1" Active="true" UseCustomProperties="false" UID="18 10898 301989932" />
+            <Sound ID="301989933" Name="amb_crt_2" CreStamp="1412337243" ModStamp="1412337248" WorldPos="47.525 3.27948 -13.1133" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_machines/CRT/Buzz" MinDistance="1" MaxDistance="6" Volume="1" Active="true" UseCustomProperties="false" UID="18 10897 301989933" />
+            <Sound ID="301989934" Name="amb_crt_3" CreStamp="1412337253" ModStamp="1412337261" WorldPos="44.2946 1.73793 -11.3998" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_machines/CRT/Buzz" MinDistance="1" MaxDistance="6" Volume="1" Active="true" UseCustomProperties="false" UID="18 10884 301989934" />
+            <Sound ID="301989935" Name="amb_vent_8" CreStamp="1412675766" ModStamp="1412675779" WorldPos="77 2 -10" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/dust/metal" MinDistance="2" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 10911 301989935" />
+            <Sound ID="301989936" Name="amb_vent_9" CreStamp="1412675785" ModStamp="1412675795" WorldPos="69.5 2.75 -16.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/dust/metal" MinDistance="2" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 10913 301989936" />
+            <Sound ID="301989937" Name="amb_cupboard_debris" CreStamp="1412675818" ModStamp="1412675886" WorldPos="31.75 9.5 3" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/dust/metal" MinDistance="2" MaxDistance="8" Volume="1" Active="false" UseCustomProperties="false" UID="18 10912 301989937" />
+            <Sound ID="301989942" Name="transform_hum_working_1" CreStamp="1416318930" ModStamp="1416319147" WorldPos="42.5 -2.25 34.1745" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="Entities_Station/object/upsilon_transformer/hum" MinDistance="0.5" MaxDistance="12" Volume="1" Active="true" UseCustomProperties="false" UID="18 10919 301989942" />
+            <Sound ID="301989943" Name="transform_hum_working_2" CreStamp="1416318965" ModStamp="1416319169" WorldPos="45.8373 -2.25 34.1745" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="Entities_Station/object/upsilon_transformer/hum" MinDistance="0.5" MaxDistance="12" Volume="1" Active="true" UseCustomProperties="false" UID="18 10922 301989943" />
+            <Sound ID="301989944" Name="transform_hum_working_3" CreStamp="1416318967" ModStamp="1416319180" WorldPos="49.6332 -2.25 34.1745" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="Entities_Station/object/upsilon_transformer/hum" MinDistance="0.5" MaxDistance="12" Volume="1" Active="true" UseCustomProperties="false" UID="18 10924 301989944" />
+            <Sound ID="301989945" Name="transform_hum_working_4" CreStamp="1416318971" ModStamp="1416319189" WorldPos="49.6332 -2.25 38.1364" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="Entities_Station/object/upsilon_transformer/hum" MinDistance="0.5" MaxDistance="12" Volume="1" Active="true" UseCustomProperties="false" UID="18 10921 301989945" />
+            <Sound ID="301989946" Name="transform_hum_working_5" CreStamp="1416318973" ModStamp="1416319199" WorldPos="45.7168 -2.25 38.1364" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="Entities_Station/object/upsilon_transformer/hum" MinDistance="0.5" MaxDistance="12" Volume="1" Active="true" UseCustomProperties="false" UID="18 10923 301989946" />
+            <Sound ID="301989947" Name="transform_hum_working_6" CreStamp="1416318974" ModStamp="1416319206" WorldPos="41.934 -2.25 38.1364" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="Entities_Station/object/upsilon_transformer/hum" MinDistance="0.5" MaxDistance="12" Volume="1" Active="true" UseCustomProperties="false" UID="18 10920 301989947" />
+            <Sound ID="301989948" Name="transformer_area_loop" CreStamp="1416324640" ModStamp="1416325573" WorldPos="45.6271 0 32.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="Entities_Station/object/upsilon_transformer/large_loop" MinDistance="5" MaxDistance="25" Volume="1" Active="true" UseCustomProperties="false" UID="18 10943 301989948" />
+            <Sound ID="301989955" Name="rodroom_fan" CreStamp="1416411997" ModStamp="1416412393" WorldPos="31.75 14 -18.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="Entities_Station/object/large_fan/large_fan_loop" MinDistance="1" MaxDistance="12" Volume="1" Active="false" UseCustomProperties="false" UID="18 10954 301989955" />
+            <Sound ID="301989956" Name="generatorroom_fan_1" CreStamp="1416412057" ModStamp="1416412531" WorldPos="30.25 -0.25 21.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="Entities_Station/object/large_fan/large_fan_loop" MinDistance="1" MaxDistance="12" Volume="1" Active="false" UseCustomProperties="false" UID="18 10953 301989956" />
+            <Sound ID="301989957" Name="generatorroom_fan_2" CreStamp="1416412071" ModStamp="1416412528" WorldPos="30.25 -0.25 13.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="Entities_Station/object/large_fan/large_fan_loop" MinDistance="1" MaxDistance="5" Volume="1" Active="false" UseCustomProperties="false" UID="18 10952 301989957" />
+            <Sound ID="301989963" Name="control_spot_wau_1" CreStamp="1416421533" ModStamp="1416421579" WorldPos="45 0.75 -10.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/wau/upsilon_lump" MinDistance="2" MaxDistance="8" Volume="1" Active="false" UseCustomProperties="false" UID="18 10968 301989963" />
+            <Sound ID="301989972" Name="water_stream_1" CreStamp="1416509850" ModStamp="1416587427" WorldPos="11.9533 20.3075 -12.0253" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/water/small_water_stream_drain" MinDistance="2" MaxDistance="12" Volume="2" Active="false" UseCustomProperties="true" UID="18 11024 301989972" />
+            <Sound ID="301989974" Name="water_stream_3" CreStamp="1416509944" ModStamp="1416661803" WorldPos="12.4516 20.3656 -14.1314" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/water/water_vent_stream _small_spread" MinDistance="3" MaxDistance="12" Volume="2" Active="false" UseCustomProperties="true" UID="18 10978 301989974" />
+            <Sound ID="301989975" Name="water_stream_4" CreStamp="1416509973" ModStamp="1416661936" WorldPos="14.8863 21.9295 -13" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/water/WaterSpraying_S" MinDistance="2" MaxDistance="8" Volume="2" Active="false" UseCustomProperties="true" UID="18 10979 301989975" />
+            <Sound ID="301989981" Name="airlock_water_spray_floor" CreStamp="1416587014" ModStamp="1416587415" WorldPos="13.5 20.5 -13.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/water/water_dripping_L" MinDistance="2" MaxDistance="8" Volume="2" Active="false" UseCustomProperties="true" UID="18 11008 301989981" />
+            <Sound ID="301989982" Name="airlock_water_stream_1" CreStamp="1416587044" ModStamp="1416587095" WorldPos="15 20.75 -13" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/water/water_dripping_stream_M" MinDistance="2" MaxDistance="8" Volume="2" Active="true" UseCustomProperties="true" UID="18 11009 301989982" />
+            <Sound ID="301989983" Name="airlock_water_dripping_small" CreStamp="1416587101" ModStamp="1416587404" WorldPos="14.25 20.75 -13" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/water/water_dripping_stream_S" MinDistance="2" MaxDistance="8" Volume="2" Active="false" UseCustomProperties="true" UID="18 11007 301989983" />
+            <Sound ID="301989984" Name="back_corridor_wau_1" CreStamp="1416590041" ModStamp="1416590087" WorldPos="8 14 -1.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/wau/upsilon_lump" MinDistance="2" MaxDistance="8" Volume="1" Active="false" UseCustomProperties="false" UID="18 11021 301989984" />
+            <Sound ID="301989985" Name="hub_wau_2" CreStamp="1416590144" ModStamp="1416590174" WorldPos="42.25 14.25 -1.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/wau/upsilon_lump" MinDistance="2" MaxDistance="8" Volume="1" Active="false" UseCustomProperties="false" UID="18 11023 301989985" />
+            <Sound ID="301989986" Name="hub_wau_1" CreStamp="1416590158" ModStamp="1416590165" WorldPos="42.25 14.25 -4.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/wau/upsilon_lump" MinDistance="2" MaxDistance="8" Volume="1" Active="false" UseCustomProperties="false" UID="18 11022 301989986" />
+            <Sound ID="301989987" Name="power_station_terminal" CreStamp="1416590818" ModStamp="1416764613" WorldPos="50.75 1.5 -1.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="01_02_upsilon_inside_02/sfx/power_plant_terminal_loop" MinDistance="0.5" MaxDistance="5" Volume="1" Active="false" UseCustomProperties="false" UID="18 11020 301989987" />
+            <Sound ID="301989988" Name="control_spot_wau_2" CreStamp="1416590931" ModStamp="1416590946" WorldPos="59.5 1.75 -16.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/wau/upsilon_lump" MinDistance="2" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 11019 301989988" />
+            <Sound ID="301989989" Name="backcorridor_spot_1" CreStamp="1416660759" ModStamp="1416660806" WorldPos="6.29654 15.75 3.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/metal_light_creak" MinDistance="2" MaxDistance="8" Volume="2" Active="false" UseCustomProperties="true" UID="18 11016 301989989" />
+            <Sound ID="301989990" Name="backcorridor_spot_2" CreStamp="1416660810" ModStamp="1416660813" WorldPos="-2.75 15.75 3.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/metal_light_creak" MinDistance="2" MaxDistance="8" Volume="2" Active="false" UseCustomProperties="true" UID="18 11014 301989990" />
+            <Sound ID="301989991" Name="backcorridor_spot_3" CreStamp="1416660814" ModStamp="1416660857" WorldPos="0.5 18 10.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/metal/metal_groan_light" MinDistance="1" MaxDistance="10000" Volume="2" Active="false" UseCustomProperties="true" UID="18 11017 301989991" />
+            <Sound ID="301989993" Name="backcorridor_spot_5" CreStamp="1416660876" ModStamp="1416660910" WorldPos="-2.75 17 -0.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/metal/catwalk_dust" MinDistance="2" MaxDistance="8" Volume="2" Active="false" UseCustomProperties="true" UID="18 11015 301989993" />
+            <Sound ID="301989994" Name="backcorridor_spot_6" CreStamp="1416661056" ModStamp="1416661097" WorldPos="5.5 21.75 -13.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/metal_tinking/soft_movement" MinDistance="2" MaxDistance="8" Volume="2" Active="false" UseCustomProperties="true" UID="18 11018 301989994" />
+            <Sound ID="301989995" Name="backcorridor_spot_7" CreStamp="1416661134" ModStamp="1416661136" WorldPos="-1.25 19.25 -13.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/metal_tinking/soft_movement" MinDistance="2" MaxDistance="8" Volume="2" Active="false" UseCustomProperties="true" UID="18 11013 301989995" />
+            <Sound ID="301989996" Name="small_gas_leak" CreStamp="1416662042" ModStamp="1416662723" WorldPos="-0.516428 16 6.776" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/steam/slow" MinDistance="1" MaxDistance="8" Volume="2" Active="false" UseCustomProperties="true" UID="18 4787 301989996" />
+            <Sound ID="301989997" Name="hubroom_spot_1" CreStamp="1416753497" ModStamp="1416753570" WorldPos="40.5 15.5 -2.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/metal/pipe_groan" MinDistance="2" MaxDistance="20" Volume="1" Active="false" UseCustomProperties="false" UID="18 11039 301989997" />
+            <Sound ID="301989999" Name="storage_hum_1" CreStamp="1416754787" ModStamp="1416754849" WorldPos="37.5 15.25 -13" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_machines/misc/lights/fluorescent_light_buzz" MinDistance="1" MaxDistance="6" Volume="1" Active="false" UseCustomProperties="false" UID="18 11038 301989999" />
+            <Sound ID="301990000" Name="storage_hum_2" CreStamp="1416754840" ModStamp="1421960416" WorldPos="41.5608 14.5352 -11.5146" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_machines/misc/lights/fluorescent_light_buzz" MinDistance="1" MaxDistance="6" Volume="1" Active="false" UseCustomProperties="false" UID="18 11052 301990000" />
+            <Sound ID="301990002" Name="storage_hum_3" CreStamp="1416763627" ModStamp="1416763681" WorldPos="-0.5 18.25 -6.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_machines/misc/lights/fluorescent_light_buzz" MinDistance="1" MaxDistance="6" Volume="1" Active="true" UseCustomProperties="false" UID="18 11051 301990002" />
+            <Sound ID="301990003" Name="metal_light_creak_back" CreStamp="1416763646" ModStamp="1416763689" WorldPos="-0.5 18.75 -6.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/sfx/detail/metal_light_creak" MinDistance="2" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 11037 301990003" />
+        </Objects>
+    </Section>
+    <Section Name="Aaron@AARON-PC">
+        <Objects />
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="MR B@MR_B">
+        <Objects />
+    </Section>
+    <Section Name="Peter@PETER-PC">
+        <Objects />
+    </Section>
+    <Section Name="MrB@BENZIE">
+        <Objects>
+            <Sound ID="452984838" Name="SparkSFX_Sizzle" CreStamp="1416929407" ModStamp="1416942010" WorldPos="24.9976 12.5 -12" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="02_05_theta/amb/spots/small_spark_loop" MinDistance="1" MaxDistance="5" Volume="1" Active="false" UseCustomProperties="false" UID="27 30 452984838" />
+        </Objects>
+    </Section>
+    <Section Name="Ian@IAN-DESKTOP">
+        <Objects />
+    </Section>
+    <Section Name="Lisa@JUSTICELAPTOP">
+        <Objects>
+            <Sound ID="486539264" Name="control_spot_gloop_1" CreStamp="1417988768" ModStamp="1417990686" WorldPos="59.597 0.0918129 -14.3026" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="" MinDistance="1" MaxDistance="8" Volume="1" Active="false" UseCustomProperties="false" UID="29 11019 486539264" />
+            <Sound ID="486539265" Name="control_spot_gloop_2" CreStamp="1417990690" ModStamp="1417990701" WorldPos="59.597 0.0918129 -14.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/gloop/dripping_granular" MinDistance="1" MaxDistance="14" Volume="1" Active="false" UseCustomProperties="false" UID="29 11034 486539265" />
+            <Sound ID="486539266" Name="control_spot_gloop_3" CreStamp="1417991194" ModStamp="1417991213" WorldPos="59.597 0.0918129 -14.3731" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/spot/gloop/drips_granular" MinDistance="1" MaxDistance="14" Volume="1" Active="false" UseCustomProperties="false" UID="29 11033 486539266" />
+        </Objects>
+    </Section>
+    <Section Name="SD@SD-PC">
+        <Objects />
+    </Section>
+</HPLMapTrack_Sound>

@@ -1,0 +1,22 @@
+<HPLMapTrack_LensFlare ID="5EB47CFFF8E5E5776DE9DC269DBEA6345D1BF267" Version="1.00">
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="Marcus@MARCUS-PC">
+        <Objects>
+            <LensFlare ID="285222319" Name="LensFlare_5" CreStamp="0" ModStamp="1425458219" WorldPos="48 4.62224 13.8267" Rotation="0.785398 6.50132e-007 -6.58768e-010" Scale="1 1 1" ActiveAnamorphic="false" MaterialAnamorphic="D:/work/depth/redist/lights/lensflare/anamorphic_simple.mat" SizeAnamorphic="0.525 0.225" ColorAnamorphic="1 0.933333 0.658824 0.235294" ActiveFlare="true" MaterialFlare="D:/work/depth/redist/lights/lensflare/flare_star_simple.mat" SizeFlare="0.7 0.4" ColorFlare="1 0.933333 0.658824 0.215686" ActiveMultiIris="true" MaterialMultiIris="D:/work/depth/redist/lights/lensflare/multi_iris_simple.mat" SizeMultiIris="0.1 0.1" ColorMultiIris="1 0.933333 0.658824 0.156863" MultiIrisSeed="18257" MultiIrisCount="32" UseParentMeshForOcclusion="false" ShrinkWhenOccluded="true" MulMultiIrisWithGlare="true" SourceSize="1.4 0.4 0.3" InnerFOV="0.785398" OuterFOV="1.5708" GlareBrightness="0.5" GlareFOV="0.872665" GlareStareAt="0.4" SizeChangeBasedOnDistance="0.3" MultiIrisTextureAtlasGrid="2 2" RangeMax="30 50" RangeMin="1 10" GlareRange="5 40" Brightness="2" CulledByDistance="false" CulledByFog="true" UID="17 3069 285222319" />
+        </Objects>
+    </Section>
+    <Section Name="Snafu@SNAFU-LAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Lisa@JUSTICELAPTOP">
+        <Objects />
+    </Section>
+</HPLMapTrack_LensFlare>

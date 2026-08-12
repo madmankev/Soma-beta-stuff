@@ -1,0 +1,52 @@
+<HPLMapTrack_LensFlare ID="4F126B871DE805A2E20DC5919C7C9ABB9965DA98" Version="1.00">
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects>
+            <LensFlare ID="268468484" Name="LensFlare_1" CreStamp="0" ModStamp="0" WorldPos="27.7948 24.7103 -5.27666" Rotation="2.00711 -0 0" Scale="1 1 1" ActiveAnamorphic="false" MaterialAnamorphic="D:/work/depth/redist/lights/lensflare/anamorphic_simple.mat" SizeAnamorphic="0.625 0.1" ColorAnamorphic="0.625019 0.890698 0.966797 0.410156" ActiveFlare="false" MaterialFlare="D:/work/depth/redist/lights/lensflare/flare_star_simple.mat" SizeFlare="0.325 0.325" ColorFlare="0.625019 0.890698 0.966797 1" ActiveMultiIris="true" MaterialMultiIris="D:/work/depth/redist/lights/lensflare/multi_iris_simple.mat" SizeMultiIris="0.125 0.125" ColorMultiIris="0.625019 0.966797 0.870672 1" MultiIrisSeed="19074" MultiIrisCount="16" UseParentMeshForOcclusion="true" ShrinkWhenOccluded="true" MulMultiIrisWithGlare="true" SourceSize="0.14 0.14 0.1" InnerFOV="0.279253" OuterFOV="0.610865" GlareBrightness="0.5" GlareFOV="3.14159" GlareStareAt="0" SizeChangeBasedOnDistance="0" MultiIrisTextureAtlasGrid="2 2" RangeMax="0 0" RangeMin="4 16" GlareRange="0 25" Brightness="2" CulledByDistance="false" CulledByFog="true" UID="16 300 268468484" />
+        </Objects>
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Aaron@AARON-PC">
+        <Objects>
+            <LensFlare ID="318773807" Name="LensFlare_2" CreStamp="1412607258" ModStamp="1412632378" WorldPos="-0.5 18.8903 -6.85807" Rotation="2.36267 -0 0" Scale="1 1 1" ActiveAnamorphic="false" MaterialAnamorphic="D:/work/depth/redist/lights/lensflare/anamorphic_simple.mat" SizeAnamorphic="0.625 0.1" ColorAnamorphic="0.625019 0.890698 0.966797 0.410156" ActiveFlare="false" MaterialFlare="D:/work/depth/redist/lights/lensflare/flare_star_simple.mat" SizeFlare="0.325 0.325" ColorFlare="0.625019 0.890698 0.966797 1" ActiveMultiIris="true" MaterialMultiIris="D:/work/depth/redist/lights/lensflare/multi_iris_simple.mat" SizeMultiIris="0.125 0.125" ColorMultiIris="0.625019 0.966797 0.870672 1" MultiIrisSeed="19074" MultiIrisCount="16" UseParentMeshForOcclusion="true" ShrinkWhenOccluded="true" MulMultiIrisWithGlare="true" SourceSize="0.14 0.14 0.1" InnerFOV="1.0472" OuterFOV="1.5708" GlareBrightness="0.75" GlareFOV="2.0944" GlareStareAt="0" SizeChangeBasedOnDistance="0" MultiIrisTextureAtlasGrid="2 2" RangeMax="0 0" RangeMin="1 8" GlareRange="0 10" Brightness="2" CulledByDistance="false" CulledByFog="true" UID="19 300 318773807" />
+            <LensFlare ID="318774390" Name="reactor_flow_room_flare" CreStamp="1412787304" ModStamp="1412853933" WorldPos="-2.01373 14.9054 18.9086" Rotation="1.39264 1.04341 -1.72999" Scale="1 1 1" ActiveAnamorphic="false" MaterialAnamorphic="D:/work/depth/redist/lights/lensflare/anamorphic_simple.mat" SizeAnamorphic="0.625 0.1" ColorAnamorphic="1 0.65625 0 0.535156" ActiveFlare="false" MaterialFlare="D:/work/depth/redist/lights/lensflare/flare_star_simple.mat" SizeFlare="0.325 0.325" ColorFlare="1 0.65625 0 0.523438" ActiveMultiIris="true" MaterialMultiIris="D:/work/depth/redist/lights/lensflare/multi_iris_simple.mat" SizeMultiIris="0.125 0.125" ColorMultiIris="1 0.65625 0 0.242188" MultiIrisSeed="19074" MultiIrisCount="16" UseParentMeshForOcclusion="true" ShrinkWhenOccluded="true" MulMultiIrisWithGlare="true" SourceSize="0.14 0.14 0.1" InnerFOV="1.0472" OuterFOV="1.5708" GlareBrightness="1" GlareFOV="2.0944" GlareStareAt="0" SizeChangeBasedOnDistance="0" MultiIrisTextureAtlasGrid="2 2" RangeMax="0 0" RangeMin="0 4" GlareRange="0 6" Brightness="4" CulledByDistance="false" CulledByFog="true" UID="19 7034 318774390" />
+        </Objects>
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="MR B@MR_B">
+        <Objects />
+    </Section>
+    <Section Name="Peter@PETER-PC">
+        <Objects />
+    </Section>
+    <Section Name="MrB@BENZIE">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IAN-DESKTOP">
+        <Objects />
+    </Section>
+    <Section Name="Lisa@JUSTICELAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="SD@SD-PC">
+        <Objects />
+    </Section>
+</HPLMapTrack_LensFlare>

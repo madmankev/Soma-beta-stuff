@@ -1,0 +1,31 @@
+<HPLMapTrack_LightMask ID="5EB47CFFF8E5E5776DE9DC269DBEA6345D1BF267" Version="1.00">
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects>
+            <LightMaskBox ID="268446454" Name="LightMaskBox_4" CreStamp="1417718072" ModStamp="1419011678" WorldPos="19.5 4.98817 12.9367" Rotation="0 0 0" Scale="1 1 1" Size="1.25 2 3" UID="16 10756 268446454" />
+        </Objects>
+    </Section>
+    <Section Name="Marcus@MARCUS-PC">
+        <Objects>
+            <LightMaskBox ID="285214680" Name="LightMaskBox_hallway_1" CreStamp="1410789318" ModStamp="1410789394" WorldPos="22.75 2.25 -4" Rotation="0 0 0" Scale="1 1 1" Size="30.25 5 7.75" UID="17 10554 285214680" />
+            <LightMaskBox ID="285216468" Name="LightMaskBox_1" CreStamp="1411487796" ModStamp="1411487990" WorldPos="4.75 1.39692 4.5" Rotation="0 0 0" Scale="1 1 1" Size="5.25 3.5 5.75" UID="17 9103 285216468" />
+            <LightMaskBox ID="285217054" Name="LightMaskBox_pipe_room_monitor" CreStamp="1411660167" ModStamp="1411660226" WorldPos="-7.28719 3.32342 74.3785" Rotation="0 0 0" Scale="1 1 1" Size="2.44496 1.69255 1.89035" UID="17 8785 285217054" />
+            <LightMaskBox ID="285219587" Name="LightMaskBox_2" CreStamp="1416842074" ModStamp="1416842209" WorldPos="2.54482 2.88259 2.23126" Rotation="0 0 0" Scale="1 1 1" Size="10 7.45834 10.6105" UID="17 7277 285219587" />
+            <LightMaskBox ID="285220436" Name="LightMaskBox_3" CreStamp="1417176444" ModStamp="1417176523" WorldPos="0 4.25 -5.5" Rotation="0 0 0" Scale="1 1 1" Size="12.25 1.5 1.5" UID="17 6714 285220436" />
+            <LightMaskBox ID="285222506" Name="LightMaskBox_5" CreStamp="1418419076" ModStamp="1420726273" WorldPos="24.757 2 15.25" Rotation="0 0 0" Scale="1 1 1" Size="26.0166 5 9.5" UID="17 5519 285222506" />
+            <LightMaskBox ID="285223715" Name="LightMaskBox_6" CreStamp="1423583065" ModStamp="1423583101" WorldPos="10.75 2 -9" Rotation="0 0 0" Scale="1 1 1" Size="4.25 4.5 16" UID="17 11005 285223715" />
+            <LightMaskBox ID="285223885" Name="LightMaskBox_robot_storage" CreStamp="1424614991" ModStamp="1424615160" WorldPos="24.25 4.25 5.25" Rotation="0 0 0" Scale="1 1 1" Size="22.75 9.25 10.75" UID="17 4981 285223885" />
+        </Objects>
+    </Section>
+    <Section Name="Snafu@SNAFU-LAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Lisa@JUSTICELAPTOP">
+        <Objects />
+    </Section>
+</HPLMapTrack_LightMask>
