@@ -64,8 +64,8 @@ enum eSlideShowSlide
 
 //------------------------------------------------------------
 
-float gfScienceSlideTime_1 = 4;
-float gfScienceSlideTime_2 = 4;
+const float gfScienceSlideTime_1 = 4.0f;
+const float gfScienceSlideTime_2 = 4.0f;
 
 //------------------------------------------------------------
 
@@ -82,17 +82,13 @@ class cScrMap : iScrMap
 	//------------------------------------------------------------
 	
 	//AIRLOCK ROOM
-	int mlValveCount;			//Count how many of the valves has been turned (3 when done)
-	tString msInteractCallback; //Save the name of callback to restore in timer, to avoid rappid clicking.
 	
 	//PLAYER
-	bool mbPlayerGotLight;		//True if player picked up the light
 	bool mbPlayerIsSitting;		//True if player is sitting in the train chair.
 	
 	//TURNING ON LIGHTS/POWER
 	bool mbCableConnected;		//True if the power cable is connected to cabinet
 	int mlLightValveCount;		//Count at what "power level" the player moved the valve.
-	int mlTrackLight;			//Counter for the lights in the pipe going along the side of the station platform.
 	ePowerState mPowerState_General = ePowerState_NoPower; // Keeps track of if the stability of the power.
 	ePowerState mPowerState_Platform = ePowerState_NoPower; // Keeps track of if the stability of the power.
 	
@@ -129,6 +125,8 @@ class cScrMap : iScrMap
 	
 	void Setup()
 	{
+		GetBase().SetDisplayNameEntry("01-04-transport-station");
+
 		///////////////////////////////
 		// Setup presets
 		{
@@ -155,17 +153,13 @@ class cScrMap : iScrMap
 
 		//------------------------------------------------------------
 		//AIRLOCK ROOM
-		mlValveCount = 0;
-		msInteractCallback = "";
 		
 		//PLAYER
-		mbPlayerGotLight = false;
 		mbPlayerIsSitting = false;
 		
 		//TURNING ON LIGHTS/POWER
 		mbCableConnected = false;
 		mlLightValveCount = 0;
-		mlTrackLight = 0;
 		
 		Lamp_SetLit("TrainWarningLamp",false,false);
 		
@@ -341,7 +335,6 @@ class cScrMap : iScrMap
 	// Run when entering map
 	void OnEnter()
 	{
-		GetBase().SetDisplayNameEntry("01-04-transport-station");
 				
 		//Effect_Fade_In(2);
 		Map_AddTimer("SimonOnEnterLevel", 3, "Timer_PlayVoice");
@@ -1542,7 +1535,6 @@ class cScrMap : iScrMap
 		 * The main power switch in the power cabinet.
 		 * */
 		bool mbHasSwitchScareTriggered = false; 
-		bool mbSwitchDownSweetenerSound = true;
 		void StateLightSwitch(const tString &in asEntity, int alState)
 		{
 			if(alState != 1) return;
@@ -2505,7 +2497,6 @@ class cScrMap : iScrMap
 		
 		bool mbInCrashArea = false;
 		bool mbFlesherAwake = false;
-		bool mbLeftCapsule = false;
 		bool mbFirstFlesherAttackHappened = false;
 		int mlRadialBlurID = -1;
 		
@@ -2905,7 +2896,6 @@ class cScrMap : iScrMap
 
 		bool CollideLeftCapsule(const tString &in asParent, const tString &in asChild, int alState)
 		{
-			mbLeftCapsule = true;
 			Player_SetCrouching(false);
 			return false;
 		}
@@ -3854,19 +3844,12 @@ class cScrMap : iScrMap
 		
 		//-----------------------------------------------------------
 		
-		tString msStationClosedImg = "01_05_station_closed";
-		tString msStationCurrentImg = "01_05_station_current";
-		tString msStationOpenImg = "01_05_station_open";
-		tString msText = "";
-		tString msStationDestination = "Station03";
 		
-		cVector3f mvTextFramePos = cVector3f(43, 256, 5);
 		
 		bool mbMessageBoxActive = false;
 		tString msPickedStation;
 		tString msFocusedStation = "Station02";
 		int mlPickedETA;
-		eStationType mMessageBoxType;
 		void OnGUIStationSelection(const tString &in asEntityName, float afTimeStep)
 		{
 			ImGui_SetTransCategory("01_04_transport_station");
@@ -4624,7 +4607,6 @@ class cScrMap : iScrMap
 		
 		bool mbSlideshowPlaying = false;
 		eSlideShowSlide mCurrentSlide = eSlideShowSlide_None;
-		int mlStationSlide = 5;
 				
 		float mfSlideTime = 0.0f;
 		

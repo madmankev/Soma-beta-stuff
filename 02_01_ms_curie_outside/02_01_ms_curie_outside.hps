@@ -1778,7 +1778,6 @@ class cScrMap : iScrMap
 		//-------------------------------------------------------
 		
 		bool mbGlassPoundFirstCrash = true;
-		int mlGlassPoundCount=0;
 		
 		//-------------------------------------------------------
 				
@@ -4308,7 +4307,6 @@ class cScrMap : iScrMap
 	}
 	
 	//Music
-	bool mbExteriorAmbientMusicPlaying = false;
 	
 	bool Trigger_RevealMusic(const tString &in asParent, const tString &in asChild, int alState)
 	{
@@ -4319,7 +4317,6 @@ class cScrMap : iScrMap
 	void AmbientExplorationMusic(const tString &in asTimer)
 	{
 		Music_PlayExt("02_01_exploration", true, 0.15f, 1, 10, 0.0f, eMusicPrio_BgAmb , true);
-		mbExteriorAmbientMusicPlaying = true;
 	}
 	
 	//-------------------------------------------------------------------
@@ -4331,7 +4328,6 @@ class cScrMap : iScrMap
 		{
 			cLux_AddDebugMessage("Enter music stop area");
 			Music_Stop(5.0, eMusicPrio_BgAmb);
-			mbExteriorAmbientMusicPlaying = false;
 		}
 		else if (mbOmniToolLoadingDone==false && alState==-1)
 		{
@@ -4346,7 +4342,6 @@ class cScrMap : iScrMap
 		if (mbOmniToolLoadingDone==false)
 		{
 			Music_Stop(afFadeTime, eMusicPrio_BgAmb);
-			mbExteriorAmbientMusicPlaying = false;
 		}
 	}
 	
@@ -4380,7 +4375,6 @@ class cScrMap : iScrMap
 		if (alState==-1) // Leave
 		{
 			Map_AddTimer("AmbientExplorationMusic", cMath_RandRectf(3.f, 6.f), "AmbientExplorationMusic");
-			mbExteriorAmbientMusicPlaying = true;
 			return false;
 		}
 		else	// Enter
@@ -4393,7 +4387,6 @@ class cScrMap : iScrMap
 	bool SmallCurieAmbientMusicStop(const tString &in asParent, const tString &in asChild, int alState)
 	{
 		Music_Stop(5.0f, eMusicPrio_BgAmb);
-		mbExteriorAmbientMusicPlaying = false;
 		return false;
 	}
 		

@@ -133,39 +133,6 @@ enum eCommRoomContact
 	eCommRoomContact_LastEnum,
 }
 
-tString[] gvCommRoomContacts = 
-{		
-	"NULL",
-	
-	"1622", //Paris
-	"1623", //New York
-	"1624", //Toronto
-	"1625", //Shanghai
-	"1626", //Hamburg
-	"1627", //London
-	
-	"2201", //Upsilon
-	"2202", //Theta
-	"2203", //Lambda
-	"2204", //Delta
-	"2205", //Omicron
-	"2206", //Tau
-	"2207", //Phi
-	"2208", //Omega
-};
-
-cVector2f[] gvCommRoomStations = 
-{
-	cVector2f(3.84,6.04), // Upsilon
-	cVector2f(2.62,3.15), // Theta
-	cVector2f(1.24,6.67), // Lambda
-	cVector2f(7.84,8.35), // Delta
-	cVector2f(0.73,2.73), // Omicron
-	cVector2f(4.84,3.26), // Tau
-	cVector2f(2.05,8.84), // Phi
-	cVector2f(2.67,4.07), // Omega
-};
-
 //------------------------------------------------------------
 	
 /////////////////////////////////////////
@@ -186,6 +153,53 @@ class cScrMap : iScrMap
 	
 	void Setup()
 	{
+		GetBase().SetDisplayNameEntry("01-02-upsilon-inside");
+
+	}
+
+	//-------------------------------------------------------
+
+	tString GetCommRoomContactCode(eCommRoomContact aContact)
+	{
+		switch (aContact)
+		{
+			case eCommRoomContact_None: return "NULL";
+			case eCommRoomContact_Paris: return "1622";
+			case eCommRoomContact_NewYork: return "1623";
+			case eCommRoomContact_Toronto: return "1624";
+			case eCommRoomContact_Shanghai: return "1625";
+			case eCommRoomContact_Hamburg: return "1626";
+			case eCommRoomContact_London: return "1627";
+			case eCommRoomContact_Upsilon: return "2201";
+			case eCommRoomContact_Theta: return "2202";
+			case eCommRoomContact_Lambda: return "2203";
+			case eCommRoomContact_Delta: return "2204";
+			case eCommRoomContact_Omicron: return "2205";
+			case eCommRoomContact_Tau: return "2206";
+			case eCommRoomContact_Phi: return "2207";
+			case eCommRoomContact_Omega: return "2208";
+		}
+
+		return "";
+	}
+
+	//-------------------------------------------------------
+
+	cVector2f GetCommRoomStationPosition(eCommRoomContact aContact)
+	{
+		switch (aContact)
+		{
+			case eCommRoomContact_Upsilon: return cVector2f(3.84f, 6.04f);
+			case eCommRoomContact_Theta: return cVector2f(2.62f, 3.15f);
+			case eCommRoomContact_Lambda: return cVector2f(1.24f, 6.67f);
+			case eCommRoomContact_Delta: return cVector2f(7.84f, 8.35f);
+			case eCommRoomContact_Omicron: return cVector2f(0.73f, 2.73f);
+			case eCommRoomContact_Tau: return cVector2f(4.84f, 3.26f);
+			case eCommRoomContact_Phi: return cVector2f(2.05f, 8.84f);
+			case eCommRoomContact_Omega: return cVector2f(2.67f, 4.07f);
+		}
+
+		return cVector2f_Zero;
 	}
 	
 	//-------------------------------------------------------
@@ -264,7 +278,6 @@ class cScrMap : iScrMap
 	// Run when entering map
 	void OnEnter()
 	{	
-		GetBase().SetDisplayNameEntry("01-02-upsilon-inside");
 		
 		if(cLux_ScriptDebugOn() == false) Game_AutoSave();
 	}
@@ -290,7 +303,6 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
-	bool mbTransformerBotKilledPlayer = false;
 	
 	void OnPlayerKilled(int alRecentDeaths, const tString&in asDeathSource)
 	{
@@ -382,7 +394,6 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
-	bool mbIsVentHatchOpen = false;
 	bool mbControlRoomMusic = false;
 	
 	//-------------------------------------------------------
@@ -1450,7 +1461,6 @@ class cScrMap : iScrMap
 		Map_AddTimer("DuckLight", 0.1f, "Audio_ConversationDucking");
 		
 		//Button_SetDisabled("ControlRoomDoor_Control_2", false);
-		mbControlRoomConnectionUp = true;
 		mbControlRoomConnectFailing = true;
 		Voice_SetFocusScene("");
 		Terminal_SetGuiActive("RadioPanelMonitor_GUI", true);
@@ -1477,7 +1487,6 @@ class cScrMap : iScrMap
 		if (abStart)
 			return;
 			
-		mbControlRoomConnectionUp = false;
 		mbControlRoomConnectFailing = false;
 		mbControlRoomConversationOver = true;
 	}
@@ -1541,10 +1550,8 @@ class cScrMap : iScrMap
 		
 		//-------------------------------------------------------
 			
-		bool mbControlRoomConnectionUp = false;
 		bool mbControlRoomConnectFailing = false;
 		bool mbControlRoomConversationOver = false;
-		float mfBlink=0.0f;
 		
 		void OnGuiRadioPanel(const tString&in asEntityName, float afTimeStep)
 		{		
@@ -2458,7 +2465,6 @@ class cScrMap : iScrMap
 		
 		//-------------------------------------------------------
 		
-		bool mbTransformerRobotAtLowerFloor = true;
 		
 		//-------------------------------------------------------
 		
@@ -2540,7 +2546,6 @@ class cScrMap : iScrMap
 		
 		bool CollideTransformerBotAtLowerFloor(const tString &in asParent, const tString &in asChild, int alState)
 		{
-			mbTransformerRobotAtLowerFloor = alState==1;
 			
 			return true;
 		}
@@ -3600,7 +3605,6 @@ class cScrMap : iScrMap
 	
 		//-------------------------------------------------------
 	
-		bool mbSentDraft = false;
 		void OnHubRoomTerminalGUI(const tString&in asEntityName, float afTimeStep)
 		{	
 			///////////////////////
@@ -3720,7 +3724,6 @@ class cScrMap : iScrMap
 			}
 			else
 			{
-				mbSentDraft = true;
 				//StationGui_SetActiveApp(eHubRoomTerminalState_Mail_Send);
 			}
 			
@@ -4031,7 +4034,6 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
-	float mfFuseBlink = 0.0f;
 	
 	void OnGuiFuseBoxTerminal(const tString&in asEntityName, float afTimeStep)
 	{
@@ -4222,7 +4224,6 @@ class cScrMap : iScrMap
 	bool mbCarlCanHearPlayer = false;
 	bool mbCarlCanSeePlayer = false;
 	bool mbHeardCarl = false;
-	bool mbCarlHasSeenPlayer = false;
 	bool mbPlayerReturnedToCarl = false;
 	bool mbPlayerBeenGoneFromCarlAWhile = false;
 	bool mbCarlDrained = false;
@@ -4415,9 +4416,6 @@ class cScrMap : iScrMap
 	{
 		mbCarlCanSeePlayer = (alState==1);
 		
-		if (mbCarlCanSeePlayer)
-			mbCarlHasSeenPlayer = true;
-			
 		if (alState==1)
 		{
 			cLux_AddDebugMessage("Carl can see player.");
@@ -5288,7 +5286,6 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
-	bool mbCanSeeLevelExit = false;
 	
 	void SetupCommRoom()
 	{
@@ -5384,8 +5381,6 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
-	float mfConstructSoundMinTime = 5.0f;
-	float mfConstructSoundMaxTime = 15.0f;
 
 	bool OnCommRoomDoorway(const tString &in asArea, const tString &in asEntity, int alState)
 	{
@@ -5721,16 +5716,16 @@ class cScrMap : iScrMap
 		{
 			tString sCode = StationGui_GetNumpadInput();
 			eCommRoomContact contact = eCommRoomContact_None;
-			for (int i = 0; i <= eCommRoomContact_LastEnum; i++)
+			for (int i = 0; i < eCommRoomContact_LastEnum; i++)
 			{
-				if (sCode != gvCommRoomContacts[i])
+				if (sCode != GetCommRoomContactCode(eCommRoomContact(i)))
 					continue;
 
 				contact = eCommRoomContact(i);
 				break;
 			}
 			
-			if (contact == eCommRoomContact_None)
+			if (contact < eCommRoomContact_Upsilon)
 			{
 				StationGui_SetError("CommRoomError_InvalidCode");
 			}
@@ -5821,7 +5816,7 @@ class cScrMap : iScrMap
 			/////////////////////////////////////
 			// SOUND: Moving Crosshair
 			float fThisX = ImGui_GetStateFloat("TuningX",0.0f);
-			float fThisY = ImGui_GetStateFloat("TuningX",0.0f);
+			float fThisY = ImGui_GetStateFloat("TuningY",0.0f);
 			float fTime = ImGui_GetStateFloat("TuningXhairTimer",0.0f) + afTimeStep;
 			if (mfLastCursorX != fThisX || mfLastCursorY != fThisY)
 			{
@@ -5845,7 +5840,7 @@ class cScrMap : iScrMap
 		
 		int lStation = contact-eCommRoomContact_Upsilon+1;
 		
-		cVector2f vTarget = gvCommRoomStations[lStation-1];
+		cVector2f vTarget = GetCommRoomStationPosition(contact);
 		fPosX+=0.5f;
 		fPosY+=0.5f;
 		fPosX*=10.0f;
@@ -5860,7 +5855,7 @@ class cScrMap : iScrMap
 		ImGui_SetTransCategory("");
 		tString sOutX = cString_Sub(fPosX+"",0,5);
 		tString sOutY = cString_Sub(fPosY+"",0,5);
-		ImGui_DoLabelExt(gvCommRoomContacts[contact]+" : "+sOutX+" : "+sOutY, tuningLabel, 
+		ImGui_DoLabelExt(GetCommRoomContactCode(contact)+" : "+sOutX+" : "+sOutY, tuningLabel,
 			ImGui_NrmPos(0.3, 0.875, 1), ImGui_NrmSize(1.0f, 0.1f), 1);
 		ImGui_SetTransCategory("01_02_upsilon_inside");
 		
@@ -6935,7 +6930,6 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------	
 	
-	int mlTimesFixedPipe = 0;
 	
 	void OnChangeCommRoomPipe(const tString &in asEntity, int alState)
 	{
@@ -6970,7 +6964,6 @@ class cScrMap : iScrMap
 		else if(alState == -1)
 		{
 			cLux_AddDebugMessage("FLOOD: Player fixes pipe");
-			mlTimesFixedPipe++;
 			Sound_CreateAtEntity(asEntity+"_RattleSound", "Entities_Station/special/01_02_pipe_medium/pipes_rattle_intensive", asEntity, 0.1f, true);
 			Entity_PlayAnimation("CommRoomPipe_1", "rattle", 0, true, false, "");
 			
@@ -7017,10 +7010,7 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
-	float mfConstructAttackMinTime = 3.0f;
-	float mfConstructAttackMaxTime = 8.0f;
 
-	int mlAttackArea = 0;
 	
 	//-------------------------------------------------------
 	
@@ -7033,7 +7023,6 @@ class cScrMap : iScrMap
 	
 	void LookAtLevelExit(const tString &in asEntity, int alState)
 	{
-		mbCanSeeLevelExit = (alState == 1);
 	}
 
 	//-------------------------------------------------------

@@ -4,7 +4,6 @@
 #include "helpers/helper_entity.hps"
 #include "helpers/helper_areas.hps"
 #include "helpers/helper_props.hps"
-#include "helpers/helper_effects.hps"
 #include "helpers/helper_physics.hps"
 #include "helpers/helper_world_effects.hps"
 #include "helpers/helper_sequences.hps"
@@ -25,7 +24,6 @@ class cScrMap : iScrMap
 
 	//-------------------------------------------------------
 		
-	tID mlID_Player;
 	
 	//-------------------------------------------------------
 
@@ -37,7 +35,6 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
-	float gfFlesherAlertMusicVolume = 1.0f;
 	
 	//-------------------------------------------------------
 	bool mbIsEscapeMusicActive = false;
@@ -46,6 +43,7 @@ class cScrMap : iScrMap
 		if(mbIsEscapeMusicActive == false)
 		{
 			Music_PlayExt("02_02_escapesequence", true, 0.65f, 1.0f, 2.0f, 0.0f, eMusicPrio_BigEvent, false);
+			mbIsEscapeMusicActive = true;
 		}
 	}
 		
@@ -129,8 +127,8 @@ class cScrMap : iScrMap
 			Sound_CreateAtEntity("AreaCargoHoldAlarm_5", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_5", afFadeTime);
 			Sound_CreateAtEntity("AreaCargoHoldAlarm_6", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_6", afFadeTime);
 			Sound_CreateAtEntity("AreaCargoHoldAlarm_7", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_7", afFadeTime);
-			Sound_CreateAtEntity("AreaCargoHoldAlarm_7", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_8", afFadeTime);
-			Sound_CreateAtEntity("AreaCargoHoldAlarm_7", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_9", afFadeTime);
+			Sound_CreateAtEntity("AreaCargoHoldAlarm_8", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_8", afFadeTime);
+			Sound_CreateAtEntity("AreaCargoHoldAlarm_9", "02_02_ms_curie_inside/SFX/curie_tilt/alarm/general", "AreaCargoHoldAlarm_9", afFadeTime);
 			mbIsEscapeAlarmsActive = true;
 		}
 		if(mbIsBigEscapeAlarmActive == false)
@@ -367,7 +365,6 @@ class cScrMap : iScrMap
 			StartIntro();
 		}
 		
-		mlID_Player = Map_GetEntityID("Player",eLuxEntityType_Player);	
 		
 		//////////////////////////////////////////
 		// Entity setup
@@ -1316,7 +1313,7 @@ class cScrMap : iScrMap
 	
 	void StopFinalChase()
 	{
-		Map_RemoveTimer("timer_finalcahse");
+		Map_RemoveTimer("timer_finalchase");
 		Entity_SetActive("agent_flesher_finalchase",false);
 	}
 
@@ -1411,7 +1408,6 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
-	int mlWelderFootsteps = 0;
 	
 	//-------------------------------------------------------
 
@@ -1603,7 +1599,6 @@ class cScrMap : iScrMap
 	
 	//------------------------------------------------------
 	
-	bool mbPlayerDiedSecondFloor = false;
 	
 	//------------------------------------------------------	
 	
@@ -1634,7 +1629,6 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 
-	tString msPlacedCathboxEntity = "";
 	bool cath_box_tool_OnUse(const tString &in asTool, const tString &in asEntity)
 	{
 		cLux_AddTodoMessage("SCRIPT: Activate Catherine!");
@@ -2635,8 +2629,6 @@ class cScrMap : iScrMap
 	//------------------------------------------------------
 	
 	tString msWaterDrainBranch = "3C_WaterDrained";
-	bool mbDoorClosed = true;
-	int mlDoorPoundRepeats = 0;
 	
 	//------------------------------------------------------
 	
@@ -2768,7 +2760,6 @@ class cScrMap : iScrMap
 		Entity_SetActive("BlockBoxEscapePod",true);
 		CloseEscapePodDoor();
 		Entity_SetInteractionDisabled("Swingdoor_EscapePod*",true);
-		mbDoorClosed = true;
 		Map_AddTimer("EscapePodAlarm", 1.0f, "EscapePodAlarm");
 		Sound_FadeGlobalVolume(1.0f, 3.5f);
 		
@@ -2876,7 +2867,6 @@ class cScrMap : iScrMap
 	
 	tString msGlassToBreak;
 	cSequenceStatesData mBreakGlassSequence;
-	bool mbGlassBrokenFlesherSoundTriggered = false;
 		
 	void SequenceBreakGlass(const tString &in asTimer)
 	{
@@ -2898,16 +2888,14 @@ class cScrMap : iScrMap
 				Sound_CreateAtEntity("HammerGlassBroken", "level_02_02/events/cabin_window/hit_hammer_break", sNextBrokenStep, 0, false);
 				
 				/////////////////////////////////////////////////////////////////////////
-				// Enable player to climb through window and make moaning voices clearer
+				// Enable player to climb through window
 				if (sNextBrokenStep == "BreakableGlass_1_Broken")
 				{
 					Entity_SetActive("CargoRoomClimb_1_*", true);
-					mbVoicesClearer = true;
 				}
 				if (sNextBrokenStep == "BreakableGlass_2_Broken")
 				{
 					Entity_SetActive("CargoRoomClimb_2_*", true);
-					mbVoicesClearer = true;
 				}
 				
 				cVector3f vImpulse;
@@ -2955,9 +2943,6 @@ class cScrMap : iScrMap
 	
 	//------------------------------------------------------
 	
-	bool mbEnteredCargoBay = false;
-	bool mbVoicesClearer = false;
-	int mlWindowClicks = 0;
 	
 	//------------------------------------------------------
 	
@@ -2973,7 +2958,6 @@ class cScrMap : iScrMap
 		
 		///////////////////////////////
 		// Player enters the cargo bay
-		mbEnteredCargoBay = true;
 				
 		///////////////////////////////
 		// Fleshers pull box with body up to the hatch
@@ -3428,10 +3412,7 @@ class cScrMap : iScrMap
 	
 	//-----------------------------------------------------------------------------
 	
-	tString msCaptainsLogMessage = "";
 	float mfCaptainsLogTimer = 0;
-	int mlCaptainsLogChar = 0;
-	int mlCaptainsLogMaxChar = 0;
 	int mlCaptainsLogPage = 1;
 	int mlCaptainsLogMaxPages = 3;
 	float mfCaptainsLogAlpha = 0.0f;
@@ -3853,8 +3834,6 @@ class cScrMap : iScrMap
 	//////////////////////////////////////////
 	
 	//-----------------------------------------------------------------------------
-	float mfWarningFlash = 0.0f;
-	float mfBigWarningTimer = 0.0f;
 	//-----------------------------------------------------------------------------
 	
 	void CylinderTerminal_OnGui(const tString&in asEntityName, float afTimeStep)

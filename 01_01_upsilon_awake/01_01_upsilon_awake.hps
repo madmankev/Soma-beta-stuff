@@ -4,7 +4,6 @@
 #include "helpers/helper_entity.hps"
 #include "helpers/helper_areas.hps"
 #include "helpers/helper_props.hps"
-#include "helpers/helper_effects.hps"
 #include "helpers/helper_physics.hps"
 #include "helpers/helper_world_effects.hps"
 #include "helpers/helper_general.hps"
@@ -68,6 +67,8 @@ class cScrMap : iScrMap
 	// Set up map environment
 	void Setup()
 	{
+		GetBase().SetDisplayNameEntry("01-01-upsilon-awake");
+
 						
 		///////////////////////////////
 		// Setup presets
@@ -452,7 +453,6 @@ class cScrMap : iScrMap
 	//-------------------------------------------------------
 
 	bool mbOmniToolInserted = false;
-	bool mbOmniToolConfigured = false;
 	bool mbConfigChipInserted = false;
 	bool mbRobotDestroyedTechRoom = false;
 	
@@ -471,9 +471,6 @@ class cScrMap : iScrMap
 
 	int mlCurrentImageTrailEffectID = 0;
 	int mlDoFEffectID = 0;
-	bool mbLookForPhonePlayed = false;
-	bool mbCalledOutForMunshi = false;
-	bool mbPlayerStoodUp = false;
 
 	//-------------------------------------------------------
 	
@@ -649,7 +646,6 @@ class cScrMap : iScrMap
 				Effect_ImageTrail_FadeOut(mlCurrentImageTrailEffectID, 6.0f);
 				Entity_SetActive("simon_legs",false);
 			}
-			mbPlayerStoodUp = true;
 		}
 		return true;
 	}
@@ -708,7 +704,6 @@ class cScrMap : iScrMap
 			mlMunshiLine++;
 			if (mlMunshiLine > 5) mlMunshiLine = 0;
 			
-			mbCalledOutForMunshi = true;
 			Map_AddTimer("timer_lostindark",cMath_RandRectf(5.25f,9.25f),"TimerLostInDark");
 		}
 	}
@@ -1486,7 +1481,6 @@ class cScrMap : iScrMap
 
 	//-------------------------------------------------------
 	
-	bool mbInfectedRobotAwakened = false;
 	
 	//-------------------------------------------------------
 
@@ -1650,8 +1644,6 @@ class cScrMap : iScrMap
 	//{//////////////////////////////////////
 	
 	//-------------------------------------------------------
-	int mlFootstepCount = 0;
-	float mfFootstepVolume = 1.0f;
 	//-------------------------------------------------------
 	
 	void SetupInfectedRobot()
@@ -2139,7 +2131,6 @@ class cScrMap : iScrMap
 		
 		cLux_AddTodoMessage("SOUND: We hear the robot moving around again..");
 		
-		mfFootstepVolume = 1.0f;
 		Area_MoveLinearTo("RunningSoundSource_TechRoom","RunningSoundSource_TechRoomTarget",2.2f,5.0f);
 		Map_AddTimer("RunningSoundSource_TechRoom", 0.2f, "TimerTempStopFootSteps");
 		
@@ -2266,7 +2257,6 @@ class cScrMap : iScrMap
 
 	//{------------------------------------------------------
 	
-	bool mbPlayerInStorageRoom = false;			// Player in the room with him
 	bool mbRobotCriedForHelp = false;			// Has he cried out when player leaves room at least once?
 	
 	//-------------------------------------------------------
@@ -2312,7 +2302,6 @@ class cScrMap : iScrMap
 	bool mbEnterStorageMusicPlayed = false;
 	void EnterStorage()
 	{
-		mbPlayerInStorageRoom = true;
 		
 		if(mbPlayerOpenedAquarium == false)
 		{
@@ -2329,7 +2318,6 @@ class cScrMap : iScrMap
 	
 	void ExitStorage()
 	{
-		mbPlayerInStorageRoom = false;
 		cLux_AddDebugMessage("Simon leaves storage..");
 		
 		if(mbPlayerOpenedAquarium == false && mbOmniToolPickedUp == true)
@@ -2641,7 +2629,6 @@ class cScrMap : iScrMap
 		/////////////////////////////////
 		// Player picks up the fully configured OmniTool
 		mbOmniToolInserted = false;
-		mbOmniToolConfigured = true;
 		Entity_SetActive("ConfigChipToolInserted",false);
 		
 		mbThrowBoxesAllowed = true;
@@ -3136,7 +3123,6 @@ class cScrMap : iScrMap
 	//-------------------------------------------------------
 	
 	bool mbDoorDrained = false;
-	bool mbPlayerEscaped = false;
 	
 	//-------------------------------------------------------
 	
@@ -3250,7 +3236,6 @@ class cScrMap : iScrMap
 			Entity_SetActive("HatchClimbtestArea",false);
 			Entity_SetActive("HatchClimb_1",false);
 			CameraAnimation_Begin("ClimbAnim","",true);
-			mbPlayerEscaped = true;
 		}
 	}
 	

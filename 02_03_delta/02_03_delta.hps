@@ -10,7 +10,6 @@
 #include "helpers/helper_eventdb.hps"
 #include "helpers/helper_audio.hps"
 #include "helpers/helper_sequences.hps"
-#include "helpers/helper_audio.hps"
 #include "helpers/helper_world_effects.hps"
 #include "helpers/helper_modules.hps"
 #include "helpers/helper_physics.hps"
@@ -143,7 +142,6 @@ class cScrMap : iScrMap
 	// Run when entering map
 	void OnEnter()
 	{		
-		GetBase().SetDisplayNameEntry("02-03-delta");
 	
 		//iTexture@ pSkybox = cResources_CreateTextureCubeMap("grayscale_gradient_1_4_fog.dds",false);
 		cLux_GetCurrentMap().GetWorld().SetFogSkyboxTexture(null);
@@ -264,6 +262,8 @@ class cScrMap : iScrMap
 	
 	void Setup()
 	{
+		GetBase().SetDisplayNameEntry("02-03-delta");
+
 		////////////////////
 		// PRESETS FOR NEXT LEVEL TRANSITIOn
 		Map_Preset_SetupBloom("Outside2.4", 160, 0.00001, 0, cColor(0.3, 0.3, 0.3, 0.0));
@@ -281,9 +281,7 @@ class cScrMap : iScrMap
 
 	//-------------------------------------------------------
 	
-	bool mbOpenDoorFailed = false;
 	bool mbStopKateFollowing = false;
-	int mlDepthOfFieldEffect = -1;
 	tString msKilledRobot = "";
  
     //-------------------------------------------------------
@@ -837,7 +835,7 @@ class cScrMap : iScrMap
 		Effect_Bloom_FadeBloomWidth(160, fFadeTime); //sets 128 pixels in bloom width, looks best within 32 - 512 pixels.
 		Effect_Bloom_FadeBloomTint(0.3, 0.3, 0.3, fFadeTime); //sets red tint to bloom
 		
-		mlDepthOfFieldEffect = Effect_DoF_Start(0, 12, 1.0f, 3);
+		Effect_DoF_Start(0, 12, 1.0f, 3);
 		
 		cLux_GetCurrentMap().GetWorld().SetDirectionalLightActive(true);
 		
@@ -1735,7 +1733,6 @@ class cScrMap : iScrMap
 	
 	int mlDevouredTransmission = 0;
 	bool mbHasBeenInCave = false;
-	bool mbDiggerBrokeDown = false;
 
 	//-------------------------------------------------------
 	
@@ -1989,9 +1986,7 @@ class cScrMap : iScrMap
 
 	//-------------------------------------------------------
 	
-	tString msAntennaLocation;
 	int mlComChannel = 2;
-	bool mbZeppelinCallFailed = false;
 	bool mbZeppelinOnRoute = false;
 	bool mbZeppelinArrived = false;
 	bool mbTriedOpeningTrainDoor = false;
@@ -3312,7 +3307,6 @@ class cScrMap : iScrMap
  
     //-------------------------------------------------------
 	
-	bool mbCatherineFixed = false;
  
     //-------------------------------------------------------
 	
@@ -3364,7 +3358,6 @@ class cScrMap : iScrMap
 					Dialog_AddSubject("8_FixCatherine_End", "Subject_CatherineFixed");
 			Dialog_End();
 			
-			mbCatherineFixed = true;
 			
 			Player_FadeMoveSpeedMulTo(1, 0.5);
 		}
@@ -4898,7 +4891,6 @@ class cScrMap : iScrMap
  
     //-------------------------------------------------------
 	
-	int mlMaggiePhoto = 1;
 	bool mbCameraMusicPlayed = false;
 	
 	//-------------------------------------------------------
@@ -4960,7 +4952,6 @@ class cScrMap : iScrMap
 	//-------------------------------------------------------
 	
 	bool mbSentLaunchBunkerDraft = false;
-	bool mbSawMessageError = false;
 	
 	//-------------------------------------------------------
 	
@@ -5258,7 +5249,6 @@ class cScrMap : iScrMap
 				{
 					Depth_Audio_Terminal_Negative(ImGui_GetName());
 					StationGui_SetError("ErrorMsg_NoSignal");
-					mbZeppelinCallFailed = true;
 				}
 				else if (alZeppelin==1)
 				{
@@ -5272,7 +5262,6 @@ class cScrMap : iScrMap
 				{
 					Sound_CreateAtEntity("TerminalNegative", "Entities_Station/tech/terminal_beeps/underwater/terminal_computer_denied", ImGui_GetName(), 0.0f, false, 1.0f);
 					StationGui_SetError("ErrorMsg_WrongZeppelin");
-					mbZeppelinCallFailed = true;
 				}
 			}
 			ImGui_SetModUseInput(true);
@@ -5465,10 +5454,7 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
-	int mlDeflectSlide = 1;
-	bool mbSawDeflectSlideError = false;
 	int mlGuiMainCol = 0;
-	int mlGuiMainRow = 0;
 	
 	//-------------------------------------------------------
 	
@@ -5680,7 +5666,6 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
-	tString msCurrentSound;
 	int mlGuiAkersRow=0;
 	
 	//-------------------------------------------------------

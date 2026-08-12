@@ -7,7 +7,6 @@
 #include "helpers/helper_eventdb.hps"
 #include "helpers/helper_audio.hps"
 #include "helpers/helper_sequences.hps"
-#include "helpers/helper_audio.hps"
 #include "helpers/helper_world_effects.hps"
 #include "helpers/helper_modules.hps"
 #include "helpers/helper_physics.hps"
@@ -43,6 +42,8 @@ class cScrMap : iScrMap
 	// Set up map environment
 	void Setup()
 	{
+		GetBase().SetDisplayNameEntry("01-03-upsilon-outside");
+
 		///////////////////////////////
 		// Setup presets
 		{
@@ -129,7 +130,6 @@ class cScrMap : iScrMap
 	// Run when entering map
 	void OnEnter()
 	{	
-		GetBase().SetDisplayNameEntry("01-03-upsilon-outside");
 				
 		cLux_GetCurrentMap().GetWorld().SetFogUnderwater(true);
 		
@@ -924,7 +924,6 @@ class cScrMap : iScrMap
 	
 	//-------------------------------------------------------
 	
-	bool mbSignalTowerActive = true;
 	
 	//-------------------------------------------------------
 	
