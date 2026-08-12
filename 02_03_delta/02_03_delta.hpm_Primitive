@@ -1,0 +1,40 @@
+<HPLMapTrack_Primitive ID="B4032BA4F46A620F4533C27A64A10E3086CBC57E" Version="1.00">
+    <Section Name="Aaron@AARON-PC">
+        <Objects>
+            <Plane ID="268440307" Name="AbyssFallPlane_1" CreStamp="0" ModStamp="0" WorldPos="158.5 27.25 -213.125" Rotation="0 0 0" Scale="1 1 1" Material="textures/technical/simple_white.mat" StartCorner="0 0 0" EndCorner="60 0 60" CastShadows="false" Collides="false" DiffuseColorMul="0 0 0 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 4948 268440307" Corner1UV="0 60" Corner2UV="0 0" Corner3UV="60 0" Corner4UV="60 60" />
+            <Plane ID="268440308" Name="AbyssFallPlane_2" CreStamp="0" ModStamp="0" WorldPos="218.5 47.25 -213.125" Rotation="0 -0 -3.14159" Scale="1 1 1" Material="textures/technical/simple_white.mat" StartCorner="0 0 0" EndCorner="60 0 60" CastShadows="false" Collides="false" DiffuseColorMul="0 0 0 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 4949 268440308" Corner1UV="0 60" Corner2UV="0 0" Corner3UV="60 0" Corner4UV="60 60" />
+            <Plane ID="268440309" Name="AbyssFallPlane_3" CreStamp="0" ModStamp="0" WorldPos="158.5 47.25 -213.125" Rotation="0 -0 -1.5708" Scale="1 1 1" Material="textures/technical/simple_white.mat" StartCorner="0 0 0" EndCorner="20 0 60" CastShadows="false" Collides="false" DiffuseColorMul="0 0 0 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 4950 268440309" Corner1UV="0 60" Corner2UV="0 0" Corner3UV="20 0" Corner4UV="20 60" />
+            <Plane ID="268440310" Name="AbyssFallPlane_4" CreStamp="0" ModStamp="0" WorldPos="218.5 27.25 -213.125" Rotation="0 -0 1.5708" Scale="1 1 1" Material="textures/technical/simple_white.mat" StartCorner="0 0 0" EndCorner="20 0 60" CastShadows="false" Collides="false" DiffuseColorMul="0 0 0 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 4951 268440310" Corner1UV="0 60" Corner2UV="0 0" Corner3UV="20 0" Corner4UV="20 60" />
+            <Plane ID="268440311" Name="AbyssFallPlane_5" CreStamp="0" ModStamp="0" WorldPos="218.5 27.25 -153.125" Rotation="-1.5708 -0 1.5708" Scale="1 1 1" Material="textures/technical/simple_white.mat" StartCorner="0 0 0" EndCorner="20 0 60" CastShadows="false" Collides="false" DiffuseColorMul="0 0 0 1" CulledByDistance="true" CulledByFog="true" TileAmount="1 1 1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="16 4952 268440311" Corner1UV="0 60" Corner2UV="0 0" Corner3UV="20 0" Corner4UV="20 60" />
+        </Objects>
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects>
+            <Plane ID="335552640" Name="Plane" CreStamp="1397749495" ModStamp="1397749665" WorldPos="-8.9206 130.173 63.6025" Rotation="0 0 0" Scale="1 1 1" Material="textures/decals/signs/landing_pad_oceanbottom.mat" StartCorner="0 0 0" EndCorner="10 0 10" CastShadows="false" Collides="false" DiffuseColorMul="0.761719 0.761719 0.761719 1" CulledByDistance="true" CulledByFog="true" TileAmount="0.1 1 0.1" TileOffset="0 0 0" TextureAngle="0" AlignToWorldCoords="false" UID="20 1230 335552640" Corner1UV="0 1" Corner2UV="0 0" Corner3UV="1 0" Corner4UV="1 1" />
+        </Objects>
+    </Section>
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Marcus@MARCUS-PC">
+        <Objects />
+    </Section>
+</HPLMapTrack_Primitive>

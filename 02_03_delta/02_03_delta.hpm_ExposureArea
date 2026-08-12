@@ -1,0 +1,34 @@
+<HPLMapTrack_ExposureArea ID="B4032BA4F46A620F4533C27A64A10E3086CBC57E" Version="1.00">
+    <Section Name="Aaron@AARON-PC">
+        <Objects>
+            <ExposureArea ID="268440342" Name="ExposureArea_1" CreStamp="0" ModStamp="0" WorldPos="144.5 20.25 -125.75" Rotation="0 -0.261799 0" Scale="7.5 7 12.5" Exposure="0.35" WhiteCut="10" TransitionTime="0" UID="16 1650 268440342" />
+        </Objects>
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Marcus@MARCUS-PC">
+        <Objects />
+    </Section>
+</HPLMapTrack_ExposureArea>

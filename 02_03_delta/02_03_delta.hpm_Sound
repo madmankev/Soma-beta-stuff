@@ -1,0 +1,57 @@
+<HPLMapTrack_Sound ID="B4032BA4F46A620F4533C27A64A10E3086CBC57E" Version="1.00">
+    <Section Name="Aaron@AARON-PC">
+        <Objects />
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects>
+            <Sound ID="301989900" Name="amb_worldfx_field_whale1" CreStamp="1402070002" ModStamp="1402070040" WorldPos="35 20.7136 -24" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/world_fx/animals/whale1" MinDistance="10000" MaxDistance="10000" Volume="1" Active="false" UseCustomProperties="false" UID="18 4457 301989900" />
+            <Sound ID="301989901" Name="amb_worldfx_field_whale2" CreStamp="1402070042" ModStamp="1402070051" WorldPos="34.25 20.7136 -24" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/world_fx/animals/whale2" MinDistance="10000" MaxDistance="10000" Volume="1" Active="false" UseCustomProperties="false" UID="18 4442 301989901" />
+            <Sound ID="301989902" Name="amb_worldfx_metal_shrimp" CreStamp="1402071268" ModStamp="1402071282" WorldPos="34.25 20.7136 -25.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/world_fx/animals/ghoulish_shrimp" MinDistance="10000" MaxDistance="10000" Volume="1" Active="false" UseCustomProperties="false" UID="18 4455 301989902" />
+            <Sound ID="301989903" Name="amb_worldfx_metal_carp_1" CreStamp="1402071297" ModStamp="1402071307" WorldPos="35.25 20.7136 -25.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/world_fx/animals/baritone_carp" MinDistance="10000" MaxDistance="10000" Volume="1" Active="false" UseCustomProperties="false" UID="18 4456 301989903" />
+            <Sound ID="301989904" Name="train_track_spot_1" CreStamp="1402312732" ModStamp="1402312790" WorldPos="8.75 129.25 21.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4461 301989904" />
+            <Sound ID="301989905" Name="train_track_spot_2" CreStamp="1402312792" ModStamp="1402312818" WorldPos="23.25 129.25 32.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4472 301989905" />
+            <Sound ID="301989906" Name="train_track_spot_3" CreStamp="1402312822" ModStamp="1402312824" WorldPos="33.5 129.25 32.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4470 301989906" />
+            <Sound ID="301989907" Name="train_track_spot_4" CreStamp="1402312825" ModStamp="1402312827" WorldPos="41.25 129.25 28" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4486 301989907" />
+            <Sound ID="301989908" Name="train_track_spot_5" CreStamp="1402312831" ModStamp="1402312835" WorldPos="46.25 129.25 16.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4468 301989908" />
+            <Sound ID="301989909" Name="train_track_spot_6" CreStamp="1402312838" ModStamp="1402312843" WorldPos="46.25 129.25 8.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4469 301989909" />
+            <Sound ID="301989910" Name="train_track_spot_7" CreStamp="1402312843" ModStamp="1402312846" WorldPos="45.5 129.25 0.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4467 301989910" />
+            <Sound ID="301989911" Name="train_track_spot_8" CreStamp="1402312853" ModStamp="1402312857" WorldPos="40.75 129.25 -6.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4466 301989911" />
+            <Sound ID="301989912" Name="train_track_spot_9" CreStamp="1402312860" ModStamp="1402312864" WorldPos="32.75 129.25 -9.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4465 301989912" />
+            <Sound ID="301989913" Name="train_track_spot_10" CreStamp="1402312873" ModStamp="1402312875" WorldPos="22.25 129.25 -9.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4464 301989913" />
+            <Sound ID="301989914" Name="train_track_spot_11" CreStamp="1402312933" ModStamp="1402312936" WorldPos="13.5 129.25 -5.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4462 301989914" />
+            <Sound ID="301989915" Name="train_track_spot_12" CreStamp="1402312941" ModStamp="1402312944" WorldPos="8.5 129.25 2.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/metal_train_track_ping_moan_loop" MinDistance="1" MaxDistance="4" Volume="1" Active="true" UseCustomProperties="false" UID="18 4463 301989915" />
+            <Sound ID="301989916" Name="amb_silo_spot_1" CreStamp="1402401729" ModStamp="1402401899" WorldPos="66.75 129.25 30.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/big_silo_loop" MinDistance="4" MaxDistance="16" Volume="1" Active="true" UseCustomProperties="false" UID="18 4471 301989916" />
+            <Sound ID="301989917" Name="amb_small_metal_01" CreStamp="1402414565" ModStamp="1402414606" WorldPos="3.25 132.25 61" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/small_metal_hollow_structure" MinDistance="3" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 4499 301989917" />
+            <Sound ID="301989918" Name="amb_small_metal_2" CreStamp="1402414643" ModStamp="1402414653" WorldPos="-0.25 132.25 93.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/small_metal_hollow_structure" MinDistance="3" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 4501 301989918" />
+            <Sound ID="301989919" Name="amb_small_metal_3" CreStamp="1402414661" ModStamp="1402414668" WorldPos="36 132.25 93.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/small_metal_hollow_structure" MinDistance="3" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 4500 301989919" />
+            <Sound ID="301989920" Name="amb_small_metal_4" CreStamp="1402414672" ModStamp="1402414676" WorldPos="59.5 132.25 85.25" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/small_metal_hollow_structure" MinDistance="3" MaxDistance="8" Volume="1" Active="true" UseCustomProperties="false" UID="18 4498 301989920" />
+            <Sound ID="301989922" Name="amb_small_metal_distant_creak" CreStamp="1402581070" ModStamp="1402581092" WorldPos="8.75 132 10.5" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/small_distant_metal_creak" MinDistance="1" MaxDistance="15" Volume="1" Active="false" UseCustomProperties="false" UID="18 4945 301989922" />
+            <Sound ID="301989924" Name="amb_firstbunker_creaks" CreStamp="1402583450" ModStamp="1402583492" WorldPos="24.75 139.25 -44.75" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_underwater/amb/spots/metal/medium_dull_metal_spooky" MinDistance="1" MaxDistance="13" Volume="1" Active="false" UseCustomProperties="false" UID="18 4959 301989924" />
+            <Sound ID="301989927" Name="amb_aircon_int" CreStamp="1402655621" ModStamp="1402655681" WorldPos="45.75 134.764 36.7882" Rotation="0 0 0" Scale="1 1 1" SoundEntityFile="level_amb_shared_interior/amb/object/air_con" MinDistance="0.5" MaxDistance="8" Volume="1" Active="false" UseCustomProperties="false" UID="18 4956 301989927" />
+        </Objects>
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Marcus@MARCUS-PC">
+        <Objects />
+    </Section>
+</HPLMapTrack_Sound>

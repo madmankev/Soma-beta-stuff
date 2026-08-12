@@ -1,0 +1,43 @@
+<HPLMapTrack_Billboard ID="B4032BA4F46A620F4533C27A64A10E3086CBC57E" Version="1.00">
+    <Section Name="Aaron@AARON-PC">
+        <Objects>
+            <Billboard ID="268437214" Name="Billboard_5" CreStamp="0" ModStamp="0" WorldPos="25.412 147.406 -44.9133" Rotation="0 0 0" Scale="1 1 1" BillboardType="Point" MaterialFile="D:/Work/studio/Frictional Games/Depth/redist/lights/lensflare/flare_star_simple.mat" IsHalo="true" BillboardSize="7 7" HaloSourceSize="2 2 2" BillboardOffset="2" BillboardColor="1 0.167969 0.167969 1" Brightness="1" CulledByDistance="false" CulledByFog="true" ConnectLight="" RangeMinStart="-1" RangeMinEnd="-1" RangeMaxStart="-1" RangeMaxEnd="-1" />
+        </Objects>
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects>
+            <Billboard ID="318767648" Name="Billboard_1" CreStamp="1398432585" ModStamp="1398433056" WorldPos="11.7234 131.937 71.9959" Rotation="0 0 0" Scale="1 1 1" BillboardType="Axis" MaterialFile="C:/Users/Patrik/Work/svn/Depth/redist/billboards/halo/lampglow_cone01.mat" IsHalo="false" BillboardSize="4.5 7.5" HaloSourceSize="0.3 0.3 0.3" BillboardOffset="0.5" BillboardColor="0.862427 1 0.371094 1" Brightness="0.025" CulledByDistance="false" CulledByFog="true" ConnectLight="" RangeMinStart="-1" RangeMinEnd="-1" RangeMaxStart="-1" RangeMaxEnd="-1" />
+        </Objects>
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Marcus@MARCUS-PC">
+        <Objects>
+            <Billboard ID="419430434" Name="Billboard_2" CreStamp="1427206943" ModStamp="1427289043" WorldPos="44.0057 133.64 37.2501" Rotation="0 0 0" Scale="1 1 1" BillboardType="Point" MaterialFile="D:/work/svn_soma/redist/billboards/halo/lampglow_cone01.mat" IsHalo="false" BillboardSize="7 4" HaloSourceSize="0.3 0.3 0.3" BillboardOffset="0" BillboardColor="1 1 1 0.0392157" Brightness="0.0999999" CulledByDistance="false" CulledByFog="true" ConnectLight="PointLight_27" RangeMinStart="-1" RangeMinEnd="-1" RangeMaxStart="-1" RangeMaxEnd="-1" />
+            <Billboard ID="419430435" Name="Billboard_3" CreStamp="1427207003" ModStamp="1427289031" WorldPos="47.7561 133.64 35.7421" Rotation="0 0 0" Scale="1 1 1" BillboardType="Point" MaterialFile="D:/work/svn_soma/redist/billboards/halo/lampglow_cone01.mat" IsHalo="false" BillboardSize="7 4" HaloSourceSize="0.3 0.3 0.3" BillboardOffset="0" BillboardColor="1 1 1 0.0392157" Brightness="0.5" CulledByDistance="false" CulledByFog="true" ConnectLight="PointLight_34" RangeMinStart="-1" RangeMinEnd="-1" RangeMaxStart="-1" RangeMaxEnd="-1" />
+            <Billboard ID="419430481" Name="Billboard_4" CreStamp="1427292989" ModStamp="1427298685" WorldPos="54.797 132.607 32.4539" Rotation="0.375828 0.172481 1.16052" Scale="1 1 1" BillboardType="Axis" MaterialFile="D:/work/svn_soma/redist/billboards/halo/lampglow_cone01.mat" IsHalo="false" BillboardSize="8 12" HaloSourceSize="0.3 0.3 0.3" BillboardOffset="0" BillboardColor="0.854902 1 0.498039 1" Brightness="0.2" CulledByDistance="false" CulledByFog="true" ConnectLight="" RangeMinStart="-1" RangeMinEnd="-1" RangeMaxStart="-1" RangeMaxEnd="-1" />
+            <Billboard ID="419430482" Name="Billboard_6" CreStamp="1427293082" ModStamp="1427298633" WorldPos="51.4256 132.613 34.1413" Rotation="0.162983 0.379879 0.41741" Scale="1 1 1" BillboardType="Axis" MaterialFile="D:/work/svn_soma/redist/billboards/halo/lampglow_cone01.mat" IsHalo="false" BillboardSize="5 6" HaloSourceSize="0.3 0.3 0.3" BillboardOffset="0" BillboardColor="0.854902 1 0.498039 1" Brightness="0.1" CulledByDistance="false" CulledByFog="true" ConnectLight="" RangeMinStart="-1" RangeMinEnd="-1" RangeMaxStart="-1" RangeMaxEnd="-1" />
+            <Billboard ID="419430483" Name="Billboard_7" CreStamp="1427293249" ModStamp="1427298619" WorldPos="50.2761 133.626 34.5679" Rotation="0 -1.12222 0" Scale="1 1 1" BillboardType="FixedAxis" MaterialFile="D:/work/svn_soma/redist/billboards/halo/lampglow_cone01.mat" IsHalo="false" BillboardSize="5 3.5" HaloSourceSize="0.3 0.3 0.3" BillboardOffset="0" BillboardColor="0.854902 1 0.498039 1" Brightness="1" CulledByDistance="true" CulledByFog="true" ConnectLight="" RangeMinStart="-1" RangeMinEnd="-1" RangeMaxStart="-1" RangeMaxEnd="-1" />
+            <Billboard ID="419430992" Name="Billboard_8" CreStamp="1427298672" ModStamp="1427298681" WorldPos="55.6329 134.889 32.0887" Rotation="0.411792 0.00278755 1.56441" Scale="1 1 1" BillboardType="Axis" MaterialFile="D:/work/svn_soma/redist/billboards/halo/lampglow_cone01.mat" IsHalo="false" BillboardSize="8 12" HaloSourceSize="0.3 0.3 0.3" BillboardOffset="0" BillboardColor="0.854902 1 0.498039 1" Brightness="0.1" CulledByDistance="false" CulledByFog="true" ConnectLight="" RangeMinStart="-1" RangeMinEnd="-1" RangeMaxStart="-1" RangeMaxEnd="-1" />
+        </Objects>
+    </Section>
+</HPLMapTrack_Billboard>

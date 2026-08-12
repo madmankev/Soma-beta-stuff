@@ -1,0 +1,23 @@
+<HPLMap ID="B4032BA4F46A620F4533C27A64A10E3086CBC57E" Version="1.00">
+    <GlobalSettings>
+        <Fog Active="true" Culling="false" Color="0.0469208 0.0881442 0.0976563 0.980392" Brightness="1" FadeStart="5" FadeEnd="30" FalloffExp="0.3" Underwater="true" UseSkybox="true" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" SecondaryActive="true" SecondaryColor="0.0470588 0.0862745 0.0980392 0.862745" SecondaryFadeStart="0" SecondaryFadeEnd="5" SecondaryFalloffExp="0.3" />
+        <SkyBox Active="true" Color="0.46875 0.90039 1 1" Texture="D:/work/svn_soma/redist/textures/environment/grayscale_gradient_1_3.dds" Brightness="1" />
+        <DirLight Active="true" ShadowCasterDist="60" DiffuseColor="1 1 1 1" Brightness="1 1 1 1" Gobo="" GoboAnimMode="None" GoboAnimStartTime="0" GoboAnimFrameTime="0" GoboScale="1 1" Direction="-0.333 -0.872 0.358" CastShadows="true" SkyCol="0.423529 0.516666 0.572549 1" GroundCol="0 0 0 1" ShadowMapBiasMul="1" ShadowMapSlopeScaleBiasMul="2.5" AutoShadowSliceSettings="true" AutoShadowSliceLogTerm="0.9" />
+        <SSAO NormalMap="false" NumOfDirections="0" NumOfSteps="0" AngleBias="0" Power="4.4" Radius="2" BufferSizeDiv="2" />
+        <EnvParticles Color="0.898438 0.959534 1 1" Brightness="0.3" BoxDistance="0.1" GravityVelocity="0 0.01 0" GravitySpeedRandomAmount="0" WindVelocity="0 0 0" WindSpeedRandomAmount="0" WindDirRandomAmount="0" RotateVelocity="0.005 0.005 0.005" RotateSpeedRandomAmount="1" RotateBothDirs="true" NumIterations="3" FadeInStart="0.1" FadeInEnd="1" FadeOutStart="10" FadeOutEnd="16" BoxSize="10" NumParticles="3000" ParticleSize="0.06 0.06" SubDivUV="3 3" AffectedByLight="false" Texture="particles/underwater/materials/waterdust_tiny_3x3.dds" Active="true" />
+        <PostEffects ToneMappingKey="0.5" ToneMappingExposure="1" ToneMappingWhiteCut="2.5" ColorGradingTexture="textures/colorgrading/grading_default.dds" />
+        <DistanceCulling Active="true" MinRange="55" ScreenSize="0.05" RandomSize="0.25" />
+    </GlobalSettings>
+    <RegisteredUsers>
+        <User ID="Aaron@AARON-PC" RegistrationTimestamp="0" />
+        <User ID="Thomas@THOMAS-PC" RegistrationTimestamp="0" />
+        <User ID="Samuel@SAMUEL-PC" RegistrationTimestamp="0" />
+        <User ID="Patrik@POMPERIPOSSA" RegistrationTimestamp="0" />
+        <User ID="Marc@MARC-PC" RegistrationTimestamp="0" />
+        <User ID="Ian@IANSWORKLAPTOP" RegistrationTimestamp="1396275603" />
+        <User ID="SNAFU@SNAFU-PC" RegistrationTimestamp="1397498840" />
+        <User ID="Samuel@SAMUELS-PC" RegistrationTimestamp="1422033757" />
+        <User ID="jens@JW2" RegistrationTimestamp="1424874511" />
+        <User ID="Marcus@MARCUS-PC" RegistrationTimestamp="1427189917" />
+    </RegisteredUsers>
+</HPLMap>

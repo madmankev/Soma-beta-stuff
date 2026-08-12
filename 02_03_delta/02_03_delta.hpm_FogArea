@@ -1,0 +1,43 @@
+<HPLMapTrack_FogArea ID="B4032BA4F46A620F4533C27A64A10E3086CBC57E" Version="1.00">
+    <Section Name="Aaron@AARON-PC">
+        <Objects>
+            <FogArea ID="268440337" Name="FogArea_3_2" CreStamp="0" ModStamp="0" WorldPos="27.2414 112.75 10.7271" Rotation="0 0 0" Scale="17.25 11.25 18.5" Color="0 0 0 1" Brightness="1" Start="0" End="5" FalloffExp="1" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="false" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="16 4986 268440337" />
+            <FogArea ID="268440340" Name="FogArea_2_1" CreStamp="0" ModStamp="0" WorldPos="0 0 0" Rotation="0 0 0" Scale="512 256 512" Color="0 0 0 1" Brightness="1" Start="0" End="64" FalloffExp="1" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="false" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="16 4983 268440340" />
+            <FogArea ID="268440341" Name="FogArea_2_2" CreStamp="0" ModStamp="0" WorldPos="189.5 34 -187.25" Rotation="0 0 0" Scale="80 60 80" Color="0 0 0 1" Brightness="1" Start="0" End="4" FalloffExp="1" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="false" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="16 4982 268440341" />
+        </Objects>
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects>
+            <FogArea ID="318767349" Name="FogArea_2" CreStamp="0" ModStamp="1398349358" WorldPos="6.8879 130.636 -8.44908" Rotation="0.0569016 0.0288557 0.322881" Scale="1.76946 1.19451 1.30685" Color="0 0 0 1" Brightness="1" Start="0" End="0.3" FalloffExp="1" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="false" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="19 4831 318767349" />
+            <FogArea ID="318767421" Name="AkersBunkerFog_1" CreStamp="0" ModStamp="1427300400" WorldPos="45.721 133.573 35.809" Rotation="0 0.386676 0" Scale="5.89259 3.48054 5.25315" Color="0 0 0 1" Brightness="1" Start="0" End="1" FalloffExp="1" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="false" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="19 4949 318767421" />
+            <FogArea ID="318767423" Name="AkersBunkerFog_2" CreStamp="0" ModStamp="1427300400" WorldPos="47.287 133.573 35.15" Rotation="0 -0.329471 0" Scale="2.25058 3.48054 5.25315" Color="0 0 0 1" Brightness="1" Start="0" End="1" FalloffExp="1" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="false" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="19 4952 318767423" />
+            <FogArea ID="318767424" Name="AkersBunkerFog_3" CreStamp="0" ModStamp="1427300400" WorldPos="44.085 133.573 36.451" Rotation="0 1.1413 0" Scale="2.25058 3.48054 5.25315" Color="0 0 0 1" Brightness="1" Start="0" End="1" FalloffExp="1" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="false" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="19 4950 318767424" />
+        </Objects>
+    </Section>
+    <Section Name="Marc@MARC-PC">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="SNAFU@SNAFU-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects>
+            <FogArea ID="402653199" Name="FogArea_1" CreStamp="1425045701" ModStamp="1427300194" WorldPos="-76.25 142 148" Rotation="0 -0.785398 0" Scale="132 120.75 105.75" Color="0.00392157 0.0235294 0.0313726 1" Brightness="1" Start="0" End="20" FalloffExp="0.5" ShownBacksideWhenOutside="true" ShownBacksideWhenInside="true" Underwater="true" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="false" CulledByDistance="false" CulledByFog="true" UID="24 4243 402653199" />
+        </Objects>
+    </Section>
+    <Section Name="Marcus@MARCUS-PC">
+        <Objects />
+    </Section>
+</HPLMapTrack_FogArea>
