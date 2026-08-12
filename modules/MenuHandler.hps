@@ -1,0 +1,3929 @@
+#include "interfaces/UserModule_Interface.hps"
+#include "modules/ModuleInterfaces.hps"
+#include "helpers/helper_custom_depth_imgui.hps"
+#include "helpers/helper_imgui.hps"
+#include "helpers/helper_map.hps"
+#include "helpers/helper_game.hps"
+#include "helpers/helper_audio.hps"
+#include "inputhandler_types.hps"
+
+//---------------------------------------------------
+
+enum eMainMenuGroup
+{
+	eMainMenuGroup_Main,
+	eMainMenuGroup_StartGame,
+	eMainMenuGroup_LoadGame,
+	eMainMenuGroup_Options,
+	eMainMenuGroup_Options_Audio,
+	eMainMenuGroup_Options_Video,
+	eMainMenuGroup_Options_Video_Display,
+	eMainMenuGroup_Options_Video_PostEffect,
+	eMainMenuGroup_Options_Video_World,
+	eMainMenuGroup_Options_Video_Gamma,
+	eMainMenuGroup_Options_Input,
+	eMainMenuGroup_Options_Input_Keybind,
+	eMainMenuGroup_Options_Input_GamepadMapping,
+	eMainMenuGroup_Options_Gameplay,
+	eMainMenuGroup_LastEnum,
+}
+
+
+//-----------------------------------------
+
+//-------------------------------------------------------------//
+// Data for menu, values based on 1280x720 resolution
+//-------------------------------------------------------------//
+
+const cVector2f kMainMenuButtonPos = cVector2f(136, 275);
+const cVector2f kTitlePos = cVector2f(100, 67);
+const cVector2f kTitleSize = cVector2f(4 * 173, 173);
+const cColor kMainMenuButtonBgColor = cColor(69.0 / 255.0, 139.0 / 255.0, 139.0 / 255.0, 1);
+
+//-----------------------------------------
+
+const cVector2f kOptionsBgPos = cVector2f(100, 260);
+const cVector2f kOptionsBgSize = cVector2f(680, 225);
+const cVector2f kOptionsAudioBgSize = cVector2f(680, 185);
+const cVector2f kOptionsVideoBgSize = cVector2f(680, 225);
+const cVector2f kOptionsGameplayBgSize = cVector2f(680, 145);
+const cVector2f kOptionsGameplayPS4BgSize = cVector2f(680, 110);
+const cVector2f kLoadWindowBgSize = cVector2f(680, 340);
+const cVector2f kOptionsVideoPostEffectBgSize = cVector2f(680, 185);
+const cVector2f kOptionsVideoWorldBgSize = cVector2f(680, 300);
+const cVector2f kOptionsVideoDisplayBgSize = cVector2f(680, 300);
+const cVector2f kOptionsVideoGammaBgSize = cVector2f(680, 115);
+const cVector2f kOptionsBgBorderSize = cVector2f(680, 42.5);
+const cVector2f kInputBgSize = cVector2f(680, 340);
+const cVector2f kInputPS4BgSize = cVector2f(680, 190);
+const cVector2f kKeybindWindowBgSize = cVector2f(680, 350);
+const cVector2f kOptionsMappingBgSize = cVector2f(900, 340);
+
+const cVector2f kGammaBgSize = cVector2f(680, 220);
+
+const cVector2f kOptionMenu_KeybindBgPos = cVector2f(350, 335);
+const cVector2f kOptionMenu_KeybindBgSize = cVector2f(550, 35);
+const cVector2f kOptionMenu_KeybindBgBorderSize = cVector2f(550, 42.5);
+const cVector2f kOptionMenu_PressXPos = cVector2f(500, 575);
+
+//-----------------------------------------
+
+const cVector2f kSaveSlotSpacing = cVector2f(175, 0);
+const cVector2f kSaveSlotPos = cVector2f(0, 275);
+
+//-----------------------------------------
+
+const cVector2f kLoadBgPos = cVector2f(110, 270);
+const cVector2f kLoadBgSize = cVector2f(623, 305);
+const cVector2f kLoadScrollPos = cVector2f(718, 275);
+const cVector2f kLoadScrollSize = cVector2f(10, 295);
+const float kLoadSpacing = 30;
+
+//-----------------------------------------
+
+const cVector2f kKeybindBgPos = cVector2f(110, 270);
+const cVector2f kKeybindBgSize = cVector2f(623, 275);
+const cVector2f kKeybindScrollPos = cVector2f(718, 275);
+const cVector2f kKeybindScrollSize = cVector2f(10, 265);
+const float kKeybindSpacing = 30;
+
+//-----------------------------------------
+
+const cVector2f kMappingPos = cVector2f(180, 260);
+const cVector2f kMappingSize = cVector2f(680, 320);
+
+const cVector2f kMappingArrowPosRight = cVector2f(130, 400);
+const cVector2f kMappingArrowPosLeft = cVector2f(180+680+30, 400);
+const cVector2f kMappingArrowSize = cVector2f(32, 64);
+const cVector2f kMappingButtonPosRight = cVector2f(-1024+180, 260);
+const cVector2f kMappingButtonPosLeft = cVector2f(180+680, 260);
+const cVector2f kMappingButtonSize = cVector2f(1024, 320);
+
+//-----------------------------------------
+
+const cColor kSelectedColor = cColor(1.0 / 255.0, 1);
+const cColor kDeselectedColor = cColor(1, 1);
+const cColor kDisabledColor = cColor(58.0 / 255.0, 1);
+
+//-----------------------------------------
+
+class cBindableAction
+{
+	cBindableAction(){}
+	cBindableAction(tString asAction, bool abAnalog = false)
+	{
+		msAction = asAction;
+		mbAnalog = abAnalog;
+	}
+
+	tString msAction;
+	bool mbAnalog;
+};
+
+//-----------------------------------------
+
+class cScrMenuHandler : iScrUserModule, iScrUserModule_Interface, iScrMenuHandler_Interface
+{
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// INIT
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void Init()
+	{
+		mBaseObj.SetScriptableIsSaved(false);
+		mbShowPressX = Platform_IsPS4();
+	}
+	
+	//------------------------------------------------------------
+	
+	void LoadUserConfig()
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	void SaveUserConfig()
+	{
+	}
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// INTERFACE
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void EnablePauseMenu(bool abX)
+	{
+		if(LoadScreen_IsVisible()) return;
+	
+		mbPauseMenuEnabled = abX;
+
+		if(mbPauseMenuEnabled == false)
+		{
+			SetMenuActive(false);
+		}
+	}
+
+	void ShowMainMenu(bool abX)
+	{
+		if(LoadScreen_IsVisible()) return;
+
+		SetMenuActive(abX);
+		mbMainMenuActive = abX;
+		cLux_SetGamePaused(false);
+
+		if(abX)
+		{
+			msFocusNextFrame = mbCanContinue ? "Continue" : "NewGame";
+		}
+	}
+	
+	void SetMenuActive(bool abX)
+	{
+		cLux_SetGamePaused(abX);
+		mbMenuActive = abX;
+
+		if(mbMenuActive == false)
+		{
+			/////////////
+			// Restore mouse input
+			cLux_GetGuiHandler().SetGameHudInputFocus(false);
+		}
+		else
+		{
+			cLux_GetGuiHandler().SetGameHudInputFocus(true);
+		}
+		
+		mbShowRestartWarning = false;
+		mbShowApplyChanges = false;
+		mbShowApplyKeyChanges = false;
+		mbShowReset = false;
+		mbShowExit = false;
+		mbSaveAndExit = false;
+		mbShowNewGame = false;
+		mbShowLoadGame = false;
+		mbShowDuplicateKeys = false;
+		mlActionToBind= 0;
+
+		if(abX)
+		{
+			msFocusNextFrame = "ReturnToGame";
+		
+			mlClickedPauseMenuButton = -1;
+			mlClickedMainMenuButton = -1;
+
+			mCurrentGroup = eMainMenuGroup_Main;
+		}
+	}
+	
+	bool GetMenuActive()
+	{
+		return mbMenuActive;
+	}
+
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	//MAP LOADING
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnMapEnter(cLuxMap @apMap)
+	{
+		mbPauseMenuEnabled = true;
+		msSelectedAudioButton = "Volume";
+		msSelectedVideoButton = "Display";
+		msSelectedInputButton = "Keybind";
+		msSelectedOptionsButton = "Gameplay";
+		msSelectedPauseMenuButton = "ReturnToGame";
+		msSelectedGammaButton = "Gamma";
+		msSelectedVideoWorldButton ="TextureQuality"; 
+		msSelectedVideoDisplayButton ="Resolution";
+		msSelectedGameplayButton = "ShowHints";
+		msSelectedVideoGammaButton = "Gamma";
+		msFocusNextFrame = "";
+	
+		mfFadeOut = 0.0f;
+
+		if(apMap.GetName() == "main_menu")
+		{
+			mfFadeIn = 1.0;
+		}
+
+		mbMenuActive = false;
+	
+		/////////////
+		// Save files
+		cLux_GetSaveHandler().GetSaveFiles(mvSaveNames, mvSaveDates, mvSaveFiles);
+		mbCanContinue = mvSaveFiles.size() > 0;
+
+		////////////////
+		// Setup multi select options
+		@mpConfig = cLux_GetUserConfig();
+		@mpKeyConfig = cLux_GetKeyConfig();
+
+		//////////////
+		// Show pre menu
+		mbShowPreMenu = mpConfig.GetBool("Main", "ShowPreMenu", true);
+
+		/////////////
+		// Setup resolutions
+		mvResolutionValues.resize(0);
+		mvResolutionSizes.resize(0);
+		array<int> vBits;
+		mvRefresh.resize(0);
+		mvRefreshValues.resize(0);
+
+		cSystem_GetAvailableVideoModes(mvResolutionSizes, vBits, mvRefresh, 32, 15, true);
+
+		for(int i = 0; i < mvResolutionSizes.size(); ++i)
+		{
+			mvResolutionValues.push_back(""+mvResolutionSizes[i].x + "x"+mvResolutionSizes[i].y);
+		}
+
+		for(int i = 0; i < mvRefresh.size(); ++i)
+		{
+			mvRefreshValues.push_back(""+mvRefresh[i]);
+		}
+
+		//////////////
+		// Get lang files
+		tWString sLangDir = cSystem_GetWorkingDir() + "/" + cLux_GetGameLanguageFolder();
+		array<tWString> vFiles;
+		tWString sMask = "*.lang";
+		tWString sPos = ".";
+		cSystem_FindFilesInDir(vFiles, sLangDir, sMask, false);
+
+		for(uint i = 0; i < vFiles.size(); ++i)
+		{
+			int lPos = cString_GetLastStringPosW(vFiles[i], sPos);
+			tWString sEntry = cString_ToLowerCaseW(cString_SubW(vFiles[i], 0, lPos));
+			mvLangFiles.push_back(cString_To8Char(sEntry));
+		}
+
+		/////////////////////
+		// Actions
+		array<cBindableAction> vActions = 
+		{
+			cBindableAction("Forward"),
+			cBindableAction("Backward"),
+			cBindableAction("Left"),
+			cBindableAction("Right"),
+			cBindableAction("Jump"),
+			cBindableAction("Crouch"),
+			cBindableAction("Run"),
+			cBindableAction("LeanRight"),
+			cBindableAction("LeanLeft"),
+			cBindableAction("Interact"),
+			cBindableAction("InteractCancel"),
+			cBindableAction("InteractRotate"),
+			cBindableAction("Flashlight"),
+			cBindableAction("OpenInventory"),
+			cBindableAction("Examine")
+		};
+
+		mvActions = vActions;
+		
+		array<cBindableAction> vGamepadActions = 
+		{
+			cBindableAction("GamepadMove", true),
+			cBindableAction("GamepadLook", true),
+			cBindableAction("Jump"),
+			cBindableAction("Crouch"),
+			cBindableAction("Run"),
+			cBindableAction("OpenInventory"),
+			cBindableAction("Interact"),
+			cBindableAction("Flashlight"),
+			cBindableAction("Examine"),
+			cBindableAction("InteractCancel"),
+			cBindableAction("AnalogLean"),
+			cBindableAction("GamepadRotateUp"),
+			cBindableAction("GamepadRotateDown"),
+			cBindableAction("GamepadRotateLeft"),
+			cBindableAction("GamepadRotateRight"),
+			cBindableAction("MenuConfirm"),
+			cBindableAction("MenuCancel"),
+			cBindableAction("MenuUp"),
+			cBindableAction("MenuDown"),
+			cBindableAction("MenuLeft"),
+			cBindableAction("MenuRight"),
+			cBindableAction("GamepadBack"),
+			cBindableAction("OpenMenu")
+		};
+		mvGamepadActions = vGamepadActions;
+	}
+
+	void OnMapLeave(cLuxMap @apMap)
+	{
+		mbPauseMenuEnabled = true;
+	}
+	
+	//------------------------------------------------------------
+	
+	
+	void CreateWorldEntities(cLuxMap @apMap)
+	{
+	
+	}
+	void DestroyWorldEntities(cLuxMap @apMap)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GENERAL
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnEnterContainer(const tString&in asOldContainer)
+	{
+	
+	}
+	void OnLeaveContainer(const tString&in asNewContainer)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void Update(float afTimeStep)
+	{
+	}
+	
+	void PostUpdate(float afTimeStep)
+	{
+	}
+	
+	void Reset()
+	{
+		cLux_AddDebugMessage("Relax, Reset is called");
+	}
+	void VariableUpdate(float afDeltaTime)
+	{
+	}
+
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// ACTIONS
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnGui(float afTimeStep)
+	{
+		///////////////////////////////////
+		// Display ScriptDebug ON message, to ease confusion
+		if(cLux_ScriptDebugOn())
+		{
+			cVector3f vPos;
+			vPos.x = -cLux_GetHudVirtualOffset().x;
+			vPos.y = -cLux_GetHudVirtualOffset().y;
+			
+			ImGui_SetTransCategory("");
+			
+			ImGui_GroupBegin(vPos, ImGui_GetSize());
+				
+			cImGuiLabelData labelData;
+			labelData.mColorBase = cColor(1.0f,0.3f,1.0f);
+			ImGui_DoLabelExt("ScriptDebug ON", labelData, cVector3f(5.0f,ImGui_GetSize().y-20.0f,100.0f), -1,1.0f);
+			ImGui_GroupEnd();
+		}
+		
+		if(mbMenuActive == false) return;
+
+		/////////////////////////////////////
+		//Renders a in game mouse pointer.
+		cImGuiGfx mouseGfx("imgui_pointer_normal.tga");
+		mouseGfx.mColor = cColor_White;
+		if(ImGui_GetMouseVisible()) ImGui_DoMouse(mouseGfx, cVector3f_Zero);
+		
+		cGuiSet@ pSet = cLux_GetCurrentImGui().GetSet();
+		mvSize = pSet.GetVirtualSize();
+		mvOffset = pSet.GetVirtualSizeOffset();
+		mvAspectRatio = cGraphics_GetLowLevel().GetScreenSizeFloat();
+		mvAspectRatio /= mvAspectRatio.y;
+		mlActionHorizontal = 0;
+		
+		ImGui_SetTransCategory("Menu");
+
+		@mpConfig = cLux_GetUserConfig();
+		@mpKeyConfig = cLux_GetKeyConfig();
+		
+		if(msFocusNextFrame != "")
+		{
+			//////////
+			// Setup focus when changing groups
+			ImGui_SetFocus(msFocusNextFrame);
+			msFocusNextFrame = "";
+		}
+
+		if(mbMenuButtonPressed && mbShowPreMenu == false && mbShowPressX == false)
+		{
+			mbMenuButtonPressed = false;
+			if(mCurrentGroup == eMainMenuGroup_Main && ((mbShowApplyChanges || mbShowApplyKeyChanges || mbShowDuplicateKeys || mbShowReset ||  mbShowRestartWarning || mbShowExit || mbShowNewGame || mbShowLoadGame || mfKeepDisplaySetting > 0 || mlActionToBind > 0) == false))
+			{
+				if(mbMainMenuActive == false)
+				{
+					/////////////
+					// Disable menu
+					SetMenuActive(false);
+					return;
+				}
+				else
+				{
+					////////////
+					// Show exit menu
+					//mlClickedMainMenuButton = 4;
+					//ImGui_AddTimer("ButtonClicked", 0.15);
+					//cLux_AddTodoMessage("Sound: Menu main button pressed");
+				}
+			}
+			else
+			{
+				//////////////
+				// Map menu button to back button
+				cLux_GetCurrentImGui().SendAction(eImGuiAction_Cancel, true, true);
+			}
+		}
+		mbMenuButtonPressed = false;
+
+		if(mbShowApplyChanges || mbShowDuplicateKeys || mbShowApplyKeyChanges || mbShowReset || mbShowRestartWarning || mbShowExit || mbShowNewGame || mbShowLoadGame || mfKeepDisplaySetting > 0 || mlActionToBind > 0)
+		{
+			////////////////
+			// Display message box and disable input for any other widgets
+			ShowMessageBoxes();
+			ImGui_SetModUseInput(false); 
+		}
+		else
+		{
+			///////////////
+			// Catch left and right input
+			if(ImGui_ActionTriggered(eImGuiAction_Right, true)) mlActionHorizontal++;
+			if(ImGui_ActionTriggered(eImGuiAction_Left, true)) mlActionHorizontal--;
+			ImGui_SetModUseInput(true); 
+		}
+
+		///////////////
+		// Applying key config might cause actions to fire again, so ignore them
+		if(mlIgnoreInput > 0)
+		{
+			mlIgnoreInput--;
+			ImGui_SetModUseInput(false);
+			ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+		}
+
+		/////////////
+		// Update
+		GuiBackground();
+
+		/////////////
+		// Fade screen
+		if(ImGui_TimerExists("NewGame") || ImGui_TimerExists("Continue") || ImGui_TimerExists("LoadGame") || ImGui_TimerExists("ExitToMainMenu"))
+		{
+			/////////////
+			// Fade to black
+			mfFadeOut += afTimeStep / 1.5f;
+			cImGuiGfx gfx;
+			ImGui_DrawGfx(gfx, OptionMenu_GetTopLeftOffset(cVector2f(0), 40.0), ImGui_NrmSize(1.0), cColor(0, mfFadeOut));
+			ImGui_SetModUseInput(false); 
+
+			if(ImGui_TimerOver("NewGame"))
+			{
+				ImGui_StopTimer("NewGame");
+				SetMenuActive(false);
+				LoadScreen_SetUseSmallIcon(false); 
+				cLux_StartNewGame();
+				return;
+			}
+
+			if(ImGui_TimerOver("Continue"))
+			{
+				ImGui_StopTimer("Continue");
+				cLux_GetSaveHandler().DelayedLoadGameFromFile(mvSaveFiles[mlSaveFileToLoad], "", "");
+				LoadScreen_SetUseSmallIcon(false); 
+				SetMenuActive(false);
+
+				return;
+			}
+
+			if(ImGui_TimerOver("LoadGame"))
+			{
+				ImGui_StopTimer("LoadGame");
+				cLux_GetSaveHandler().DelayedLoadGameFromFile(mvSaveFiles[mlSaveFileToLoad], "", "");
+				LoadScreen_SetUseSmallIcon(false); 
+				SetMenuActive(false);
+
+				return;
+			}
+			
+			if(ImGui_TimerOver("ExitToMainMenu"))
+			{
+				ImGui_StopTimer("ExitToMainMenu");
+				Effect_Fade_Out(0.0);
+				cLux_StartMap("main_menu.hpm");
+				LoadScreen_SetUseSmallIcon(false); 
+				SetMenuActive(false);
+				
+				return;
+			}
+		}
+		else
+		{
+			if(cLux_GetGuiHandler().GetGameHudInputFocus() == false)
+			{
+				cLux_GetGuiHandler().SetGameHudInputFocus(true);
+			}
+		}
+
+		if(mfFadeIn > 0.0f)
+		{
+			/////////////
+			// Fade to black
+			mfFadeIn -= afTimeStep / 1.5f;
+			cImGuiGfx gfx;
+			ImGui_DrawGfx(gfx, OptionMenu_GetTopLeftOffset(cVector2f(0), 40.0), ImGui_NrmSize(1.0), cColor(0, mfFadeIn));
+		}
+		
+		if(mCurrentGroup == eMainMenuGroup_Main)
+		{
+			////////////////
+			// Pause or Main menu
+			if(mbMainMenuActive)
+			{
+				if(mbShowPressX)
+				{
+					////////////
+					// Gamma correction pre menu
+					GuiPressX();
+				}
+				else if(mbShowPreMenu)
+				{
+					////////////
+					// Gamma correction pre menu
+					GuiGammaCorrection();
+				}
+				else 
+				{
+					/////////////
+					// Main menu
+					GuiMainMenuSelection();
+				}
+			}
+			else
+			{
+				GuiPauseMenuSelection();
+			}
+		}
+		else if(mCurrentGroup == eMainMenuGroup_StartGame)
+		{
+			//////////////
+			// StartGame
+			GuiStartGame();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_LoadGame)
+		{
+			//////////////
+			// LoadGame
+			GuiLoadGame();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_Options)
+		{
+			//////////////
+			// Options
+			GuiOptions();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_Options_Input)
+		{
+			//////////////
+			// Input Options
+			GuiOptionsInput();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_Options_Input_Keybind)
+		{
+			//////////////
+			// Keybind
+			GuiOptionsInputKeybind();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_Options_Input_GamepadMapping)
+		{
+			//////////////
+			// Mapping
+			GuiOptionsInputMapping();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_Options_Gameplay)
+		{
+			//////////////
+			// Gameplay Options
+			GuiOptionsGameplay();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_Options_Video)
+		{
+			//////////////
+			// Video Options
+			GuiOptionsVideo();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_Options_Video_Display)
+		{
+			//////////////
+			// Display Video Options
+			GuiOptionsVideoDisplay();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_Options_Video_PostEffect)
+		{
+			//////////////
+			// PostEffect Video Options
+			GuiOptionsVideoPostEffect();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_Options_Video_World)
+		{
+			//////////////
+			// World Video Options
+			GuiOptionsVideoWorld();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_Options_Video_Gamma)
+		{
+			//////////////
+			// Gamma Video Options
+			GuiOptionsVideoGamma();
+		}
+		else if(mCurrentGroup == eMainMenuGroup_Options_Audio)
+		{
+			//////////////
+			// Audio Options
+			GuiOptionsAudio();
+		}
+
+		ImGui_SetTransCategory("");
+	}
+	//-------------------------------------------------------
+	
+	void GuiBackground()
+	{
+		if(mbMainMenuActive)
+		{
+			/////////////////////////////////////
+			// Background
+			cImGuiGfx gfx("startmenu_background.tga", eImGuiGfx_Texture);
+			ImGui_DrawGfx(gfx, OptionMenu_GetTopLeftOffset(cVector2f(0), -1.0), ImGui_NrmSize(1.0));
+
+			/////////////////////////////////////
+			//Title
+			cImGuiGfx gfxTitle("startmenu_title.tga", eImGuiGfx_Texture);
+			ImGui_DrawGfx(gfxTitle, OptionMenu_GetTopLeftOffset(kTitlePos, 0.0), OptionMenu_GetScaledSize(kTitleSize), cColor(1.0, 1.0));
+		}
+		else if(mCurrentGroup != eMainMenuGroup_Options_Video_Gamma)
+		{
+			/////////////////////////////////////
+			// Background
+			cImGuiGfx gfx;
+			ImGui_DrawGfx(gfx, OptionMenu_GetTopLeftOffset(cVector2f(0), -1.0), ImGui_NrmSize(1.0), cColor(0, 0.75));
+		}
+	}
+	
+	//-------------------------------------------------------
+
+	void GuiMainMenuSelection()
+	{
+		/////////////////
+		// Continue
+		if(mbCanContinue)
+		{
+			if(OptionMenu_ButtonMainMenu("Continue", kMainMenuButtonPos,0, msSelectedMainMenuButton, mlClickedMainMenuButton))
+			{
+				mlClickedMainMenuButton = 0;
+			}
+
+			msSelectedMainMenuButton = OptionMenu_UpdateFocus("Continue", msSelectedMainMenuButton);
+		}
+		else
+		{
+			//////////////
+			// Not possible to continue, disable it and render it as a label instead
+			cImGuiLabelData labelData;
+			labelData.mFont.SetFile("sansation_large_bold.fnt");
+			labelData.mFont.mvSize = cVector2f(36, 36);
+			labelData.mFont.mColor = kDisabledColor;
+
+			ImGui_DoLabelExt("Continue",labelData, OptionMenu_GetTopLeftOffset(kMainMenuButtonPos, 1.0));
+		}
+
+		/////////////////
+		// New Game
+		{
+			if(OptionMenu_ButtonMainMenu("NewGame", kMainMenuButtonPos, 1, msSelectedMainMenuButton, mlClickedMainMenuButton))
+			{
+				mlClickedMainMenuButton = 1;
+			}
+
+			msSelectedMainMenuButton = OptionMenu_UpdateFocus("NewGame", msSelectedMainMenuButton);
+		}
+
+		/////////////////
+		// Load Game
+		if(mbCanContinue)
+		{
+			if(OptionMenu_ButtonMainMenu("LoadGame", kMainMenuButtonPos, 2, msSelectedMainMenuButton, mlClickedMainMenuButton))
+			{
+				mlClickedMainMenuButton = 2;
+			}
+		
+			msSelectedMainMenuButton = OptionMenu_UpdateFocus("LoadGame", msSelectedMainMenuButton);
+		}
+		else
+		{
+			//////////////
+			// No games to load
+			cImGuiLabelData labelData;
+			labelData.mFont.SetFile("sansation_large_bold.fnt");
+			labelData.mFont.mvSize = cVector2f(36, 36);
+			labelData.mFont.mColor = kDisabledColor;
+
+			ImGui_DoLabelExt("LoadGame",labelData, OptionMenu_GetTopLeftOffset(kMainMenuButtonPos + cVector2f(0, kOptionMenu_ButtonSpacing * 2.0), 1.0));
+		}
+
+		/////////////////
+		// Options
+		{
+			if(OptionMenu_ButtonMainMenu("Options", kMainMenuButtonPos, 3, msSelectedMainMenuButton, mlClickedMainMenuButton))
+			{
+				mlClickedMainMenuButton = 3;
+			}
+		
+			msSelectedMainMenuButton = OptionMenu_UpdateFocus("Options", msSelectedMainMenuButton);
+		}
+
+		/////////////////
+		// Exit
+		if(Platform_IsPS4() == false)
+		{
+			if(OptionMenu_ButtonMainMenu("Exit", kMainMenuButtonPos, 4, msSelectedMainMenuButton, mlClickedMainMenuButton))
+			{
+				mlClickedMainMenuButton = 4;
+			}
+
+			msSelectedMainMenuButton = OptionMenu_UpdateFocus("Exit", msSelectedMainMenuButton);
+		}
+
+		if(ImGui_TimerOver("ButtonClicked"))
+		{
+			/////////////////
+			// After the delay, perform the button click
+			ImGui_StopTimer("ButtonClicked");
+
+			switch(mlClickedMainMenuButton)
+			{
+			case 0: 
+				///////////
+				// Load the last save
+				ImGui_AddTimer("Continue", 1.5);
+				cSound_FadeOutAll(eSoundEntryType_WorldAll, 1.0f / 1.5f, false);
+				Music_StopAll(1.5);
+				cLux_GetGuiHandler().SetGameHudInputFocus(false);
+				return;
+
+				//break;
+			case 1:
+				// New game
+
+				if(mbCanContinue)
+				{
+					// Show message box to confirm
+					mbShowNewGame = true;
+					msFocusNextFrame = "No";
+					msMessageBoxFocus = "No";
+				}
+				else
+				{
+					// No continue or load button, no need to confirm
+					ImGui_AddTimer("NewGame", 1.5);
+					cSound_FadeOutAll(eSoundEntryType_WorldAll, 1.0f / 1.5f, false);
+					Music_StopAll(1.5);
+					cLux_GetGuiHandler().SetGameHudInputFocus(false);
+					mbShowNewGame = false;
+				}
+				break;
+			case 2:
+				// Load
+				mCurrentGroup = eMainMenuGroup_LoadGame;
+				break;
+			case 3:
+				// Open options and set focus
+				mCurrentGroup = eMainMenuGroup_Options;
+
+				msFocusNextFrame = msSelectedOptionsButton;
+
+				break;
+			case 4:
+				// Exit
+				mbShowExit = true;
+				msFocusNextFrame = "No";
+				msMessageBoxFocus = "No";
+				break;
+			}
+
+			mlClickedMainMenuButton = -1;
+		}
+		
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(false);
+	}
+
+	//-------------------------------------------------------
+
+	void GuiPauseMenuSelection()
+	{
+		/////////////////
+		// Continue
+		{
+			if(OptionMenu_ButtonMainMenu("ReturnToGame", kMainMenuButtonPos,0, msSelectedPauseMenuButton, mlClickedPauseMenuButton))
+			{
+				mlClickedPauseMenuButton = 0;
+			}
+
+			msSelectedPauseMenuButton = OptionMenu_UpdateFocus("ReturnToGame", msSelectedPauseMenuButton);
+		}
+
+		/////////////////
+		// Options
+		{
+			if(OptionMenu_ButtonMainMenu("Options", kMainMenuButtonPos, 1, msSelectedPauseMenuButton, mlClickedPauseMenuButton))
+			{
+				mlClickedPauseMenuButton = 1;
+			}
+		
+			msSelectedPauseMenuButton = OptionMenu_UpdateFocus("Options", msSelectedPauseMenuButton);
+		}
+
+		/////////////////
+		// Exit and save
+		if(Map_IsChanging() == false)
+		{
+			if(OptionMenu_ButtonMainMenu("SaveAndExit", kMainMenuButtonPos, 2, msSelectedPauseMenuButton, mlClickedPauseMenuButton))
+			{
+				mlClickedPauseMenuButton = 2;
+			}
+
+			msSelectedPauseMenuButton = OptionMenu_UpdateFocus("SaveAndExit", msSelectedPauseMenuButton);
+		}
+		else
+		{
+			//////////////
+			// Cant exit while changing map
+			cImGuiLabelData labelData;
+			labelData.mFont.SetFile("sansation_large_bold.fnt");
+			labelData.mFont.mvSize = cVector2f(36, 36);
+			labelData.mFont.mColor = kDisabledColor;
+
+			ImGui_DoLabelExt("SaveAndExit",labelData, OptionMenu_GetTopLeftOffset(kMainMenuButtonPos + cVector2f(0, kOptionMenu_ButtonSpacing * 2.0), 1.0));
+		}
+
+		/////////////////
+		// Exit
+		if(Map_IsChanging() == false)
+		{
+			if(OptionMenu_ButtonMainMenu("Exit", kMainMenuButtonPos, 3, msSelectedPauseMenuButton, mlClickedPauseMenuButton))
+			{
+				mlClickedPauseMenuButton = 3;
+			}
+
+			msSelectedPauseMenuButton = OptionMenu_UpdateFocus("Exit", msSelectedPauseMenuButton);
+		}
+		else
+		{
+			//////////////
+			// Cant exit while changing map
+			cImGuiLabelData labelData;
+			labelData.mFont.SetFile("sansation_large_bold.fnt");
+			labelData.mFont.mvSize = cVector2f(36, 36);
+			labelData.mFont.mColor = kDisabledColor;
+
+			ImGui_DoLabelExt("Exit",labelData, OptionMenu_GetTopLeftOffset(kMainMenuButtonPos + cVector2f(0, kOptionMenu_ButtonSpacing * 3.0), 1.0));
+		}
+
+		if(ImGui_ActionTriggered(eImGuiAction_Cancel, true))
+		{
+				/////////////
+				// Disable menu
+				SetMenuActive(false);
+				return;
+		}
+
+		if(ImGui_TimerOver("ButtonClicked"))
+		{
+			/////////////////
+			// After the delay, perform the button click
+			ImGui_StopTimer("ButtonClicked");
+
+			switch(mlClickedPauseMenuButton)
+			{
+			case 0: 
+				// return to game
+				SetMenuActive(false);
+				break;
+			case 1:
+				// Options
+				mCurrentGroup = eMainMenuGroup_Options;
+
+				msFocusNextFrame = msSelectedOptionsButton;
+				break;
+			case 2:
+				mbSaveAndExit = true;
+			case 3:
+				// Exit
+				mbShowExit = true;
+				msFocusNextFrame = "No";
+				msMessageBoxFocus = "No";
+				break;
+			}
+
+			mlClickedPauseMenuButton = -1;
+		}
+		
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(false);
+
+	}
+	
+	//-------------------------------------------------------
+	
+	void GuiOptions()
+	{
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(kOptionsBgSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, kOptionsBgSize.y), 0.01), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		
+		////////////////
+		// Title
+		OptionMenu_SectionTitle("Options", kOptionsBgPos + cVector2f(kOptionsBgSize.x * 0.6, kOptionsBgSize.y));
+
+		/////////////////
+		// Gameplay
+		{
+			if(OptionMenu_ButtonOptions("Gameplay", kMainMenuButtonPos, 0, msSelectedOptionsButton))
+			{
+				mCurrentGroup = eMainMenuGroup_Options_Gameplay;
+				msFocusNextFrame = msSelectedGameplayButton;
+			}
+
+			msSelectedOptionsButton = OptionMenu_UpdateFocus("Gameplay", msSelectedOptionsButton);
+		}
+
+		/////////////////
+		// Controls
+		{
+			if(OptionMenu_ButtonOptions("Controls", kMainMenuButtonPos, 1, msSelectedOptionsButton))
+			{
+				mCurrentGroup = eMainMenuGroup_Options_Input;
+				msFocusNextFrame = msSelectedInputButton;
+			}
+
+			msSelectedOptionsButton = OptionMenu_UpdateFocus("Controls", msSelectedOptionsButton);
+		}
+
+		/////////////////
+		// Video
+		if(Platform_IsPS4() == false)
+		{
+			if(OptionMenu_ButtonOptions("Video", kMainMenuButtonPos, 2, msSelectedOptionsButton))
+			{
+				mCurrentGroup = eMainMenuGroup_Options_Video;
+				mlCurrentResolution = GetCurrentResolution(); //keep track of resolution to be able to revert if invalid is selected
+				msCurrentDisplayMode = cString_ToLowerCase(mpConfig.GetString("Screen", "FullScreen", "true"));
+				msFocusNextFrame = msSelectedVideoButton;
+			}
+
+			msSelectedOptionsButton = OptionMenu_UpdateFocus("Video", msSelectedOptionsButton);
+		}
+		else
+		{
+			if(OptionMenu_ButtonOptions("Gamma", kMainMenuButtonPos, 2, msSelectedOptionsButton))
+			{
+				if(mbMainMenuActive)
+				{
+					mCurrentGroup = eMainMenuGroup_Main;
+					msFocusNextFrame = "Gamma";
+					mbShowPreMenu = true;
+					mlCurrentOptionChange = mlOptionChanges;
+				}
+				else
+				{
+					mCurrentGroup = eMainMenuGroup_Options_Video_Gamma;
+					msFocusNextFrame = msSelectedVideoGammaButton;
+				}
+			}
+
+			msSelectedOptionsButton = OptionMenu_UpdateFocus("Gamma", msSelectedOptionsButton);
+		}
+		
+		/////////////////
+		// Audio
+		{
+			if(OptionMenu_ButtonOptions("Audio", kMainMenuButtonPos, 3, msSelectedOptionsButton))
+			{
+				mCurrentGroup = eMainMenuGroup_Options_Audio;
+				msFocusNextFrame = msSelectedAudioButton;
+			}
+
+			msSelectedOptionsButton = OptionMenu_UpdateFocus("Audio", msSelectedOptionsButton);
+		}
+		
+		/////////////////
+		// Back
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, 5, msSelectedOptionsButton);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+			if(bButton || bGamepad)
+			{
+				mCurrentGroup = eMainMenuGroup_Main;
+				msFocusNextFrame = mbMainMenuActive ? msSelectedMainMenuButton : msSelectedPauseMenuButton;
+
+				////////
+				// Reset menu pos
+				if(bGamepad == false)
+				{
+					msSelectedOptionsButton = "Video";
+					OptionMenu_GamepadButtons(false);
+					return;
+				}
+			}
+
+			msSelectedOptionsButton = OptionMenu_UpdateFocus("Back", msSelectedOptionsButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(false);
+	}
+
+	//-------------------------------------------------------
+
+	void GuiStartGame()
+	{
+		//////////////////
+		// Draw the save slots
+		cVector2f vPos = kSaveSlotPos;
+		vPos.x = (1280.0 / 2.0) * (720.0 / 1280.0) / (cGraphics_GetLowLevel().GetScreenSizeFloat().y / cGraphics_GetLowLevel().GetScreenSizeFloat().x); 
+		float fSpacingMul = 2.0 * vPos.x / 1024.0;
+		for(int i = 0; i < 5; ++i)
+		{
+			OptionMenu_SaveSlot("SaveSlot"+i, vPos + kSaveSlotSpacing * (i - 2.5 + (fSpacingMul - 1.0) / 2.0) * fSpacingMul, (i % 2) == 0 ? "gamma_background" : "", msSelectedStartButton, msSelectedStartButton);
+		}
+
+		/////////////////
+		// Back
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, 8, msSelectedStartButton);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+			if(bButton || bGamepad)
+			{
+				mCurrentGroup = eMainMenuGroup_Main;
+
+				msFocusNextFrame = msSelectedMainMenuButton;
+				ApplySettings();
+
+				//////////
+				// Reset menu pos
+				if(bGamepad == false)
+				{
+					OptionMenu_GamepadButtons(msSelectedStartButton != "Back");
+					return;
+				}
+			}
+			
+			msSelectedStartButton = OptionMenu_UpdateFocus("Back", msSelectedStartButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(msSelectedStartButton != "Back");
+	}
+
+	//-------------------------------------------------------
+	
+	void GuiLoadGame()
+	{
+		
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(kLoadWindowBgSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, kLoadWindowBgSize.y-1), 0.0), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		cImGuiGfx gfx;
+		ImGui_DrawGfx(gfx, OptionMenu_GetTopLeftOffset(kLoadBgPos, 0.01), OptionMenu_GetScaledSize(kLoadBgSize), cColor(0.0, 1.0));
+		
+		////////////////
+		// Title
+		OptionMenu_SectionTitle("LoadGame", kOptionsBgPos + cVector2f(kLoadWindowBgSize.x * 0.6, kLoadWindowBgSize.y));
+
+		//////////////
+		// Catch input
+		int lActionVertical = 0;
+		bool bMouseDown = false;
+		float fPadding = mbScrollingSaveList ? 10000 : 5;
+
+		if(mbShowLoadGame == false)
+		{
+			if(ImGui_ActionTriggered(eImGuiAction_Down, true)) lActionVertical++;
+			if(ImGui_ActionTriggered(eImGuiAction_Up, true)) lActionVertical--;
+			if(ImGui_ActionTriggered(eImGuiAction_ScrollDown, true) && (mlSaveFileOffset + mlSelectedLoadButton) < mvSaveNames.size()-1 && mlSelectedLoadButton != 10) lActionVertical++;
+			if(ImGui_ActionTriggered(eImGuiAction_ScrollUp, true) && (mlSaveFileOffset + mlSelectedLoadButton) > 0 && mlSelectedLoadButton != 10) lActionVertical--;
+			bMouseDown = ImGui_ActionIsDown(eImGuiAction_MouseLeft, false);
+		}
+
+		////////////////
+		// Draw a list of all save files
+		int c = 0;
+			
+		for(int i = mlSaveFileOffset; i < mvSaveNames.size() && c < 10; ++i)
+		{
+			if(OptionMenu_ButtonSaveFile("Save"+c, mvSaveNames[i], mvSaveDates[i], kLoadBgPos + cVector2f(26, c * kLoadSpacing),
+																				   kLoadBgPos + cVector2f(590, c * kLoadSpacing+5), mlSelectedLoadButton == c))
+			{
+				if(bMouseDown == false || OptionMenu_GetMouseInside(kLoadScrollPos - cVector2f(fPadding, 0), 
+																	kLoadScrollPos + kLoadScrollSize + cVector2f(10000, 0)).y == -1)
+				{
+					mlSaveFileToLoad = i;
+					mbShowLoadGame = true;
+					msMessageBoxFocus = "No";
+					msFocusNextFrame="No";
+				}
+			}
+
+			if(bMouseDown == false)
+			{
+				if (ImGui_PrevBecameInFocus())
+				{
+					mlSelectedLoadButton = c;
+				}
+			}
+			c++;
+		}
+		
+		//////////////
+		// Update focus
+		if(lActionVertical != 0)
+		{
+			//////////
+			// Select file
+			if (lActionVertical<0)	// Scroll up
+			{
+				if (mlSelectedLoadButton==10)	// Back button
+				{
+					mlSelectedLoadButton = 9;
+				}
+				else
+				{
+					mlSelectedLoadButton--;
+					if(mlSelectedLoadButton < 0)
+					{
+						if(mlSaveFileOffset > 0) 
+						{
+							mlSelectedLoadButton = 0;
+							mlSaveFileOffset--;
+						}
+						else
+						{
+							mlSelectedLoadButton = 10;
+						}
+					}
+				}
+			}
+			else	// Scroll down
+			{
+				if (mlSelectedLoadButton==10)	// Back button
+				{
+					mlSelectedLoadButton = 0;
+				}
+				else
+				{
+					mlSelectedLoadButton++;
+					if(mlSelectedLoadButton >= cMath_Min(mvSaveNames.size(),10) )
+					{
+						if(mlSaveFileOffset<mvSaveNames.size()-10) 
+						{
+							mlSelectedLoadButton--;
+							mlSaveFileOffset++;
+						}
+						else
+						{
+							///////////
+							// No more files, scroll to back button
+							mlSelectedLoadButton = 10;
+						}
+					}
+				}			
+			}
+			
+		}
+
+		//////////////
+		// Scroll bar
+		if(mvSaveNames.size() > 10)
+		{
+			////////////
+			// Update input
+			float fFiles = mvSaveNames.size();
+			int lOldOffset = mlSaveFileOffset;
+			float fMouseScrollY = OptionMenu_GetMouseInside(kLoadScrollPos - cVector2f(fPadding, 0), kLoadScrollPos + kLoadScrollSize + cVector2f(fPadding, 0)).y;
+
+			if(fMouseScrollY != -1.0)
+			{
+				///////////
+				// Mouse touching scroll, check if button pressed
+				if(bMouseDown)
+				{
+					mlSaveFileOffset = cMath_RoundToInt((fFiles-10) * fMouseScrollY);
+					mbScrollingSaveList = true;
+				}
+			}
+
+			if(bMouseDown == false)
+			{
+				////////
+				// Stopped scrolling
+				mbScrollingSaveList = false;
+			}
+
+			mlSaveFileOffset = cMath_Clamp(mlSaveFileOffset, 0, mvSaveNames.size() - 10);
+
+			if(mlSelectedLoadButton >= 0 && mlSelectedLoadButton < 10 && (mlSaveFileOffset - lOldOffset) != 0)
+			{
+				int lDiff = (mlSaveFileOffset - lOldOffset);
+				mlSelectedLoadButton = cMath_Clamp(mlSelectedLoadButton - lDiff, 0, 9);
+			}
+
+			float fScaleY = 1.0 - (fFiles - 10.0) / fFiles;
+			float fPosY = 0;
+			if (fFiles>10)
+				fPosY = (mlSaveFileOffset) / (fFiles-10);
+			ImGui_DrawGfx(gfx, OptionMenu_GetTopLeftOffset(kLoadScrollPos + kLoadScrollSize * cVector2f(0, (1.0 - fScaleY) * fPosY), 0.01), OptionMenu_GetScaledSize(kLoadScrollSize * cVector2f(1, fScaleY)), ((fMouseScrollY == -1.0f && mbScrollingSaveList == false) || mbShowLoadGame) ? kMainMenuButtonBgColor : cColor(1,1));
+		}
+
+		/////////////////
+		// Back
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, 8, mlSelectedLoadButton < 10 ? ("Save"+mlSelectedLoadButton) : "Back");
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+			if(bButton || bGamepad)
+			{
+				mCurrentGroup = eMainMenuGroup_Main;
+				msFocusNextFrame = msSelectedMainMenuButton;
+
+				////////
+				// Reset menu pos
+				if(bGamepad == false)
+				{
+					mlSelectedLoadButton = 0;
+					OptionMenu_GamepadButtons(false);
+				}
+
+				return;
+			}
+
+			if(bMouseDown == false)
+			{
+				if (ImGui_PrevBecameInFocus())
+				{
+					cLux_AddTodoMessage("Sound: Menu focus changed");
+					mlSelectedLoadButton = 10;
+				}
+			}
+		}
+
+		///////////
+		// Manual focus since we catch input
+		if(mbShowLoadGame == false)
+		{
+			if(mlSelectedLoadButton >= 0 && mlSelectedLoadButton < 10) msFocusNextFrame = "Save"+mlSelectedLoadButton;
+			else													   msFocusNextFrame = "Back";
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(false);
+	}
+
+	//-------------------------------------------------------
+	
+	void GuiOptionsInput()
+	{
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+		cVector2f vSize = Platform_IsPS4() ? kInputPS4BgSize : kInputBgSize;
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(vSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, vSize.y-1), 0.0), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		
+		////////////////
+		// Title
+		OptionMenu_SectionTitle("Input", kOptionsBgPos + cVector2f(vSize.x * 0.6, vSize.y));
+
+		int lY = 0;
+
+		if(Platform_IsPS4() == false)
+		{
+			/////////////////
+			// Controls
+			{
+				if(OptionMenu_ButtonOptions("Keybind", kMainMenuButtonPos, lY++, msSelectedInputButton))
+				{
+					mCurrentGroup = eMainMenuGroup_Options_Input_Keybind;
+					msFocusNextFrame = msSelectedInputButton;
+					mbKeybindChanged = false;
+					mbBindingGamepad = false;
+					mpKeyConfig.Save();
+				}
+
+				msSelectedInputButton = OptionMenu_UpdateFocus("Keybind", msSelectedInputButton);
+			}
+
+			/////////////////
+			// Mapping
+			{
+				if(OptionMenu_ButtonOptions("GamepadMapping", kMainMenuButtonPos, lY++, msSelectedInputButton))
+				{
+					mCurrentGroup = eMainMenuGroup_Options_Input_GamepadMapping;
+					msFocusNextFrame = "Back";
+					mpKeyConfig.Save();
+				}
+
+				msSelectedInputButton = OptionMenu_UpdateFocus("GamepadMapping", msSelectedInputButton);
+			}
+
+			/////////////////
+			// Mouse sensitivity
+			{
+				float fValue = mpConfig.GetFloat("Input", "MouseSensitivity", 1.0f);
+				fValue /= 4.0f;
+				fValue = OptionMenu_ButtonOptionsSlider("MouseSens", kMainMenuButtonPos, lY++, msSelectedInputButton, fValue, 0.2f / 4.0f, mlActionHorizontal);
+				fValue *= 4.0f;
+				mpConfig.SetFloat("Input", "MouseSensitivity", fValue);
+
+				msSelectedInputButton = OptionMenu_UpdateFocus("MouseSens", msSelectedInputButton);
+			}
+		
+		
+			/////////////////
+			// Invert Mouse Y
+			{
+				bool bValue = mpConfig.GetBool("Input", "InvertMouse", false);
+				bValue = OptionMenu_ButtonOptionsToggle("InvertMouseY", kMainMenuButtonPos, lY++, msSelectedInputButton, bValue, mlActionHorizontal);
+				mpConfig.SetBool("Input", "InvertMouse", bValue);
+
+				msSelectedInputButton = OptionMenu_UpdateFocus("InvertMouseY", msSelectedInputButton);
+			}
+		
+		
+			/////////////////
+			// Smooth mouse
+			{
+				bool bValue = mpConfig.GetBool("Input", "SmoothMouse", true);
+				bValue = OptionMenu_ButtonOptionsToggle("SmoothMouse", kMainMenuButtonPos, lY++, msSelectedInputButton, bValue, mlActionHorizontal);
+				mpConfig.SetBool("Input", "SmoothMouse", bValue);
+
+				msSelectedInputButton = OptionMenu_UpdateFocus("SmoothMouse", msSelectedInputButton);
+			}
+		}
+		else
+		{
+			/////////////////
+			// Mapping
+			{
+				if(OptionMenu_ButtonOptions("GamepadMapping", kMainMenuButtonPos, lY++, msSelectedInputButton))
+				{
+					mCurrentGroup = eMainMenuGroup_Options_Input_GamepadMapping;
+					msFocusNextFrame = "Back";
+					mpKeyConfig.Save();
+				}
+
+				msSelectedInputButton = OptionMenu_UpdateFocus("GamepadMapping", msSelectedInputButton);
+			}
+		}
+		
+		/////////////////
+		// Gamepad Sens
+		{
+			float fValue = mpConfig.GetFloat("Input", "GamepadSensitivity", 2.0f);
+			fValue /= 4.0f;
+			fValue = OptionMenu_ButtonOptionsSlider("GamepadSens", kMainMenuButtonPos, lY++, msSelectedInputButton, fValue, 0.2f / 4.0f, mlActionHorizontal);
+			fValue *= 4.0f;
+			mpConfig.SetFloat("Input", "GamepadSensitivity", fValue);
+
+			msSelectedInputButton = OptionMenu_UpdateFocus("GamepadSens", msSelectedInputButton);
+		}
+
+		/////////////////
+		// Invert Pad Y
+		{
+			bool bValue = mpConfig.GetBool("Input", "InvertPad", false);
+			bValue = OptionMenu_ButtonOptionsToggle("InvertGamepadY", kMainMenuButtonPos, lY++, msSelectedInputButton, bValue, mlActionHorizontal);
+			mpConfig.SetBool("Input", "InvertPad", bValue);
+
+			msSelectedInputButton = OptionMenu_UpdateFocus("InvertGamepadY", msSelectedInputButton);
+		}
+
+		/////////////////
+		// Back
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, lY + 1, msSelectedInputButton);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+			if(bButton || bGamepad)
+			{
+				mCurrentGroup = eMainMenuGroup_Options;
+
+				msFocusNextFrame = msSelectedOptionsButton;
+				ApplySettings();
+
+				//////////
+				// Reset menu pos
+				if(bGamepad == false)
+				{
+					msSelectedInputButton = "MouseSens";
+					OptionMenu_GamepadButtons(msSelectedInputButton != "Back");
+					return;
+				}
+			}
+			
+			msSelectedInputButton = OptionMenu_UpdateFocus("Back", msSelectedInputButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(msSelectedInputButton != "Back");
+	}
+
+	//-------------------------------------------------------
+	
+	tString ParseKeybind(tString asBind, bool abAnalog)
+	{
+		if(asBind.length() > 0)
+		{
+			int lPos = cString_GetFirstCharPos(asBind, '.');
+
+			if(lPos != -1)
+			{
+				tString sType = cString_Sub(asBind, 0, lPos);
+
+				if(sType == "Gamepad")
+				{
+					if(abAnalog)
+					{
+						tString sAxisNum = cString_Sub(asBind, lPos+8);
+						sAxisNum = cString_Sub(sAxisNum, 0, cString_GetFirstCharPos(sAxisNum, '.'));
+						int lAxis = cString_ToInt(sAxisNum, 0);
+
+						return "Stick."+(lAxis / 2);
+					}
+					else
+					{
+						tString sKey = cString_Sub(asBind, lPos+3);
+
+						return sKey;
+					}
+				}
+				else
+				{
+					tString sKey = cString_Sub(asBind, lPos+1);
+
+					return sKey;					
+				}
+			}
+		}
+
+		return asBind;
+	}
+	
+	void GuiOptionsInputKeybind()
+	{
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(kKeybindWindowBgSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, kKeybindWindowBgSize.y-1), 0.0), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		cImGuiGfx gfx;
+		ImGui_DrawGfx(gfx, OptionMenu_GetTopLeftOffset(kKeybindBgPos, 0.01), OptionMenu_GetScaledSize(kKeybindBgSize), cColor(0.0, 1.0));
+		
+		////////////////
+		// Select which type to bind
+		array<cBindableAction> vActions = mbBindingGamepad ? mvGamepadActions : mvActions;
+		tString sMain = mbBindingGamepad ? "GamepadPrimary" : "Primary";
+		tString sSec = mbBindingGamepad ? "GamepadSecondary" : "Secondary";
+
+		////////////////
+		// Get any duplicates
+		array<bool> vDuplicates0;
+		array<bool> vDuplicates1;
+		bool bHasDuplicates = false;
+
+		for(uint i = 0; i < vActions.size(); ++i)
+		{
+			//////////////
+			// Check if this is a duplicate
+			bool bDuplicate0 = false;
+			bool bDuplicate1 = false;
+			
+			tString sBind = vActions[i].msAction;
+			tString sPrimary = mpKeyConfig.GetString(sBind, sMain, "");
+			tString sSecondary = mpKeyConfig.GetString(sBind, sSec, "");
+			
+			bool bCheck0 = sPrimary.length() != 0;
+			bool bCheck1 = sSecondary.length() != 0;
+
+			if(bCheck0 || bCheck1)
+			{
+				if(sSecondary == sPrimary)
+				{
+					bDuplicate0 = true;
+					bDuplicate1 = true;
+				}
+
+				for(uint j = 0; j < vActions.size(); ++j)
+				{
+					if(i == j) continue;
+
+					sBind = vActions[j].msAction;
+
+					tString sComp0 = mpKeyConfig.GetString(sBind, sMain, "");
+					tString sComp1 = mpKeyConfig.GetString(sBind, sSec, "");
+					
+					if(bCheck0 && (sComp0 == sPrimary || sComp1 == sPrimary)) bDuplicate0 = true;
+					if(bCheck1 && (sComp0 == sSecondary || sComp1 == sSecondary)) bDuplicate1 = true;
+
+					if((bCheck0 == false || bDuplicate0) && (bCheck1 == false || bDuplicate1)) break;
+				}
+			}
+			
+			vDuplicates0.push_back(bDuplicate0);
+			vDuplicates1.push_back(bDuplicate1);
+			if(bDuplicate0 || bDuplicate1) bHasDuplicates = true;
+		}
+
+
+		//////////////
+		// Catch input
+		int lActionVertical = 0;
+		bool bMouseDown = false;
+		float fPadding = mbScrollingKeybindList ? 10000 : 5;
+		int lNumBinds = 9;
+
+		if(mlActionToBind == 0 && mbShowApplyKeyChanges == false && mbShowReset == false)
+		{
+			if(ImGui_ActionTriggered(eImGuiAction_Down, true)) lActionVertical++;
+			if(ImGui_ActionTriggered(eImGuiAction_Up, true)) lActionVertical--;
+			if(ImGui_ActionTriggered(eImGuiAction_ScrollDown, true) && (mlKeybindOffset + mlSelectedKeybindButton) < vActions.size()-1 && mlSelectedKeybindButton != lNumBinds) lActionVertical++;
+			if(ImGui_ActionTriggered(eImGuiAction_ScrollUp, true) && (mlKeybindOffset + mlSelectedKeybindButton) > 0 && mlSelectedKeybindButton != lNumBinds) lActionVertical--;
+			bMouseDown = ImGui_ActionIsDown(eImGuiAction_MouseLeft, false);
+		}
+
+		////////////////
+		// Draw a list of all keybinds
+		int c = 0;
+			
+		for(int i = mlKeybindOffset; i < vActions.size() && c < lNumBinds; ++i)
+		{
+			///////////////
+			// Get action and parse the bind
+			tString sBind = vActions[i].msAction;
+
+			tString sPrimary = ParseKeybind(mpKeyConfig.GetString(sBind, sMain, ""), vActions[i].mbAnalog);
+			tString sSecondary = ParseKeybind(mpKeyConfig.GetString(sBind, sSec, ""), vActions[i].mbAnalog);
+
+			///////////////
+			// Draw button, use red color if a duplicate is detected
+			cColor color0 = vDuplicates0[i] ? cColor(1, 0, 0, 1) : cColor(0,1);
+			cColor color1 = vDuplicates1[i] ? cColor(1, 0, 0, 1) : cColor(0,1);
+			int lFocusChange = 0;
+			int lButton = OptionMenu_ButtonKeybind("Bind"+c, sBind, sPrimary, sSecondary, kKeybindBgPos + cVector2f(26, c * kKeybindSpacing), mlSelectedKeybindButton == c, mlKeybindFocusSlot, lFocusChange, color0, color1);
+			
+			if(bMouseDown == false)
+			{
+				if (lFocusChange > 0)
+				{
+					mlSelectedKeybindButton = c;
+					mlKeybindFocusSlot = lFocusChange-1;
+				}
+			}
+
+			if(lButton > 0 && mlKeybindFocusSlot > 0)
+			{
+				if(bMouseDown == false || OptionMenu_GetMouseInside(kKeybindScrollPos - cVector2f(fPadding, 0), 
+																	kKeybindScrollPos + kKeybindScrollSize + cVector2f(10000, 0)).y == -1)
+				{
+					mlActionToBind = i+1;
+					msKeybindSlot = mlKeybindFocusSlot == 1 ? sMain : sSec;
+					msFocusAfterBind = "Bind"+c + msKeybindSlot;
+					msKeybindFirstState = "";
+				}
+			}
+			c++;
+		}
+		
+		//////////////
+		// Update focus
+		if(lActionVertical != 0)
+		{
+			//////////
+			// Select file
+			if (lActionVertical<0)	// Scroll up
+			{
+				if (mlSelectedKeybindButton==lNumBinds+1)	// Back button
+				{
+					mlSelectedKeybindButton = lNumBinds;
+				}
+				else if (mlSelectedKeybindButton==lNumBinds)
+				{
+					mlSelectedKeybindButton = lNumBinds-1;
+				}
+				else
+				{
+					mlSelectedKeybindButton--;
+					if(mlSelectedKeybindButton < 0)
+					{
+						if(mlKeybindOffset > 0) 
+						{
+							mlSelectedKeybindButton = 0;
+							mlKeybindOffset--;
+						}
+						else
+						{
+							mlSelectedKeybindButton = lNumBinds;
+						}
+					}
+				}
+			}
+			else	// Scroll down
+			{
+				if (mlSelectedKeybindButton==lNumBinds)
+				{
+					mlSelectedKeybindButton = lNumBinds+1;
+				}
+				else if (mlSelectedKeybindButton==lNumBinds+1)	// Back button
+				{
+					mlSelectedKeybindButton = 0;
+				}
+				else
+				{
+					mlSelectedKeybindButton++;
+					if(mlSelectedKeybindButton >= cMath_Min(vActions.size(),lNumBinds) )
+					{
+						if(mlKeybindOffset<vActions.size()-lNumBinds) 
+						{
+							mlSelectedKeybindButton--;
+							mlKeybindOffset++;
+						}
+						else
+						{
+							///////////
+							// No more files, scroll to back button
+							mlSelectedKeybindButton = lNumBinds;
+						}
+					}
+				}			
+			}
+		}
+			
+		//////////////
+		// Left right focus
+		if(mlActionHorizontal != 0 || lActionVertical!=0)
+		{
+			mlKeybindFocusSlot = cMath_Clamp(mlKeybindFocusSlot + mlActionHorizontal, 1, 2);
+		}
+
+		//////////////
+		// Scroll bar
+		if(vActions.size() > lNumBinds)
+		{
+			////////////
+			// Update input
+			float fFiles = vActions.size();
+			int lOldOffset = mlKeybindOffset;
+			float fMouseScrollY = OptionMenu_GetMouseInside(kKeybindScrollPos - cVector2f(fPadding, 0), kKeybindScrollPos + kKeybindScrollSize + cVector2f(fPadding, 0)).y;
+
+			if(fMouseScrollY != -1.0)
+			{
+				///////////
+				// Mouse touching scroll, check if button pressed
+				if(bMouseDown)
+				{
+					mlKeybindOffset = cMath_RoundToInt((fFiles-9) * fMouseScrollY);
+					mbScrollingKeybindList = true;
+				}
+			}
+
+			if(bMouseDown == false)
+			{
+				////////
+				// Stopped scrolling
+				mbScrollingKeybindList = false;
+			}
+
+			mlKeybindOffset = cMath_Clamp(mlKeybindOffset, 0, vActions.size() - lNumBinds);
+
+			if(mlSelectedKeybindButton >= 0 && mlSelectedKeybindButton < lNumBinds && (mlSaveFileOffset - lOldOffset) != 0)
+			{
+				int lDiff = (mlKeybindOffset - lOldOffset);
+				mlSelectedKeybindButton = cMath_Clamp(mlSelectedKeybindButton - lDiff, 0, lNumBinds-1);
+			}
+
+			float fScaleY = 1.0 - (fFiles - lNumBinds) / fFiles;
+			float fPosY = 0;
+			if (fFiles>lNumBinds)
+				fPosY = (mlKeybindOffset) / (fFiles-lNumBinds);
+			ImGui_DrawGfx(gfx, OptionMenu_GetTopLeftOffset(kKeybindScrollPos + kKeybindScrollSize * cVector2f(0, (1.0 - fScaleY) * fPosY), 0.01), OptionMenu_GetScaledSize(kKeybindScrollSize * cVector2f(1, fScaleY)), ((fMouseScrollY == -1.0f && mbScrollingKeybindList == false) || (mlActionToBind > 0 || mbShowApplyKeyChanges || mbShowReset)) ? kMainMenuButtonBgColor : cColor(1,1));
+		}
+		
+		tString sSelected;
+		if(mlSelectedKeybindButton < lNumBinds) sSelected = ("Bind"+mlSelectedKeybindButton);
+		else if(mlSelectedKeybindButton == lNumBinds) sSelected = "ResetToDefault";
+		else sSelected = "Back";
+
+		/////////////////
+		// Reset to default
+		{
+			if(OptionMenu_ButtonOptions("ResetToDefault", kMainMenuButtonPos+ cVector2f(0, 10), 7, sSelected))
+			{
+				mbShowReset = true;
+				msFocusNextFrame = "No";
+			}
+
+			if(bMouseDown == false)
+			{
+				if (ImGui_PrevBecameInFocus())
+				{
+					cLux_AddTodoMessage("Sound: Menu focus changed");
+					mlSelectedKeybindButton = lNumBinds;
+				}
+			}
+		}
+
+		/////////////////
+		// Back
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos+ cVector2f(0, 10), 8, sSelected);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+			if(bButton || bGamepad)
+			{
+				if(mbKeybindChanged == false)
+				{
+					mCurrentGroup = eMainMenuGroup_Options_Input;
+					msFocusNextFrame = msSelectedInputButton;
+				}
+				else
+				{
+					mbShowDuplicateKeys = bHasDuplicates;
+					mbShowApplyKeyChanges = true;
+					msFocusNextFrame = "No";
+				}
+
+				////////
+				// Reset menu pos
+				if(bGamepad == false)
+				{
+					mlSelectedKeybindButton = 0;
+				}
+
+				OptionMenu_GamepadButtons(true);
+				return;
+			}
+
+			if(bMouseDown == false)
+			{
+				if (ImGui_PrevBecameInFocus())
+				{
+					cLux_AddTodoMessage("Sound: Menu focus changed");
+					mlSelectedKeybindButton = lNumBinds+1;
+				}
+			}
+		}
+
+		///////////
+		// Manual focus since we catch input
+		if(mlActionToBind == 0 && mbShowApplyKeyChanges == false && mbShowReset == false)
+		{
+			if(mlSelectedKeybindButton >= 0 && mlSelectedKeybindButton < lNumBinds)
+			{
+				if(mlKeybindFocusSlot == 0) msFocusNextFrame = "Bind"+mlSelectedKeybindButton;
+				if(mlKeybindFocusSlot == 1) msFocusNextFrame = "Bind"+mlSelectedKeybindButton+"Primary";
+				if(mlKeybindFocusSlot == 2) msFocusNextFrame = "Bind"+mlSelectedKeybindButton+"Secondary";
+			}
+			else if(mlSelectedKeybindButton == lNumBinds)
+			{
+				msFocusNextFrame = "ResetToDefault";				
+			}
+			else						
+			{						 
+				msFocusNextFrame = "Back";
+			}
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(true);
+	}
+	
+	//-------------------------------------------------------
+	
+	void GuiOptionsInputMapping()
+	{
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(kOptionsMappingBgSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, kOptionsMappingBgSize.y-1), 0.0), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		
+		/////////////////
+		// Draw preset
+		tString sDefault = Platform_IsPS4() ? "PS4 Controller" : "X360 Controller";
+		tString sProfile = mpKeyConfig.GetString("GamepadMapping", "Profile", sDefault);
+		tString sPreset = mpKeyConfig.GetString("GamepadMapping", "Preset", "Right");
+
+		/////////////
+		// Check gamepad input
+		if(ImGui_ActionTriggered(eImGuiAction_Down, true))
+		{
+			msSelectedInputMappingButton = "Back";
+		}
+		if(ImGui_ActionTriggered(eImGuiAction_Up, true))
+		{
+			if(sProfile == "Custom") msSelectedInputMappingButton = "CustomPad";
+			else					msSelectedInputMappingButton = "Back";
+		}
+		if(mlActionHorizontal != 0 && sProfile != "Custom")
+		{
+			msFocusNextFrame = msSelectedInputMappingButton = "Back";
+		}
+		
+		if(sProfile == "X360 Controller")
+		{
+			//////////////
+			// Xbox controller
+			cImGuiGfx gfxPreset(sPreset == "Right" ? "360_controller_right.png" : "360_controller_left.png", eImGuiGfx_Texture);
+			ImGui_DrawGfx(gfxPreset, OptionMenu_GetTopLeftOffset(kMappingPos, 1.0), OptionMenu_GetScaledSize(kMappingSize), cColor(1.0, 0.25, 1.0, 1.0));
+		}
+		else if(sProfile == "PS4 Controller")
+		{
+			//////////////
+			// Xbox controller
+			cImGuiGfx gfxPreset(sPreset == "Right" ? "ps4_controller_right.png" : "ps4_controller_left.png", eImGuiGfx_Texture);
+			ImGui_DrawGfx(gfxPreset, OptionMenu_GetTopLeftOffset(kMappingPos, 1.0), OptionMenu_GetScaledSize(kMappingSize), cColor(1.0, 0.25, 1.0, 1.0));
+		}
+		else if(sProfile == "Custom")
+		{
+			//////////////
+			// Custom controller, show button to bind
+			cImGuiButtonData labelData;
+			labelData.mFont.SetFile("sansation_large_bold.fnt");
+			labelData.mFont.mvSize = cVector2f(84, 84);
+			labelData.mFontAlign = eFontAlign_Center;
+			labelData.mbUseBackgroundGfx = msSelectedInputMappingButton == "CustomPad";
+			labelData.mbUseInFocusGfx = false;
+			labelData.mbUseTriggeredGfx = false;
+			labelData.mFont.mColor = msSelectedInputMappingButton == "CustomPad" ? cColor(0,1) : cColor(1, 0.5, 1,1);
+
+			if(ImGui_DoButtonExt("CustomPad", "CustomPad",labelData, OptionMenu_GetTopLeftOffset(kMappingPos, 1.0), OptionMenu_GetScaledSize(kMappingSize)))
+			{
+				mCurrentGroup = eMainMenuGroup_Options_Input_Keybind;
+				msFocusNextFrame = msSelectedInputButton;
+				mbKeybindChanged = false;	
+				mbBindingGamepad = true;	
+				
+				cLux_GetInputHandler().LoadKeyConfig();		
+			}
+
+			msSelectedInputMappingButton = OptionMenu_UpdateFocus("CustomPad", msSelectedInputMappingButton);
+		}
+
+		/////////////////
+		// Left and right buttons
+		{
+			////////////////
+			// Get current selection
+			int lId = 0;
+			array<tString> vProfilePresets;
+			
+			if(Platform_IsPS4())
+			{
+				vProfilePresets.push_back("PS4 Controller"); vProfilePresets.push_back("Right");
+				vProfilePresets.push_back("PS4 Controller"); vProfilePresets.push_back("Left");
+			}
+			else
+			{
+				vProfilePresets.push_back("X360 Controller"); vProfilePresets.push_back("Right");
+				vProfilePresets.push_back("X360 Controller"); vProfilePresets.push_back("Left");
+				vProfilePresets.push_back("Custom"); vProfilePresets.push_back("");
+			}
+
+			for(int i = 0; i < vProfilePresets.size(); i+=2)
+			{
+				if(vProfilePresets[i] == sProfile &&
+				   vProfilePresets[i+1] == sPreset)
+				{
+					lId = i / 2;
+					break;
+				}
+			}
+
+			////////////////
+			// Draw arrows
+			cImGuiButtonData labelData;
+			labelData.mbUseBackgroundGfx = false;
+			labelData.mbUseInFocusGfx = false;
+			labelData.mbUseTriggeredGfx = false;
+			cImGuiGfx gfxArrow("startmenu_options_arrow");
+			//msSelectedInputMappingButton = "Right";
+			if(lId > 0) //right arrow
+			{
+				/////////////
+				// Draw arrow
+				cColor color = msSelectedInputMappingButton == "Right" ? cColor(1,1) : cColor(0,1);
+				ImGui_SetModRotateAngle(180);
+				ImGui_DrawGfx(gfxArrow, OptionMenu_GetTopLeftOffset(kMappingArrowPosRight, 2.0), OptionMenu_GetScaledSize(kMappingArrowSize), color);
+				ImGui_SetModRotateAngle(0.0);
+
+				// And button to click
+				if(ImGui_DoButtonExt("Right", "",labelData, OptionMenu_GetTopLeftOffset(kMappingButtonPosRight, 1.0), OptionMenu_GetScaledSize(kMappingButtonSize)) || mlActionHorizontal < 0)
+				{	
+					/////////////
+					// Set next preset
+					lId--;
+					mpKeyConfig.SetString("GamepadMapping", "Profile", vProfilePresets[lId * 2]);
+					mpKeyConfig.SetString("GamepadMapping", "Preset", vProfilePresets[lId * 2 + 1]);
+					mbKeybindChanged = true;
+				}
+
+				if(mlActionHorizontal == 0) msSelectedInputMappingButton = OptionMenu_UpdateFocus("Right", msSelectedInputMappingButton);
+			}
+
+			if(lId < vProfilePresets.size() / 2 - 1)
+			{
+				/////////////
+				// Draw arrow
+				cColor color = msSelectedInputMappingButton == "Left" ? cColor(1,1) : cColor(0,1);
+				ImGui_DrawGfx(gfxArrow, OptionMenu_GetTopLeftOffset(kMappingArrowPosLeft, 2.0), OptionMenu_GetScaledSize(kMappingArrowSize), color);
+				
+				// And button to click
+				if(ImGui_DoButtonExt("Left", "",labelData, OptionMenu_GetTopLeftOffset(kMappingButtonPosLeft, 1.0), OptionMenu_GetScaledSize(kMappingButtonSize)) || mlActionHorizontal > 0)
+				{
+					/////////////
+					// Set next preset
+					lId++;
+					mpKeyConfig.SetString("GamepadMapping", "Profile", vProfilePresets[lId * 2]);
+					mpKeyConfig.SetString("GamepadMapping", "Preset", vProfilePresets[lId * 2 + 1]);
+					mbKeybindChanged = true;
+				}
+
+				if(mlActionHorizontal == 0) msSelectedInputMappingButton = OptionMenu_UpdateFocus("Left", msSelectedInputMappingButton);
+			}
+		}
+
+		/////////////////
+		// Back
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, 8, msSelectedInputMappingButton);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+			if(bButton || bGamepad)
+			{
+				if(mbKeybindChanged == false)
+				{
+					mCurrentGroup = eMainMenuGroup_Options_Input;
+					msFocusNextFrame = msSelectedInputButton;
+				}
+				else
+				{
+					mbShowApplyKeyChanges = true;
+					msFocusNextFrame = "No";
+				}
+
+				//////////
+				// Reset menu poos
+				if(bGamepad == false)
+				{
+					msSelectedInputMappingButton = "Back";
+					OptionMenu_GamepadButtons(false);
+					return;
+				}
+			}
+
+			msSelectedInputMappingButton = OptionMenu_UpdateFocus("Back", msSelectedInputMappingButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(true);
+	}
+
+	//-------------------------------------------------------
+	
+	void GuiOptionsVideo()
+	{
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(kOptionsVideoBgSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, kOptionsVideoBgSize.y-1), 0.0), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		
+		////////////////
+		// Title
+		OptionMenu_SectionTitle("Video", kOptionsBgPos + cVector2f(kOptionsVideoBgSize.x * 0.6, kOptionsVideoBgSize.y));
+
+		int lY = 0;
+		
+		/////////////////
+		// Display
+		{
+			if(OptionMenu_ButtonOptions("Display", kMainMenuButtonPos, lY, msSelectedVideoButton))
+			{
+				mCurrentGroup = eMainMenuGroup_Options_Video_Display;
+				msFocusNextFrame = msSelectedVideoDisplayButton;
+				mlCurrentOptionChange = mlOptionChanges; //keep track of number of changes that have been made, determines if "Apply Changes" window should show
+			}
+
+			msSelectedVideoButton = OptionMenu_UpdateFocus("Display", msSelectedVideoButton);
+		}
+		
+		/////////////////
+		// PostEffect
+		lY++;
+		{
+			if(OptionMenu_ButtonOptions("PostEffect", kMainMenuButtonPos, lY, msSelectedVideoButton))
+			{
+				mCurrentGroup = eMainMenuGroup_Options_Video_PostEffect;
+				msFocusNextFrame = msSelectedVideoPostEffectButton;
+				mlCurrentOptionChange = mlOptionChanges;
+			}
+
+			msSelectedVideoButton = OptionMenu_UpdateFocus("PostEffect", msSelectedVideoButton);
+		}
+
+		/////////////////
+		// World
+		lY++;
+		{
+			if(OptionMenu_ButtonOptions("Rendering", kMainMenuButtonPos, lY, msSelectedVideoButton))
+			{
+				mCurrentGroup = eMainMenuGroup_Options_Video_World;
+				msFocusNextFrame = msSelectedVideoWorldButton;
+				mlCurrentOptionChange = mlOptionChanges;
+			}
+
+			msSelectedVideoButton = OptionMenu_UpdateFocus("Rendering", msSelectedVideoButton);
+		}
+
+		/////////////////
+		// Gamma
+		lY++;
+		{
+			if(OptionMenu_ButtonOptions("Gamma", kMainMenuButtonPos, lY, msSelectedVideoButton))
+			{
+				if(mbMainMenuActive)
+				{
+					mCurrentGroup = eMainMenuGroup_Main;
+					msFocusNextFrame = "Gamma";
+					mbShowPreMenu = true;
+					mlCurrentOptionChange = mlOptionChanges;
+				}
+				else
+				{
+					mCurrentGroup = eMainMenuGroup_Options_Video_Gamma;
+					msFocusNextFrame = msSelectedVideoGammaButton;
+				}
+			}
+
+			msSelectedVideoButton = OptionMenu_UpdateFocus("Gamma", msSelectedVideoButton);
+		}
+
+		/////////////////
+		// Back
+		lY++;
+		lY++;
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, lY, msSelectedVideoButton);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+			if(bButton || bGamepad)
+			{
+				mCurrentGroup = eMainMenuGroup_Options;
+				msFocusNextFrame = msSelectedOptionsButton;
+
+				//////////
+				// Reset menu poos
+				if(bGamepad == false)
+				{
+					msSelectedVideoButton = "Display";
+					OptionMenu_GamepadButtons(false);
+					return;
+				}
+			}
+
+			msSelectedVideoButton = OptionMenu_UpdateFocus("Back", msSelectedVideoButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(false);
+	}
+
+	void GuiOptionsVideoDisplay()
+	{
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(kOptionsVideoDisplayBgSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, kOptionsVideoDisplayBgSize.y-1), 0.0), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		
+		////////////////
+		// Title
+		OptionMenu_SectionTitle("Display", kOptionsBgPos + cVector2f(kOptionsVideoDisplayBgSize.x * 0.6, kOptionsVideoDisplayBgSize.y));
+
+		int lY = 0;
+
+		/////////////////
+		// Resolution
+		{
+			/////////////
+			// Get current resolution and update config
+			int lResolution = GetCurrentResolution();
+			int lNewResolution = OptionMenu_ButtonOptionsMultiSelect("Resolution", kMainMenuButtonPos, lY, msSelectedVideoDisplayButton, mvResolutionValues, lResolution, false, mlActionHorizontal, "");
+			
+			if(lResolution != lNewResolution)
+			{
+				mlOptionChanges++;
+				SetCurrentResolution(lNewResolution);
+			}
+
+			msSelectedVideoDisplayButton = OptionMenu_UpdateFocus("Resolution", msSelectedVideoDisplayButton);
+		}
+		
+		/////////////////
+		// Display Mode
+		lY++;
+		{
+			//////////////
+			// Draw button and update config
+			array<tString> vValues = { "Fullscreen", "Windowed", "Borderless" };
+
+			tString sValue = cString_ToLowerCase(mpConfig.GetString("Screen", "FullScreen", "true"));
+
+			int lValue = (sValue == "true") ? 0 : (sValue == "borderless" ? 2 : 1); 
+			int lNewValue = OptionMenu_ButtonOptionsMultiSelect("DisplayMode", kMainMenuButtonPos, lY, msSelectedVideoDisplayButton, vValues, lValue, false, mlActionHorizontal);
+
+			if(lValue != lNewValue)
+			{
+				mlOptionChanges++;
+				mpConfig.SetString("Screen", "FullScreen", (lNewValue == 0) ? "true" :
+														   (lNewValue == 1	? "false" : "borderless"));
+			}
+
+			msSelectedVideoDisplayButton = OptionMenu_UpdateFocus("DisplayMode", msSelectedVideoDisplayButton);
+		}
+		
+		/////////////////
+		// V-sync
+		lY++;
+		{
+			//////////////
+			// Draw button and update config
+			array<tString> vValues = { "On", "Adaptive", "Off" };
+			tString sValue = cString_ToLowerCase(mpConfig.GetString("Screen", "Vsync", "true"));
+
+			int lValue = (sValue == "true") ? 0 : (sValue == "adaptive" ? 1 : 2);
+			int lNewValue = OptionMenu_ButtonOptionsMultiSelect("VSync", kMainMenuButtonPos, lY, msSelectedVideoDisplayButton, vValues, lValue, false, mlActionHorizontal);
+			
+			if(lValue != lNewValue)
+			{
+				mlOptionChanges++;
+				mpConfig.SetString("Screen", "Vsync",	(lNewValue == 0)	? "true" :
+														(lNewValue == 1		? "adaptive" : "false"));
+			}
+			 
+			msSelectedVideoDisplayButton = OptionMenu_UpdateFocus("VSync", msSelectedVideoDisplayButton);
+		}
+
+		/////////////////
+		// Refresh rate
+		lY++;
+		{
+			//////////////
+			// Draw button and update config
+			array<tString> vValues = { "On", "Adaptive", "Off" };
+			tString sValue = cString_ToLowerCase(mpConfig.GetString("Screen", "Vsync", "true"));
+
+			int lValue = GetCurrentRefreshRate();
+			int lNewValue = OptionMenu_ButtonOptionsMultiSelect("RefreshRate", kMainMenuButtonPos, lY, msSelectedVideoDisplayButton, mvRefreshValues, lValue, false, mlActionHorizontal, "");
+			
+			if(lValue != lNewValue)
+			{
+				mlOptionChanges++;
+				SetCurrentRefreshRate(lNewValue);
+			}
+			 
+			msSelectedVideoDisplayButton = OptionMenu_UpdateFocus("RefreshRate", msSelectedVideoDisplayButton);
+		}
+		
+		/////////////////
+		// AA
+		lY++;
+		{
+			/////////////
+			// Draw multi select box and update config
+			array<tString> vValues = { "Off", "FXAA" };
+			tString sValue = mpConfig.GetString("Graphics", "AntiAliasing", "FXAA");
+
+			int lValue = (sValue == "FXAA") ? 1 : 0;
+			int lNewValue = OptionMenu_ButtonOptionsMultiSelect("AA", kMainMenuButtonPos, lY, msSelectedVideoDisplayButton, vValues, lValue, true, mlActionHorizontal);
+			
+			if(lValue != lNewValue)
+			{
+				mlOptionChanges++;
+				mpConfig.SetString("Graphics", "AntiAliasing", vValues[lNewValue]);
+			}
+
+			msSelectedVideoDisplayButton = OptionMenu_UpdateFocus("AA", msSelectedVideoDisplayButton);
+		}
+
+		/////////////////
+		// FOV
+		lY++;
+		{
+			float fFOVMin = 50;
+			float fFOVMax = 100;
+			float fValue = mpConfig.GetFloat("Gameplay", "FOV", 70);
+
+			float fAspectRatio = mpConfig.GetFloat("Screen", "Width", 1920) / mpConfig.GetFloat("Screen", "Height", 1080);
+			float fHorizontalFov = 2.0f * cMath_ATan(cMath_Tan(cMath_ToRad(fValue) / 2.0f) * fAspectRatio);
+			tString sTextValue = "" + cMath_RoundToInt(cMath_ToDeg(fHorizontalFov));
+
+			fValue = (fValue - fFOVMin) / (fFOVMax - fFOVMin);
+			float fNewValue = OptionMenu_ButtonOptionsSlider("FOV", kMainMenuButtonPos, lY, msSelectedVideoDisplayButton, fValue, 0.2f / 4.0f, mlActionHorizontal, sTextValue);
+
+			if(fValue != fNewValue)
+			{
+				mlOptionChanges++;
+				fNewValue = fNewValue * (fFOVMax - fFOVMin) + fFOVMin;
+				mpConfig.SetFloat("Gameplay", "FOV", fNewValue);
+			}
+
+			msSelectedVideoDisplayButton = OptionMenu_UpdateFocus("FOV", msSelectedVideoDisplayButton);
+		}
+
+		/////////////////
+		// Back
+		lY++;
+		lY++;
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, lY, msSelectedVideoDisplayButton);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+			if(bButton || bGamepad)
+			{
+				if(mlCurrentOptionChange != mlOptionChanges)
+				{
+					// Changes has been made
+					mbShowApplyChanges = true;
+					msFocusNextFrame = "NO";
+				}
+				else
+				{
+					// No changes
+					mCurrentGroup = eMainMenuGroup_Options_Video;
+
+					msFocusNextFrame = msSelectedVideoButton;
+				}
+
+				//////////
+				// Reset menu poos
+				if(bGamepad == false)
+				{
+					msSelectedVideoDisplayButton = "Resolution";
+					OptionMenu_GamepadButtons(msSelectedVideoDisplayButton != "Back");
+					return;
+				}
+			}
+
+			msSelectedVideoDisplayButton = OptionMenu_UpdateFocus("Back", msSelectedVideoDisplayButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(msSelectedVideoDisplayButton != "Back");
+	}
+	
+	void GuiOptionsVideoWorld()
+	{
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(kOptionsVideoWorldBgSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, kOptionsVideoWorldBgSize.y-1), 0.0), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		
+		////////////////
+		// Title
+		OptionMenu_SectionTitle("Rendering", kOptionsBgPos + cVector2f(kOptionsVideoWorldBgSize.x * 0.6, kOptionsVideoWorldBgSize.y));
+
+		int lY = 0;
+		
+		/////////////////
+		// Textures
+		{
+			/////////////
+			// Draw multi select box and update config
+			array<tString> vValues = { "High", "Medium", "Low" };
+			int lValue = mpConfig.GetInt("Graphics", "TextureQuality", 0);
+			int lNewValue = OptionMenu_ButtonOptionsMultiSelect("TextureQuality", kMainMenuButtonPos, lY, msSelectedVideoWorldButton, vValues, lValue, true, mlActionHorizontal);
+			
+			if(lValue != lNewValue)
+			{
+				mpConfig.SetInt("Graphics", "TextureQuality", lNewValue);
+				mlOptionChanges++;
+			}
+
+			msSelectedVideoWorldButton = OptionMenu_UpdateFocus("TextureQuality", msSelectedVideoWorldButton);
+		}
+
+		/////////////////
+		// Textures Filtering
+		lY++;
+		{
+			/////////////
+			// Draw multi select box and update config
+			array<tString> vValues = { "Bilinear", "Trilinear", "Anis2x", "Anis4x", "Anis8x", "Anis16x" };
+			int lFilter = mpConfig.GetInt("Graphics", "TextureFilter", 0);
+			int lAnis = mpConfig.GetInt("Graphics", "TextureAnisotropy", 0);
+
+			int lValue = 0;
+
+			if(lAnis < 2)
+			{
+				lValue = lFilter == 2 ? 1 : 0;
+			}
+			else
+			{
+				if(lAnis == 2)		lValue = 2;
+				else if(lAnis == 4) lValue = 3;
+				else if(lAnis == 8) lValue = 4;
+				else				lValue = 5;
+			}
+
+			int lNewValue = OptionMenu_ButtonOptionsMultiSelect("TextureFiltering", kMainMenuButtonPos, lY, msSelectedVideoWorldButton, vValues, lValue, false, mlActionHorizontal);
+			
+			if(lValue != lNewValue)
+			{
+				switch(lNewValue)
+				{
+				case 0:
+					lAnis = 1;
+					lFilter = 1;
+					break;
+				case 1:
+					lAnis = 1;
+					lFilter = 2;
+					break;
+				case 2:
+					lAnis = 2;
+					lFilter = 2;
+					break;
+				case 3:
+					lAnis = 4;
+					lFilter = 2;
+					break;
+				case 4:
+					lAnis = 8;
+					lFilter = 2;
+					break;
+				case 5:
+					lAnis = 16;
+					lFilter = 2;
+					break;
+				}
+
+				
+				mpConfig.SetInt("Graphics", "TextureFilter", lFilter);
+				mpConfig.SetInt("Graphics", "TextureAnisotropy", lAnis);
+				mlOptionChanges++;
+			}
+
+			msSelectedVideoWorldButton = OptionMenu_UpdateFocus("TextureFiltering", msSelectedVideoWorldButton);
+		}
+
+		/////////////////
+		// Shadows
+		lY++;
+		{
+			/////////////
+			// Draw multi select and update config
+			array<tString> vValues = { "Off", "Low", "Medium", "High", "VeryHigh" };
+			int lShadowActive = mpConfig.GetBool("Graphics", "ShadowsActive", true) ? 1 : 0;
+			int lShadowQuality = mpConfig.GetInt("Graphics", "ShadowResolution", 2);
+			int lValue = lShadowActive * (lShadowQuality+1);
+			int lNewValue = OptionMenu_ButtonOptionsMultiSelect("ShadowQuality", kMainMenuButtonPos, lY, msSelectedVideoWorldButton, vValues, lValue, false, mlActionHorizontal);
+					
+			if(lValue != lNewValue)
+			{	
+				if(lNewValue == 0)
+				{
+					mpConfig.SetBool("Graphics", "ShadowsActive", false);
+				}
+				else
+				{
+					mpConfig.SetBool("Graphics", "ShadowsActive", true);
+					mpConfig.SetInt("Graphics", "ShadowResolution", lNewValue-1);
+				}
+				mlOptionChanges++;
+			}
+
+			msSelectedVideoWorldButton = OptionMenu_UpdateFocus("ShadowQuality", msSelectedVideoWorldButton);
+		}
+		
+		/////////////////
+		// Reflection
+		lY++;
+		{
+			//////////////
+			// Draw button and update config
+			bool bValue = mpConfig.GetBool("Graphics", "WorldReflection", true);
+			bool bNewValue = OptionMenu_ButtonOptionsToggle("Reflection", kMainMenuButtonPos, lY, msSelectedVideoWorldButton, bValue, mlActionHorizontal);
+			
+			if(bValue != bNewValue)
+			{
+				mpConfig.SetBool("Graphics", "WorldReflection", bNewValue);
+				mlOptionChanges++;
+			}
+			
+			msSelectedVideoWorldButton = OptionMenu_UpdateFocus("Reflection", msSelectedVideoWorldButton);
+		}
+
+		/////////////////
+		// Refraction
+		lY++;
+		{
+			//////////////
+			// Draw button and update config
+			bool bValue = mpConfig.GetBool("Graphics", "Refraction", true);
+			bool bNewValue = OptionMenu_ButtonOptionsToggle("Refraction", kMainMenuButtonPos, lY, msSelectedVideoWorldButton, bValue, mlActionHorizontal);
+			
+			if(bValue != bNewValue)
+			{
+				mpConfig.SetBool("Graphics", "Refraction", bNewValue);
+				mlOptionChanges++;
+			}
+			
+			msSelectedVideoWorldButton = OptionMenu_UpdateFocus("Refraction", msSelectedVideoWorldButton);
+		}
+
+		/////////////////
+		// Tesselation
+		lY++;
+		{
+			/////////////
+			// Draw multi select and update config
+			array<tString> vValues = { "Off", "Low", "Medium", "High" };
+			int lValue = mpConfig.GetInt("Graphics", "TerrainTessellation", 0);
+			int lNewValue = OptionMenu_ButtonOptionsMultiSelect("TerrainTessellation", kMainMenuButtonPos, lY, msSelectedVideoWorldButton, vValues, lValue, false, mlActionHorizontal);
+					
+			if(lValue != lNewValue)
+			{	
+				mpConfig.SetInt("Graphics", "TerrainTessellation", lNewValue);
+				mlOptionChanges++;
+			}
+
+			msSelectedVideoWorldButton = OptionMenu_UpdateFocus("TerrainTessellation", msSelectedVideoWorldButton);
+		}
+
+		/////////////////
+		// Back
+		lY++;
+		lY++;
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, lY, msSelectedVideoWorldButton);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+			if(bButton || bGamepad)
+			{
+				if(mlCurrentOptionChange != mlOptionChanges)
+				{
+					// Changes has been made
+					mbShowApplyChanges = true;
+					msFocusNextFrame = "NO";
+				}
+				else
+				{
+					// No changes
+					mCurrentGroup = eMainMenuGroup_Options_Video;
+					msFocusNextFrame = msSelectedVideoButton;
+				}
+
+				//////////
+				// Reset menu poos
+				if(bGamepad == false)
+				{
+					msSelectedVideoWorldButton = "TextureQuality";
+					OptionMenu_GamepadButtons(msSelectedVideoWorldButton != "Back");
+					return;
+				}
+			}
+
+			msSelectedVideoWorldButton = OptionMenu_UpdateFocus("Back", msSelectedVideoWorldButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(msSelectedVideoWorldButton != "Back");
+	}
+
+	
+	void GuiOptionsVideoPostEffect()
+	{
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(kOptionsVideoPostEffectBgSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, kOptionsVideoPostEffectBgSize.y-1), 0.0), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		
+		////////////////
+		// Title
+		OptionMenu_SectionTitle("PostEffect", kOptionsBgPos + cVector2f(kOptionsVideoPostEffectBgSize.x * 0.6, kOptionsVideoPostEffectBgSize.y));
+
+		int lY = 0;
+		
+		/////////////////
+		// DOF
+		{
+			/////////////
+			// Draw multi select box and update config
+			array<tString> vValues = {"Low", "Medium", "High"};
+			int lValue = mpConfig.GetInt("Graphics", "DepthOfFieldQuality", 2);
+			int lNewValue = OptionMenu_ButtonOptionsMultiSelect("DepthOfField", kMainMenuButtonPos, lY, msSelectedVideoPostEffectButton, vValues, lValue, false, mlActionHorizontal);
+			
+			if(lValue != lNewValue)
+			{
+				mpConfig.SetInt("Graphics", "DepthOfFieldQuality", lNewValue);
+				mlOptionChanges++;
+			}
+
+			msSelectedVideoPostEffectButton = OptionMenu_UpdateFocus("DepthOfField", msSelectedVideoPostEffectButton);
+		}
+
+
+		/////////////////
+		// SSAO
+		lY++;
+		{
+			//////////////
+			// Draw button and update config
+			bool bValue = mpConfig.GetBool("Graphics", "SSAOActive", true);
+			bool bNewValue = OptionMenu_ButtonOptionsToggle("SSAO", kMainMenuButtonPos, lY, msSelectedVideoPostEffectButton, bValue, mlActionHorizontal);
+			
+			if(bValue != bNewValue)
+			{
+				mpConfig.SetBool("Graphics", "SSAOActive", bNewValue);
+				mlOptionChanges++;
+			}
+			
+			msSelectedVideoPostEffectButton = OptionMenu_UpdateFocus("SSAO", msSelectedVideoPostEffectButton);
+		}
+
+		/////////////////
+		// Bloom
+		lY++;
+		{
+			//////////////
+			// Draw button and update config
+			bool bValue = mpConfig.GetBool("Graphics", "BloomActive", true);
+			bool bNewValue = OptionMenu_ButtonOptionsToggle("Bloom", kMainMenuButtonPos, lY, msSelectedVideoPostEffectButton, bValue, mlActionHorizontal);
+			
+			if(bValue != bNewValue)
+			{
+				mpConfig.SetBool("Graphics", "BloomActive", bNewValue);
+				mlOptionChanges++;
+			}
+			
+			msSelectedVideoPostEffectButton = OptionMenu_UpdateFocus("Bloom", msSelectedVideoPostEffectButton);
+		}
+
+		/////////////////
+		// Back
+		lY++;
+		lY++;
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, lY, msSelectedVideoPostEffectButton);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+			if(bButton || bGamepad)
+			{
+				if(mlCurrentOptionChange != mlOptionChanges)
+				{
+					// Changes has been made
+					mbShowApplyChanges = true;
+					msFocusNextFrame = "NO";
+				}
+				else
+				{
+					// No changes
+					mCurrentGroup = eMainMenuGroup_Options_Video;
+					msFocusNextFrame = msSelectedVideoButton;
+				}
+
+				//////////
+				// Reset menu poos
+				if(bGamepad == false)
+				{
+					msSelectedVideoPostEffectButton = "DepthOfField";
+					OptionMenu_GamepadButtons(msSelectedVideoPostEffectButton != "Back");
+					return;
+				}
+			}
+
+			msSelectedVideoPostEffectButton = OptionMenu_UpdateFocus("Back", msSelectedVideoPostEffectButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(msSelectedVideoPostEffectButton != "Back");
+	}
+
+	void GuiOptionsVideoGamma()
+	{
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(kOptionsVideoGammaBgSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, kOptionsVideoGammaBgSize.y-1), 0.0), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		
+		////////////////
+		// Title
+		OptionMenu_SectionTitle("Gamma", kOptionsBgPos + cVector2f(kOptionsVideoGammaBgSize.x * 0.6, kOptionsVideoGammaBgSize.y));
+
+		int lY = 0;
+		
+		/////////////////
+		// Gamma
+		{
+			float fValue = (mpConfig.GetFloat("Graphics", "Brightness", 1.0f) - 0.3f) / (2.0f - 0.6f);
+			float fNewValue = OptionMenu_ButtonOptionsSlider("Gamma", kMainMenuButtonPos, lY, msSelectedVideoGammaButton, fValue, 0.05f, mlActionHorizontal);
+
+			if(fNewValue != fValue)
+			{
+				mpConfig.SetFloat("Graphics", "Brightness", (fNewValue * (2.0f - 0.6f) + 0.3f));
+				ApplySettings();
+			}
+
+			msSelectedVideoGammaButton = OptionMenu_UpdateFocus("Gamma", msSelectedVideoGammaButton);
+		}
+
+
+		/////////////////
+		// Back
+		lY++;
+		lY++;
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, lY, msSelectedVideoGammaButton);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+			if(bButton || bGamepad)
+			{
+				if(Platform_IsPS4())
+				{
+					mCurrentGroup = eMainMenuGroup_Options;
+					msFocusNextFrame = msSelectedOptionsButton;
+				}
+				else
+				{
+					mCurrentGroup = eMainMenuGroup_Options_Video;
+					msFocusNextFrame = msSelectedVideoButton;
+				}
+
+				ApplySettings();
+
+				//////////
+				// Reset menu poos
+				if(bGamepad == false)
+				{
+					if(Platform_IsPS4())
+					{
+						msSelectedOptionsButton = "Gamma";
+					}
+					else
+					{
+						msSelectedVideoGammaButton = "Gamma";
+					}
+
+					OptionMenu_GamepadButtons(msSelectedVideoGammaButton != "Back");
+					return;
+				}
+			}
+
+			msSelectedVideoGammaButton = OptionMenu_UpdateFocus("Back", msSelectedVideoGammaButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(msSelectedVideoGammaButton != "Back");
+	}
+
+	int GetCurrentResolution()
+	{
+		cVector2l vResolution = cVector2l(mpConfig.GetInt("Screen", "Width", 1280), 
+									      mpConfig.GetInt("Screen", "Height", 720));
+
+		if(vResolution.x == -1 || vResolution.y == -1)
+		{
+			vResolution.x = cGraphics_GetLowLevel().GetScreenSizeInt().x;
+			vResolution.y = cGraphics_GetLowLevel().GetScreenSizeInt().y;
+		}
+
+		for(int i = 0; i < mvResolutionSizes.size(); ++i)
+		{
+			if(vResolution == mvResolutionSizes[i])
+			{
+				return i;
+			}
+		} 
+
+		////////////
+		// Custom resolution
+		mvResolutionSizes.push_back(vResolution);
+		mvResolutionValues.push_back(""+vResolution.x + "x"+vResolution.y);
+
+		return mvResolutionValues.size()-1;
+	}
+
+	void SetCurrentResolution(int aID)
+	{
+		aID = (aID + mvResolutionSizes.size()) % mvResolutionSizes.size();
+
+		mpConfig.SetInt("Screen", "Width", mvResolutionSizes[aID].x);
+		mpConfig.SetInt("Screen", "Height", mvResolutionSizes[aID].y);
+	}
+
+	int GetCurrentRefreshRate()
+	{
+		int lRate = mpConfig.GetInt("Screen", "RefreshRate", 0);
+
+		if(lRate == 0)
+		{
+			lRate = mvRefresh[mvRefresh.size()-1];
+		}
+
+		for(int i = 0; i < mvRefresh.size(); ++i)
+		{
+			if(lRate == mvRefresh[i])
+			{
+				return i;
+			}
+		} 
+
+		////////////
+		// Custom resolution
+		mvRefresh.push_back(lRate);
+		mvRefreshValues.push_back(""+lRate);
+
+		return mvRefreshValues.size()-1;
+	}
+
+	void SetCurrentRefreshRate(int aID)
+	{
+		aID = (aID + mvRefresh.size()) % mvRefresh.size();
+
+		mpConfig.SetInt("Screen", "RefreshRate", mvRefresh[aID]);
+	}
+
+	//------------------------------------------------------
+
+	void GuiOptionsAudio()
+	{
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(kOptionsAudioBgSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, kOptionsAudioBgSize.y), 0.0), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		
+		////////////////
+		// Audio
+		OptionMenu_SectionTitle("Audio", kOptionsBgPos + cVector2f(kOptionsAudioBgSize.x * 0.6, kOptionsAudioBgSize.y));
+
+		/////////////////
+		// Music
+		{
+			float fValue = mpConfig.GetFloat("Sound", "Volume", 1.0f);
+			float fNewValue = OptionMenu_ButtonOptionsSlider("Volume", kMainMenuButtonPos, 0, msSelectedAudioButton, fValue, 0.1f, mlActionHorizontal);
+
+			if(fNewValue != fValue)
+			{
+				mpConfig.SetFloat("Sound", "Volume", fNewValue);
+				ApplySettings();
+			}
+
+			msSelectedAudioButton = OptionMenu_UpdateFocus("Volume", msSelectedAudioButton);
+		}
+		
+		/////////////////
+		// SUBTITLES
+		{
+			//////////////
+			// Draw button and update config
+			bool bValue = mpConfig.GetBool("Sound", "ShowSubtitles", true);
+			bool bNewValue = OptionMenu_ButtonOptionsToggle("Subtitles", kMainMenuButtonPos, 1, msSelectedAudioButton, bValue, mlActionHorizontal);
+			
+			if(bValue != bNewValue)
+			{
+				mpConfig.SetBool("Sound", "ShowSubtitles", bNewValue);
+			}
+			
+			msSelectedAudioButton = OptionMenu_UpdateFocus("Subtitles", msSelectedAudioButton);
+		}
+
+		
+		/////////////////
+		// HEARING AID
+		{
+			//////////////
+			// Draw button and update config
+			bool bValue = mpConfig.GetBool("Sound", "ForceShowSubtitleCharacterName", false);
+			bool bNewValue = OptionMenu_ButtonOptionsToggle("HearingAid", kMainMenuButtonPos, 2, msSelectedAudioButton, bValue, mlActionHorizontal);
+			
+			if(bValue != bNewValue)
+			{
+				mpConfig.SetBool("Sound", "ForceShowSubtitleCharacterName", bNewValue);
+			}
+			
+			msSelectedAudioButton = OptionMenu_UpdateFocus("HearingAid", msSelectedAudioButton);
+		}
+
+		/////////////////
+		// Back
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, 4, msSelectedAudioButton);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+			if(bButton || bGamepad)
+			{
+				ApplySettings();
+				mCurrentGroup = eMainMenuGroup_Options;
+
+				msFocusNextFrame = msSelectedOptionsButton;
+
+				/////////
+				// Reset menu position
+				if(bGamepad == false)
+				{
+					msSelectedAudioButton = "Volume";
+					OptionMenu_GamepadButtons(msSelectedAudioButton != "Back");
+					return;
+				}
+			}
+
+			msSelectedAudioButton = OptionMenu_UpdateFocus("Back", msSelectedAudioButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(msSelectedAudioButton != "Back");
+	}
+	
+	//------------------------------------------------------
+
+	void GuiOptionsGameplay()
+	{
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main.tga", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border.tga", eImGuiGfx_Texture);
+
+		cVector2f vSize = Platform_IsPS4() ? kOptionsGameplayPS4BgSize : kOptionsGameplayBgSize;
+
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionsBgPos, 0.0), OptionMenu_GetScaledSize(vSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionsBgPos + cVector2f(0, vSize.y), 0.0), OptionMenu_GetScaledSize(kOptionsBgBorderSize), cColor(1.0, 1.0));
+		
+		////////////////
+		// Audio
+		OptionMenu_SectionTitle("Gameplay", kOptionsBgPos + cVector2f(kOptionsGameplayBgSize.x * 0.6, vSize.y));
+
+		int lY = 0;
+
+		if(Platform_IsPS4() == false)
+		{
+			/////////////////
+			// LANGUAGE
+			{
+				//////////////
+				// Draw button and update config
+				tString sLang = mpConfig.GetString("Main", "StartLanguage", cLux_GetDefaultGameLanguage());
+				int lValue = 0;
+
+				for(int i = 0; i < mvLangFiles.size(); ++i)
+				{
+					if(sLang == mvLangFiles[i])
+					{
+						lValue = i;
+						break;
+					}
+				}
+
+				int lNewValue = OptionMenu_ButtonOptionsMultiSelect("Language", kMainMenuButtonPos, lY++, msSelectedGameplayButton, mvLangFiles, lValue, false, mlActionHorizontal, "Languages");
+			
+				if(lValue != lNewValue)
+				{
+					mpConfig.SetString("Main", "StartLanguage", mvLangFiles[lNewValue]);
+				}
+
+				msSelectedGameplayButton = OptionMenu_UpdateFocus("Language", msSelectedGameplayButton);
+			}
+		}
+
+		/////////////////
+		// Hints
+		{
+			//////////////
+			// Draw button and update config
+			bool bValue = mpConfig.GetBool("Gameplay", "ShowHints", true);
+			bool bNewValue = OptionMenu_ButtonOptionsToggle("ShowHints", kMainMenuButtonPos, lY++,
+								msSelectedGameplayButton, bValue, mlActionHorizontal);
+			
+			if(bValue != bNewValue)
+			{
+				mpConfig.SetBool("Gameplay", "ShowHints", bNewValue);
+			}
+			
+			msSelectedGameplayButton = OptionMenu_UpdateFocus("ShowHints", msSelectedGameplayButton);
+		}
+
+		/////////////////
+		// Back
+		{
+			bool bButton = OptionMenu_ButtonOptions("Back", kMainMenuButtonPos, lY+1, msSelectedGameplayButton);
+			bool bGamepad = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+			if(bButton || bGamepad)
+			{
+				ApplySettings();
+				mCurrentGroup = eMainMenuGroup_Options;
+
+				msFocusNextFrame = msSelectedOptionsButton;
+
+				/////////
+				// Reset menu position
+				if(bGamepad == false)
+				{
+					msSelectedGameplayButton = "ShowHints";
+					OptionMenu_GamepadButtons(msSelectedGameplayButton != "Back");
+					return;
+				}
+			}
+
+			msSelectedGameplayButton = OptionMenu_UpdateFocus("Back", msSelectedGameplayButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(msSelectedGameplayButton != "Back");
+	}
+
+	//------------------------------------------------------
+
+	void ShowMessageBoxes()
+	{
+		if(mbShowApplyChanges )
+		{
+			MessageBoxApplyChanges();
+		}
+		else if(mbShowDuplicateKeys )
+		{
+			MessageBoxDuplicateKeys();
+		}
+		else if(mbShowApplyKeyChanges )
+		{
+			MessageBoxApplyKeyChanges();
+		}
+		else if(mbShowReset)
+		{
+			MessageBoxResetKeys();
+		}
+		else if(mfKeepDisplaySetting > 0)
+		{
+			MessageBoxKeepResolution();
+		}
+		else if(mlActionToBind > 0)
+		{
+			MessageBoxKeybind();
+		}
+		else if(mbShowRestartWarning)
+		{
+			MessageBoxRestartWarning();
+		}
+		else if(mbShowExit)
+		{
+			if(mbMainMenuActive)
+			{
+				MessageBoxExitFromMainMenu();
+			}
+			else
+			{
+				MessageBoxExitFromPauseMenu();
+			}
+		}
+		else if(mbShowNewGame)
+		{
+			MessageBoxNewGame();
+		}
+		else if(mbShowLoadGame)
+		{
+			MessageBoxLoadGame();
+		}
+	}
+
+	void MessageBoxApplyChanges()
+	{
+		////////////////
+		// Apply changes message box
+		int lSelect = OptionMenu_MessageBox("ApplyChanges", "Yes", "No", msMessageBoxFocus, msMessageBoxFocus);
+		ImGui_SetModUseInput(false); //disable input for any other widgets
+
+		if(lSelect == -1)
+		{
+			ApplySettings();
+
+			if(Platform_IsPS4())
+			{
+				mCurrentGroup = eMainMenuGroup_Options;
+				msFocusNextFrame = msSelectedOptionsButton;
+			}
+			else
+			{
+				mCurrentGroup = eMainMenuGroup_Options_Video;
+				msFocusNextFrame = msSelectedVideoButton;
+			}
+
+			mbShowRestartWarning = mbRestartWarning;
+			mbShowApplyChanges = false;
+			mbShowPreMenu = false;
+
+			if(GetCurrentResolution() != mlCurrentResolution)
+			{
+				////////////
+				// If resolution has changed 
+				mfKeepDisplaySetting = 15;
+			}
+
+			if(mfKeepDisplaySetting > 0) msFocusNextFrame = "No";
+			else if(mbShowRestartWarning == false) msFocusNextFrame = msSelectedVideoButton;
+			else if(mbShowRestartWarning) msFocusNextFrame = "Ok";
+		}
+		else if(lSelect == 1)
+		{
+			DiscardSettings();
+			
+			if(Platform_IsPS4())
+			{
+				mCurrentGroup = eMainMenuGroup_Options;
+				msFocusNextFrame = msSelectedOptionsButton;
+			}
+			else
+			{
+				mCurrentGroup = eMainMenuGroup_Options_Video;
+				msFocusNextFrame = msSelectedVideoButton;
+			}
+
+			mbShowApplyChanges = false;
+			mbShowPreMenu = false;
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(true);
+	}
+	
+	void MessageBoxApplyKeyChanges()
+	{
+		////////////////
+		// Apply changes message box
+		int lSelect = OptionMenu_MessageBox("ApplyChanges", "Yes", "No", msMessageBoxFocus, msMessageBoxFocus);
+		ImGui_SetModUseInput(false); //disable input for any other widgets
+
+		if(lSelect == -1)
+		{
+			ApplyKeybinds();
+
+			mCurrentGroup = eMainMenuGroup_Options_Input;
+			msFocusNextFrame = msSelectedInputButton;
+			mbShowApplyKeyChanges = false;
+		}
+		else if(lSelect == 1)
+		{
+			DiscardKeybinds();
+
+			mCurrentGroup = eMainMenuGroup_Options_Input;
+			msFocusNextFrame = msSelectedInputButton;
+			mbShowApplyKeyChanges = false;
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(true);
+	}
+	
+	void MessageBoxDuplicateKeys()
+	{
+		////////////////
+		// Apply changes message box
+		int lSelect = OptionMenu_MessageBox("DuplicateKeys", "Yes", "No", msMessageBoxFocus, msMessageBoxFocus, 800);
+		ImGui_SetModUseInput(false); //disable input for any other widgets
+
+		if(lSelect == -1)
+		{
+			msFocusNextFrame = "Yes";
+			mbShowDuplicateKeys = false;
+		}
+		else if(lSelect == 1)
+		{
+			msFocusNextFrame = "Back";
+			mbShowDuplicateKeys = false;
+			mbShowApplyKeyChanges = false;
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(true);
+	}
+	
+	void MessageBoxResetKeys()
+	{
+		////////////////
+		// Apply changes message box
+		int lSelect = OptionMenu_MessageBox("ResetToDefaultMessage", "Yes", "No", msMessageBoxFocus, msMessageBoxFocus);
+		ImGui_SetModUseInput(false); //disable input for any other widgets
+
+		if(lSelect == -1)
+		{
+			// Erase all settings
+			if(mbBindingGamepad)
+			{
+				for(int i = 0; i < mvGamepadActions.size(); ++i)
+				{
+					mpKeyConfig.EraseValue(mvGamepadActions[i].msAction, "GamepadPrimary");
+					mpKeyConfig.EraseValue(mvGamepadActions[i].msAction, "GamepadSecondary");
+				}
+			}
+			else
+			{
+				for(int i = 0; i < mvActions.size(); ++i)
+				{
+					mpKeyConfig.EraseValue(mvActions[i].msAction, "Primary");
+					mpKeyConfig.EraseValue(mvActions[i].msAction, "Secondary");
+				}
+			}
+
+			// Get default settings by reloading key config
+			cLux_GetInputHandler().LoadKeyConfig();
+
+			mbKeybindChanged = true;
+			msFocusNextFrame = "ResetToDefault";
+			mbShowReset = false;
+				
+			/////////////
+			// Reloading keys will make actions trigger again, so ignore next frame
+			mlIgnoreInput = 3;
+		}
+		else if(lSelect == 1)
+		{
+			msFocusNextFrame = "ResetToDefault";
+			mbShowReset = false;
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(true);
+	}
+	
+	void MessageBoxRestartWarning()
+	{
+		//////////////
+		// Restart warning message box
+		int lSelect = OptionMenu_MessageBox("RestartRequired", "Ok", msMessageBoxFocus, msMessageBoxFocus);
+		ImGui_SetModUseInput(false); //disable input for any other widgets
+			
+			
+		if(lSelect == 1)
+		{
+			mbShowRestartWarning = false;
+			msFocusNextFrame = msSelectedVideoButton;
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(false);
+	}
+
+	void MessageBoxKeepResolution()
+	{
+		//////////////
+		// Restart warning message box
+		int lSelect = OptionMenu_MessageBox("KeepSettings", ""+cMath_RoundToInt(mfKeepDisplaySetting+0.5), "Yes", "No", msMessageBoxFocus, msMessageBoxFocus, 800, kOptionMenu_MessageBoxBgSize.y + 40);
+		ImGui_SetModUseInput(false); //disable input for any other widgets
+		
+		mfKeepDisplaySetting -= 1.0 / 60.0;	
+
+		if(lSelect == -1)
+		{
+			// Keep settings
+			if(mbShowRestartWarning) msFocusNextFrame = "Ok";
+			else msFocusNextFrame = msSelectedVideoButton;
+
+			mfKeepDisplaySetting = 0;
+		}
+		else if(lSelect == 1 || mfKeepDisplaySetting <= 0)
+		{
+			//////////
+			// Revert to old settings
+			mpConfig.SetString("Screen", "FullScreen", msCurrentDisplayMode);
+			SetCurrentResolution(mlCurrentResolution);
+			ApplySettings();
+
+			if(mbShowRestartWarning) msFocusNextFrame = "Ok";
+			else msFocusNextFrame = msSelectedVideoButton;
+
+			mfKeepDisplaySetting = 0;
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(false);
+	}
+	
+	void MessageBoxKeybind()
+	{
+		////////////////////////////////////
+		// Darken other widgest
+		cImGuiGfx gfx;
+		ImGui_DrawGfx(gfx, OptionMenu_GetTopLeftOffset(cVector2f(0,0), 4.5), ImGui_NrmSize(2.0), cColor(0.0, 0.75));
+
+		////////////////////////////////////
+		// Options background
+		cImGuiGfx gfxMain("startmenu_options_backdrop_main", eImGuiGfx_Texture);
+		cImGuiGfx gfxBorder("startmenu_options_backdrop_border", eImGuiGfx_Texture);
+		ImGui_DrawGfx(gfxMain, OptionMenu_GetTopLeftOffset(kOptionMenu_KeybindBgPos, 5.0), OptionMenu_GetScaledSize(kOptionMenu_KeybindBgSize), cColor(1.0, 1.0));
+		ImGui_DrawGfx(gfxBorder, OptionMenu_GetTopLeftOffset(kOptionMenu_KeybindBgPos + cVector2f(0, kOptionMenu_KeybindBgSize.y), 5.0), OptionMenu_GetScaledSize(kOptionMenu_KeybindBgBorderSize), cColor(1.0, 1.0));
+				
+		///////////////
+		// Draw title
+		cImGuiLabelData labelData;
+		labelData.mFont.SetFile("sansation_large_bold.fnt");
+		labelData.mFont.mvSize = cVector2f(36, 36);
+		labelData.mFont.mColor = cColor(1,1);
+		labelData.mFontAlign = eFontAlign_Center;
+		
+		//////////////
+		// Get data based on bind type
+		bool bAnalog = mbBindingGamepad ? mvGamepadActions[mlActionToBind-1].mbAnalog : mvActions[mlActionToBind-1].mbAnalog;
+		tString sAction = mbBindingGamepad ? mvGamepadActions[mlActionToBind-1].msAction : mvActions[mlActionToBind-1].msAction;
+
+		if(bAnalog)
+		{
+			tString sLabel = msKeybindFirstState.length() == 0 ? "PressRightGamepad" : "PressUpGamepad";
+
+			ImGui_DoLabelExt(sLabel,labelData, OptionMenu_GetTopLeftOffset(kOptionMenu_KeybindBgPos + cVector2f(kOptionMenu_KeybindBgSize.x * 0.45,15), 5.5), 0);
+		}
+		else
+		{
+			ImGui_DoLabelExt("PressAnyKey",labelData, OptionMenu_GetTopLeftOffset(kOptionMenu_KeybindBgPos + cVector2f(kOptionMenu_KeybindBgSize.x * 0.45,15), 5.5), 0);
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(false);
+
+		///////////////
+		// Check if keybind button was pressed
+		tString sKeyPressed = cLux_GetInputHandler().GetLatestKeyPressed();
+
+		if(sKeyPressed.length() > 0)
+		{
+			/////////////
+			// Disable cancel
+			ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+			if(sKeyPressed != "Keyboard.Escape")
+			{
+				//////////////
+				// Check for valid keys
+				if(mbBindingGamepad)
+				{
+					// Only allow gamepad 0
+					if(cString_GetFirstStringPos(sKeyPressed, "Gamepad.0") == -1)
+					{
+						return;
+					}
+				}
+				else
+				{
+					// Only allow mouse or keyboard
+					if(cString_GetFirstStringPos(sKeyPressed, "Gamepad") >= 0)
+					{
+						return;
+					}
+				}
+
+				if(bAnalog)
+				{
+					/////////////////
+					// Analog requires two binds in a row and must be from gamepad
+					if(cString_GetFirstStringPos(sKeyPressed, "Gamepad") != -1 && 
+					   cString_GetFirstStringPos(sKeyPressed, "Axis") != -1)
+					{
+						if(msKeybindFirstState.length() == 0) 
+						{
+							msKeybindFirstState = sKeyPressed;
+							return;
+						}
+						else if(sKeyPressed != msKeybindFirstState)
+						{
+							sKeyPressed = msKeybindFirstState +"."+ ParseKeybind(sKeyPressed, false);
+						}
+						else
+						{
+							return; //Skip binding if its the same axis again
+						}
+					}
+					else
+					{
+						return; //Skip binding if not a gamepad axis
+					}
+				}
+				
+								
+				mpKeyConfig.SetString(sAction, msKeybindSlot, sKeyPressed);
+				mbKeybindChanged = true;
+				mlIgnoreInput = 3;
+			}
+
+			mlActionToBind = 0;
+			msFocusNextFrame = msFocusAfterBind;
+		}
+	}
+
+	void MessageBoxExitFromPauseMenu()
+	{
+		//////////////
+		// Restart warning message box
+		bool bExitToMenu = mpConfig.GetBool("Main", "ShowMenu", true);
+		int lSelect = OptionMenu_MessageBox(bExitToMenu ? "ExitToMenuMessageBox" : "ExitMessageBox", "Yes", "No", msMessageBoxFocus, msMessageBoxFocus, bExitToMenu ? 660 : 550);
+		ImGui_SetModUseInput(false); //disable input for any other widgets
+
+		if(lSelect == 1)
+		{
+			///////////
+			// Cancel
+			mbShowExit = false;
+			mbSaveAndExit = false;
+			msFocusNextFrame = "Exit";
+		}
+		else if(lSelect == -1)
+		{
+			///////////
+			// Check for exit to menu or exit game
+			if(bExitToMenu)
+			{
+				//mbMenuActive = false; 
+				LoadScreen_SetUseSmallIcon(false);
+				cLux_GetGuiHandler().SetGameHudInputFocus(false);
+
+				if(mbSaveAndExit) Game_AutoSave();
+				
+				ImGui_AddTimer("ExitToMainMenu", 1.5f);
+				Map_FadeOut(1.5);
+				Music_StopAll(1.5);
+			}
+			else
+			{
+				if(mbSaveAndExit) Game_AutoSave();
+
+				mbMenuActive = false; 
+				cLux_Exit();
+			}
+			return;
+		}
+	}
+	
+	void MessageBoxExitFromMainMenu()
+	{
+		//////////////
+		// Restart warning message box
+		int lSelect = OptionMenu_MessageBox("ExitMessageBox", "Yes", "No", msMessageBoxFocus, msMessageBoxFocus, 550);
+		ImGui_SetModUseInput(false); //disable input for any other widgets
+
+		if(lSelect == 1)
+		{
+			///////////
+			// Cancel
+			mbShowExit = false;
+			mbSaveAndExit = false;
+			msFocusNextFrame = "Exit";
+		}
+		else if(lSelect == -1)
+		{
+			///////////
+			// Exit the game
+			SetMenuActive(false);
+			cLux_Exit();
+			return;
+		}
+	}
+
+	void MessageBoxNewGame()
+	{
+		//////////////
+		// Restart warning message box
+		int lSelect = OptionMenu_MessageBox("OverwriteGame", "Yes", "No", msMessageBoxFocus, msMessageBoxFocus, 1100);
+
+		if(lSelect == 1)
+		{
+			///////////
+			// Cancel
+			mbShowNewGame = false;
+			msFocusNextFrame = "NewGame";
+		}
+		else if(lSelect == -1)
+		{
+			///////////
+			// Load the game
+			ImGui_AddTimer("NewGame", 1.5);
+			cSound_FadeOutAll(eSoundEntryType_WorldAll, 1.0f / 1.5f, false);
+			Music_StopAll(1.5);
+			mbShowNewGame = false;
+			cLux_GetGuiHandler().SetGameHudInputFocus(false);
+			return;
+		}
+	}
+
+	void MessageBoxLoadGame()
+	{
+		//////////////
+		// Restart warning message box
+		int lSelect = OptionMenu_MessageBox("LoadMessageBox", "Yes", "No", msMessageBoxFocus, msMessageBoxFocus);
+		ImGui_SetModUseInput(false); //disable input for any other widgets
+
+		if(lSelect == 1)
+		{
+			///////////
+			// Cancel
+			mbShowLoadGame = false;
+				
+			if(mCurrentGroup == eMainMenuGroup_LoadGame)
+			{
+				if(mlSelectedLoadButton >= 0 && mlSelectedLoadButton < 10) msFocusNextFrame = "Save"+mlSelectedLoadButton;
+				else													   msFocusNextFrame = "Back";
+			}
+			else
+			{
+				msFocusNextFrame = "Continue";
+			}
+		}
+		else if(lSelect == -1)
+		{
+			///////////
+			// Load the game
+			ImGui_AddTimer("LoadGame", 1.5);
+			cSound_FadeOutAll(eSoundEntryType_WorldAll, 1.0f / 1.5f, false);
+			Music_StopAll(1.5);
+			mbShowLoadGame = false;
+			cLux_GetGuiHandler().SetGameHudInputFocus(false);
+			return;
+		}
+
+		///////////
+		// Show gamepad legacy
+		OptionMenu_GamepadButtons(false);
+	}
+
+	//------------------------------------------------------
+
+	void GuiGammaCorrection()
+	{
+		/////////////
+		// Accept pressed
+		bool bAccept = ImGui_ActionTriggered(eImGuiAction_Confirm, true);
+		bool bCancelled = ImGui_ActionTriggered(eImGuiAction_Cancel, true);
+
+		/////////////
+		// Setupo
+		cVector2f vAspect = cGraphics_GetLowLevel().GetScreenSizeFloat();
+		float fAspectCorrection = 0.5625 * vAspect.x / vAspect.y;
+		
+		cGuiSet@ pSet = cLux_GetCurrentImGui().GetSet();
+		cVector2f vSize = pSet.GetVirtualSize();
+
+		bool bShowAcceptOnly = mpConfig.GetBool("Main", "ShowPreMenu", true);
+
+		/////////////////////////////////////
+		// Background
+		cImGuiGfx gfxBlack;
+		cImGuiGfx gfx("gamma_background.tga", eImGuiGfx_Texture);
+		cVector2f vBgSize = OptionMenu_GetScaledSize(cVector2f(1280, 720) * 0.67) * cVector2f(fAspectCorrection);
+		cVector3f vBgPos = OptionMenu_GetCenterOffset(cVector2f(0), 0.2) - cVector3f(vBgSize.x * 0.5, vBgSize.y * 0.75, 0.0);
+		ImGui_DrawGfx(gfxBlack, OptionMenu_GetTopLeftOffset(cVector2f(0), 0.1), ImGui_NrmSize(1.0), cColor(0,1));
+		ImGui_DrawGfx(gfx, vBgPos, vBgSize);
+
+		/////////////////////
+		// Help text
+		{
+			cImGuiTextFrameData frameData;
+			frameData.mFont.SetFile("sansation_large_bold.fnt");
+			frameData.mFont.mvSize = cVector2f(24, 24);
+			frameData.mFont.mColor = cColor(1,1);
+			frameData.mbUseBackgroundGfx = false;
+			frameData.mFontAlign = eFontAlign_Left;
+
+			ImGui_DoTextFrameExt("GammaInstructions0", cVector2f(0), 2.0, 0.0, frameData, OptionMenu_GetCenterOffset(cVector2f(0), 1.0) + cVector3f(vBgSize.x *-0.5, vBgSize.y * 0.3, 0), vBgSize);
+		}
+
+		////////////////
+		// Left offset
+		float fOffsetX = (vBgPos.x - OptionMenu_GetTopLeftOffset(kMainMenuButtonPos).x) * vAspect.x / vAspect.y * 720 / vSize.x; 
+
+		////////////////
+		// Slider
+		{
+			float fValue = (mpConfig.GetFloat("Graphics", "Brightness", 1.0f) - 0.3f) / (2.0f - 0.6f);
+			float fNewValue = OptionMenu_ButtonOptionsSlider("Gamma", kMainMenuButtonPos + cVector2f(fOffsetX, 20), 7, msSelectedGammaButton, fValue, 0.05f, mlActionHorizontal);
+
+			if(fNewValue != fValue)
+			{
+				mpConfig.SetFloat("Graphics", "Brightness", (fNewValue * (2.0f - 0.6f) + 0.3f));
+				cGraphics_GetLowLevel().SetBrightness((fNewValue * (2.0f - 0.6f) + 0.3f));
+				mlOptionChanges++;
+			}
+
+			msSelectedGammaButton = OptionMenu_UpdateFocus("Gamma", msSelectedGammaButton);
+		}
+
+		//////////////
+		// Accept button
+		{
+			if(OptionMenu_ButtonOptions(bShowAcceptOnly ? "AcceptGamma" : "Back", kMainMenuButtonPos + cVector2f(fOffsetX, 20), 8, msSelectedGammaButton) || 
+			   (bAccept && bShowAcceptOnly) || (bCancelled && bShowAcceptOnly == false))
+			{
+				mpConfig.SetBool("Main", "ShowPreMenu", false);
+
+				if(bShowAcceptOnly)
+				{		
+					// Apply directly
+					mbShowPreMenu = false;
+					msFocusNextFrame = msSelectedMainMenuButton;
+					ApplySettings();			
+				}
+				else
+				{
+					if(mlOptionChanges == mlCurrentOptionChange)
+					{
+						// No changes
+						msFocusNextFrame = msSelectedVideoButton;
+						mbShowPreMenu = false;
+
+						if(Platform_IsPS4())
+						{
+							mCurrentGroup = eMainMenuGroup_Options;
+						}
+						else
+						{
+							mCurrentGroup = eMainMenuGroup_Options_Video;
+						}
+					}
+					else
+					{
+						/////////////
+						// Show apply popup
+						mbShowApplyChanges = true;
+						msFocusNextFrame = "NO";
+					}
+				}
+			}
+
+			msSelectedGammaButton = OptionMenu_UpdateFocus(bShowAcceptOnly ? "AcceptGamma" : "Back", msSelectedGammaButton);
+		}
+
+		///////////
+		// Show gamepad legacy
+		fOffsetX = (vBgPos.x - OptionMenu_GetTopLeftOffset(cVector2f(140, 0)).x) * vAspect.x / vAspect.y * 720 / vSize.x; 
+		OptionMenu_GamepadButtons(true, false, cVector2f(fOffsetX, 0));
+	}
+	
+	//------------------------------------------------------
+	
+	void GuiPressX()
+	{
+		cImGuiLabelData labelData;
+		labelData.mFont.SetFile("sansation_large_bold.fnt");
+		labelData.mFont.mvSize = cVector2f(36, 36);
+		labelData.mFont.mColor = cColor(1,1);
+
+		ImGui_DoLabelExt("PressX",labelData, OptionMenu_GetTopLeftOffset(kOptionMenu_PressXPos, 1.0));
+
+		////////////
+		// Wait for keypress
+		tString sKeyPressed = cLux_GetInputHandler().GetLatestKeyPressed();
+
+		if(sKeyPressed.length() > 0)
+		{
+			int lPos = cString_GetFirstStringPos(sKeyPressed, "Gamepad");
+			int lEndPos = cString_GetFirstStringPos(sKeyPressed, "Button.0");
+			if(lPos != -1 && lEndPos != -1)
+			{
+				/////////////////
+				// Get the device id from the gamepad that pressed the button
+				tString sNum = cString_Sub(sKeyPressed, 8);
+				int lDotPos = cString_GetFirstCharPos(sNum, '.');
+				int lNum = cString_ToInt(cString_Sub(sNum, 0, lDotPos), 0 );
+
+				/////////////
+				// Set that gamepad as the primary one
+				cLux_GetInputHandler().SetPrimaryGamepad(lNum);
+
+				////////////////
+				// Continue to menu
+				mbShowPressX = false;
+			}
+		}
+	}
+
+	//------------------------------------------------------
+	
+	void ApplySettings()
+	{
+		/////////////
+		// Saves the config
+		mpConfig.Save();
+
+		/////////////
+		// Applies the changes to the engine and displays a message box if restart is needed
+		mbRestartWarning = cLux_ApplyUserConfig();
+	}
+
+	void DiscardSettings()
+	{
+		///////////
+		// Load settings
+		mpConfig.Load();
+
+		cGraphics_GetLowLevel().SetBrightness(mpConfig.GetFloat("Graphics", "Brightness", 1.0));
+	}
+
+	//------------------------------------------------------
+	
+	void ApplyKeybinds()
+	{
+		/////////////
+		// Saves the config
+		mpKeyConfig.Save();
+
+		cLux_GetInputHandler().LoadKeyConfig();
+
+		/////////////
+		// Reloading keys will make actions trigger again, so ignore next frame
+		mlIgnoreInput = 3;
+		mbKeybindChanged = false;
+	}
+
+	void DiscardKeybinds()
+	{
+		///////////
+		// Load settings
+		mpKeyConfig.Load();
+		mbKeybindChanged = false;
+	}
+
+	//------------------------------------------------------------
+	
+	
+	void OnDraw(float afFrameTime)
+	{
+	
+	}
+	void OnPostRender(float afFrameTime)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// ACTIONS
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnAction(int alAction, bool abPressed)
+	{
+		if(abPressed)
+		{
+			if(alAction == eAction_OpenMenu && LoadScreen_IsVisible() == false)
+			{
+				if(mbMenuActive == false && mbPauseMenuEnabled)
+				{
+					mbMainMenuActive = false;
+					SetMenuActive(true);
+				}
+				else
+				{
+					mbMenuButtonPressed = true;
+				}
+			}
+		}
+
+		// Block all input
+	}
+
+
+	void OnAnalogInput(int alAnalogId, const cVector3f &in avAmount)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnExitPressed()
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void AppGotInputFocus()
+	{
+	
+	}
+	void AppLostInputFocus()
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+		
+	bool mbMainMenuActive = false;
+	bool mbMenuActive = false;
+	bool mbPauseMenuEnabled = true;
+	bool mbMenuButtonPressed = false;
+	bool mbCanContinue = false;
+
+	//------------------------------------------------------------
+		 
+	bool mbRestartWarning = false;
+	bool mbShowRestartWarning = false;
+	bool mbShowApplyChanges = false;
+	bool mbShowExit = false;
+	bool mbShowNewGame = false;
+	bool mbShowLoadGame = false;
+	bool mbShowApplyKeyChanges = false;
+	bool mbShowPreMenu = false;
+	bool mbShowReset = false;
+	bool mbShowDuplicateKeys = false;
+	bool mbShowPressX = false;
+	float mfKeepDisplaySetting = 0.0f;
+
+	bool mbSaveAndExit = false;
+	
+	tString msMessageBoxFocus = "No";
+	
+	[volatile] cConfigFile@ mpConfig;
+	[volatile] cConfigFile@ mpKeyConfig;
+
+	int mlActionHorizontal;
+	
+	int mlClickedPauseMenuButton;
+	int mlClickedMainMenuButton;
+
+	int mlCurrentResolution;
+	tString msCurrentDisplayMode;
+
+	tString msSelectedMainMenuButton;
+	tString msSelectedStartButton;
+	tString msSelectedPauseMenuButton;
+	tString msSelectedOptionsButton;
+	tString msSelectedGammaButton;
+	tString msSelectedInputButton;
+	tString msSelectedInputMappingButton;
+	tString msSelectedVideoButton;
+	tString msSelectedVideoDisplayButton;
+	tString msSelectedVideoPostEffectButton;
+	tString msSelectedVideoWorldButton;
+	tString msSelectedVideoGammaButton;
+	tString msSelectedAudioButton;
+	tString msSelectedGameplayButton;
+	int mlSelectedLoadButton = 0;
+	int mlSelectedKeybindButton = 0;
+
+	int mlOptionChanges = 0;
+	int mlCurrentOptionChange;
+
+	float mfFadeOut = 0.0f;
+	float mfFadeIn = 0.0f;
+
+	tString msFocusNextFrame;
+
+	eMainMenuGroup mCurrentGroup;
+
+	cVector2f mvAspectRatio;
+	cVector2f mvSize;
+	cVector2f mvOffset;
+	
+	array<cVector2l> mvResolutionSizes;
+	array<tString> mvResolutionValues;
+	array<int> mvRefresh;
+	array<tString> mvRefreshValues;
+	int mlSelectedResolution;
+
+	array<tString> mvSaveNames;
+	array<tString> mvSaveDates;
+	array<tWString> mvSaveFiles;
+	int mlSaveFileOffset=0;
+	int mlSaveFileToLoad=0;
+	bool mbScrollingSaveList=false;
+
+	array<tString> mvLangFiles;
+
+	float mfDisableEscapeCount = 1.0;
+
+	////////////////
+	// Keybinding
+	array<cBindableAction> mvActions;
+	array<cBindableAction> mvGamepadActions;
+	int mlActionToBind=0;
+	tString msKeybindSlot = "Primary";
+	bool mbScrollingKeybindList=false;
+	int mlKeybindOffset=0;
+	int mlKeybindFocusSlot = 0;
+	tString msFocusAfterBind;
+	bool mbKeybindChanged;
+	int mlIgnoreInput = 0;
+	tString msKeybindFirstState;
+	bool mbBindingGamepad = false;
+	
+	//------------------------------------------------------------
+}

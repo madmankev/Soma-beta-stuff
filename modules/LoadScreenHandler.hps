@@ -1,0 +1,369 @@
+#include "interfaces/UserModule_Interface.hps"
+#include "modules/ModuleInterfaces.hps"
+#include "helpers/helper_custom_depth_imgui.hps"
+#include "helpers/helper_imgui.hps"
+#include "helpers/helper_map.hps"
+#include "helpers/helper_game.hps"
+#include "helpers/helper_audio.hps"
+#include "inputhandler_types.hps"
+
+//-----------------------------------------
+
+class cScrLoadScreenHandler : iScrUserModule, iScrUserModule_Interface, iScrLoadScreenHandler_Interface
+{
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// INIT
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void Init()
+	{
+		mBaseObj.SetScriptableIsSaved(false);
+
+		cConfigFile@ pConfig = cLux_GetGameConfig();
+		
+		SetBackground(pConfig.GetString("General", "DefaultLoadingScreen", "backdrop.dds"));
+		SetIcon(pConfig.GetString("General", "LoadingIcon", "brain_01.dds"), 
+				pConfig.GetInt("General", "LoadingIconFrameNum", 26));
+	}
+	
+	//------------------------------------------------------------
+	
+	void LoadUserConfig()
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	void SaveUserConfig()
+	{
+	}
+
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// INTERFACE
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+		
+	bool IsActive()
+	{
+		return mfAlpha > 0.0;
+	}
+
+	void SetBackground(const tString&in asTexture)
+	{
+		msBackground = asTexture;
+	}
+
+	void SetIcon(const tString&in asFirstFrame, int alFrameNum)
+	{
+		mvIcons.resize(0);
+		
+		int lPos = cString_GetFirstStringPos(asFirstFrame, "01");
+		tString sFileExt = cString_GetFileExt(asFirstFrame);
+		tString sBaseName = cString_Sub(asFirstFrame, 0, lPos);
+
+		for(int i = 1; i <= alFrameNum; ++i)
+		{
+			tString sName = sBaseName;
+
+			if(i < 10) sName += "0"+i;
+			else	   sName += i;
+			
+
+			mvIcons.push_back(cString_SetFileExt(sName, sFileExt));
+		}
+	}
+
+	void SetUseSmallIcon(bool abX)
+	{
+		mbSmallIcon = abX;
+	}
+
+	void ShowLoadingIcon(float afTime)
+	{
+		mfShowIconCount = afTime;
+	}
+
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	//MAP LOADING
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnMapEnter(cLuxMap @apMap)
+	{
+	}
+
+	void OnMapLeave(cLuxMap @apMap)
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	
+	void CreateWorldEntities(cLuxMap @apMap)
+	{
+	
+	}
+	void DestroyWorldEntities(cLuxMap @apMap)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GENERAL
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnEnterContainer(const tString&in asOldContainer)
+	{
+	
+	}
+	void OnLeaveContainer(const tString&in asNewContainer)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void Update(float afTimeStep)
+	{
+	}
+	
+	void PostUpdate(float afTimeStep)
+	{
+	}
+	
+	void Reset()
+	{
+	}
+	void VariableUpdate(float afDeltaTime)
+	{
+	}
+
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// ACTIONS
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+
+	void OnGui(float afTimeStep)
+	{
+		bool bForceMini = false;
+
+		if(LoadScreen_IsVisible())
+		{
+			if(Effect_Fade_GetAlpha() == 0.0f)
+			{
+				mfAlpha = cMath_Clamp(mfAlpha + afTimeStep * 2.0f, 0.0, 1.0);
+				mfMiniIconAlpha = 0.0f;
+			}
+			else
+			{
+				bForceMini = true;
+				mfAlpha = cMath_Clamp(mfAlpha - afTimeStep * 2.0, 0.0, 1.0);
+			} 
+			
+			cLux_SetGamePaused(false);
+		}
+		else if(Map_IsChanging())
+		{
+			bForceMini = true;
+		}
+		else
+		{
+			mfAlpha = cMath_Clamp(mfAlpha - afTimeStep * 2.0, 0.0, 1.0);
+		}
+		
+		if(bForceMini)
+		{
+			mfMapChangeTime = 1.0;
+			mfMiniIconAlpha = cMath_Clamp(mfMiniIconAlpha + afTimeStep, 0.0, 1.0);
+			mfShowIconCount = 0;
+		}
+		else if(mfMapChangeTime > 0)
+		{
+			mfMapChangeTime -= afTimeStep;
+			mfMiniIconAlpha = cMath_Clamp(mfMiniIconAlpha + afTimeStep, 0.0, 1.0);
+			mfShowIconCount = 0;
+		}
+		else if(mfShowIconCount > 0)
+		{
+			mfShowIconCount -= afTimeStep;
+			mfMiniIconAlpha = cMath_Clamp(mfMiniIconAlpha + afTimeStep, 0.0, 1.0);
+		}
+		else
+		{
+			mfMiniIconAlpha = cMath_Clamp(mfMiniIconAlpha - afTimeStep * 2.0, 0.0, 1.0);
+		}
+
+		//////////////////
+		// Update icon frame to render
+		int lFrame = 0;
+		if(mvIcons.size() > 0 && (mfAlpha > 0 || mfMiniIconAlpha > 0))
+		{
+			/////////////
+			// Get frame to render
+			mfFrame += afTimeStep * 15.0;
+			while(mfFrame >= (mvIcons.size() * 2)) mfFrame -= mvIcons.size() * 2; 
+				
+			////////////
+			// Apply gain
+			float fFrameT = cMath_Abs(mfFrame - mvIcons.size()) / mvIcons.size();
+			float fGain = 0.63f; // how smooth, 0.5 = linear, < 0.5 = smoothstep, > 0.5 = inverse smoothstep
+			if(fFrameT < 0.5f) fFrameT = cMath_Pow(fFrameT * 2.0f, cMath_Log(fGain) / cMath_Log(0.5f)) / 2.0f;
+			else			   fFrameT = 1.0f - cMath_Pow(2.0f - fFrameT * 2.0f, cMath_Log(fGain) / cMath_Log(0.5f)) / 2.0f;
+				
+			lFrame = cMath_Clamp(fFrameT * mvIcons.size(), 0, mvIcons.size() - 1);
+		}
+
+		if(mfAlpha > 0.0f)
+		{
+			/////////////
+			// Setup
+			cVector2f vAspect = cGraphics_GetLowLevel().GetScreenSizeFloat();
+			float fAspectCorrection = 0.5625 * vAspect.x / vAspect.y;
+			//float fBlackAlpha = cMath_Min(1.0, mfAlpha / 0.5);
+			float fBgAlpha = cMath_Min(1.0, (mfAlpha - 0.5) / 0.25);
+			float fIconAlpha = cMath_Min(1.0, (mfAlpha - 0.75) / 0.25);
+
+			/////////////////////////////////////
+			// Black background
+			cImGuiGfx gfx;
+			ImGui_DrawGfx(gfx, OptionMenu_GetTopLeftOffset(cVector2f(0), -1.0), ImGui_NrmSize(1.0), cColor(0, 1));
+
+			if(mbSmallIcon == false)
+			{
+				//////////////
+				// Background image
+				cVector2f vBgSize = OptionMenu_GetScaledSize(cVector2f(1280, 720)) * fAspectCorrection;
+				cVector3f vBgPos = OptionMenu_GetCenterOffset(cVector2f(0), 0.2) - cVector3f(vBgSize.x*0.5, vBgSize.y * 0.5, 0.0);
+			
+				cImGuiGfx gfxBg(msBackground, eImGuiGfx_Texture);
+				ImGui_DrawGfx(gfxBg, vBgPos, vBgSize, cColor(1, fBgAlpha));
+			}
+
+			////////////
+			// Draw the icon
+			if(mvIcons.size() > 0 && fIconAlpha > 0)
+			{
+				if(mbSmallIcon)
+				{
+					DrawSmallIcon(lFrame, fIconAlpha);
+				}
+				else
+				{
+					DrawBigIcon(lFrame, fIconAlpha);
+				}
+			}
+		}
+		else if(mvIcons.size() > 0 && mfMiniIconAlpha > 0.0)
+		{
+			/////////////
+			// Draw an icon only
+			DrawSmallIcon(lFrame, mfMiniIconAlpha);
+		}
+	}
+
+	void DrawBigIcon(int alFrame, float afAlpha)
+	{
+		////////////
+		// Big centered loading screen icon
+		cVector2f vAspect = cGraphics_GetLowLevel().GetScreenSizeFloat();
+		float fAspectCorrection = 0.5625 * vAspect.x / vAspect.y;
+
+		cVector2f vIconSize = OptionMenu_GetScaledSize(cVector2f(512, 512)) * fAspectCorrection;
+		cVector3f vIconPos = OptionMenu_GetCenterOffset(cVector2f(0), 0.5) - cVector3f(vIconSize.x*0.5, vIconSize.y * 0.5, 0.0);
+			
+		cImGuiGfx gfxIcon(mvIcons[alFrame], eImGuiGfx_Texture);
+		gfxIcon.mMaterial = eGuiMaterial_Additive;
+		ImGui_DrawGfx(gfxIcon, vIconPos, vIconSize, cColor(afAlpha, afAlpha));
+	}
+
+	void DrawSmallIcon(int alFrame, float afAlpha)
+	{
+		////////////
+		// Big centered loading screen icon
+		cVector2f vIconSize = OptionMenu_GetScaledSize(cVector2f(70, 70));
+		cVector3f vIconPos = OptionMenu_GetBotRightOffset(cVector2f(-80, 80), 0.5) - cVector3f(vIconSize.x*0.5, vIconSize.y * 0.5, 0.0);
+			
+		cImGuiGfx gfxIcon(mvIcons[alFrame], eImGuiGfx_Texture);
+		gfxIcon.mMaterial = eGuiMaterial_Additive;
+		ImGui_DrawGfx(gfxIcon, vIconPos, vIconSize, cColor(afAlpha, afAlpha));
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnDraw(float afFrameTime)
+	{
+	
+	}
+	void OnPostRender(float afFrameTime)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// ACTIONS
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnAction(int alAction, bool abPressed)
+	{
+	}
+
+
+	void OnAnalogInput(int alAnalogId, const cVector3f &in avAmount)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnExitPressed()
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void AppGotInputFocus()
+	{
+	
+	}
+	void AppLostInputFocus()
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	tString msBackground;
+	array<tString> mvIcons;
+	float mfAlpha = 0.0f;
+	float mfFrame = 0.0f;
+	float mfMiniIconAlpha = 0.0f;
+	float mfMapChangeTime = 0.0f;
+	bool mbSmallIcon = false;
+
+	float mfShowIconCount = 0.0f;
+
+	//------------------------------------------------------------
+}

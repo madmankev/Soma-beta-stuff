@@ -1,0 +1,268 @@
+#include "interfaces/Prop_Interface.hps"
+#include "base/Player_Types.hps"
+
+	
+class cScrPropHandheldTerminal : iScrProp, iScrProp_Interface
+{
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// INIT
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void Init()
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// LOADING
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void SetupAfterLoad(cWorld @apWorld, cResourceVarsObject@ apVars, cResourceVarsObject@ apInstanceVars)
+	{
+		///////////////////////////////////
+		// Type vars
+		mfDistanceFromCamera = apVars.GetVarFloat("DistanceFromCamera", 0.3f);
+		mClearColor = apVars.GetVarColor("ClearColor", cColor(0,1));
+		mOfflineClearColor = apVars.GetVarColor("OfflineClearColor", cColor(0,1));
+		mvScreenSize = apVars.GetVarVector2f("ScreenSize", cVector2f(512.0f));
+		mfYStartOffset = apVars.GetVarFloat("YStartOffset", -0.5f);
+		msPickupSound = apVars.GetVarString("PickupSound", "");
+		msDropSound = apVars.GetVarString("DropSound", "");
+		msConnectedSubmesh = apVars.GetVarString("ConnectedSubmesh", "");
+			
+		msLeaveCallback = apInstanceVars.GetVarString("LeaveCallback", "");
+		msOnGuiFunction = apInstanceVars.GetVarString("OnGuiFunction", "");
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GENERAL
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnUpdate(float afTimeStep)
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnPostUpdate(float afTimeStep)
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	void ResetProperties()
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	void BeforeEntityDestruction()
+	{
+	}
+		
+	//------------------------------------------------------------
+	
+	void OnStartMove()
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnConnectionStateChange(iLuxEntity@ apEntity,int alState)
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	/*bool OnUpdateAutoSleep()
+	{
+		return true;
+	}*/
+		
+	//------------------------------------------------------------
+	
+	
+	/////////////////////////////////////////
+	// ACTIONS
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnSetActive(bool abX)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void GiveDamage(float afAmount, int alStrength, const tString&in asType, const tString&in asSource)
+	{
+		
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnHealthChange()
+	{
+	}
+	//------------------------------------------------------------
+	
+	//NOTE: This is only useable if SetScriptCollisionCallbackActive is true
+	void OnPhysicsCollision(iPhysicsBody @apBody, iPhysicsBody @apCollideBody, cPhysicsContactData&in apContactData)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GENERAL
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+		
+	bool CanInteract(int alType, iPhysicsBody@ apBody)
+	{
+		return true;
+	}
+	
+	//------------------------------------------------------------
+		
+	bool OnInteract(int alType, iPhysicsBody@ apBody, const cVector3f &in avFocusPos, const tString&in asData)
+	{					
+		iCharacterBody@ pCharBody = cLux_GetPlayer().GetCharacterBody();
+		if(pCharBody.IsOnGround() == false) return false;
+	
+		if (mpOpenProp is null)
+		{
+			cLux_GetCurrentMap().CreateEntity(mBaseObj.GetName() + "_open", mBaseObj.GetFileName(), cMatrixf_Identity, cVector3f(1));
+			@mpOpenProp = cLux_ToProp(cLux_GetCurrentMap().GetLatestEntity());
+			mpOpenProp.CreateAndSetupGui(msConnectedSubmesh, cColor_White, mClearColor, mOfflineClearColor, mvScreenSize);
+			mpOpenProp.SetOnGuiFunction(msOnGuiFunction);
+			
+			for (int i = 0; i < mpOpenProp.GetBodyNum(); i++)
+			{
+				iPhysicsBody@ pBody = mpOpenProp.GetBody(i);
+				pBody.SetCollideCharacter(false);
+				pBody.SetCollide(false);
+				pBody.SetCollideRagDoll(false);
+				pBody.SetMass(0);
+			}
+			mpOpenProp.SetActive(false);
+			mpOpenProp.SetGuiActive(false);
+			mpOpenProp.SetEffectsActive(false,false);
+		}
+		
+		//////////////////////////////////
+		// Set up the creted entity
+		mpOpenProp.SetGuiIsFocused(true, true);
+		cScript_RunGlobalFunc(mpOpenProp.GetName(), "", "_Global_SetIsHudVersion");
+		
+		cScript_SetGlobalArgID(0, mBaseObj.GetID()); //Object ID
+		cScript_SetGlobalArgInt(1, apBody.GetUniqueID()); //Body Id
+		cScript_SetGlobalArgVector3f(2, avFocusPos);//The grab postion
+		cScript_SetGlobalArgID(3, mpOpenProp.GetID()); //Open entity object ID
+		cScript_SetGlobalArgFloat(4, mfDistanceFromCamera); //Target prop distance from camera
+		cScript_SetGlobalArgFloat(5, mfYStartOffset); //Start offset along the camera's Y axis.
+		cScript_SetGlobalArgString(6, msPickupSound); //Sound played when interaction starts
+		cScript_SetGlobalArgString(7, msDropSound); //Sound played when interaction ends
+		cScript_SetGlobalArgString(8, msLeaveCallback); //Callback called when interaction ends.
+		
+		cScript_RunGlobalFunc("State_Interact_HandheldTerminal", "", "SetupTerminal");
+	
+		cLux_GetPlayer().ChangeState(ePlayerState_HandheldTerminal);	
+		
+		mbIsRead = true;
+		
+		return false;
+	}
+	
+	//------------------------------------------------------------
+	
+	int GetInteractIconId(int alType, iPhysicsBody@ apBody)
+	{
+		return eCrossHairState_Terminal;
+	}
+		
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GLOBAL
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void _Global_SetLeaveCallback()
+	{
+		msLeaveCallback = cScript_GetGlobalArgString(0);
+	}
+	
+	//------------------------------------------------------------
+	
+	void _Global_CanBeHighlighted()
+	{
+		cScript_SetGlobalReturnBool(mbIsRead ==false && mBaseObj.IsInteractedWith()==false && mbIsHudVersion==false);
+		cScript_SetGlobalArgID(0,mBaseObj.GetID());
+	}
+	
+	//------------------------------------------------------------
+	
+	void _Global_SetIsHudVersion()
+	{
+		mbIsHudVersion = true;
+	}
+		
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// DEBUG
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+		
+	float DrawDebugOutput(cGuiSet @apSet,iFontData @apFont,float afStartY)
+	{
+		return afStartY;
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// PROPERTIES
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+		
+	[nosave] tString msConnectedSubmesh;
+	[nosave] cColor mClearColor;
+	[nosave] cColor mOfflineClearColor;
+	[nosave] cVector2f mvScreenSize;
+	[nosave] float mfDistanceFromCamera;
+	[nosave] float mfYStartOffset;
+	[nosave] tString msPickupSound;
+	[nosave] tString msDropSound;
+	[nosave] tString msOnGuiFunction;
+	
+	[nosave] cLuxProp@ mpOpenProp;
+	
+	bool mbIsRead=false;
+	bool mbIsHudVersion=false;
+	
+	tString msLeaveCallback;
+	bool mbShowMouse;
+	
+	//------------------------------------------------------------
+	
+		
+}	

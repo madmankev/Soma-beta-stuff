@@ -1,0 +1,739 @@
+#include "interfaces/UserModule_Interface.hps"
+#include "modules/ModuleInterfaces.hps"
+#include "helpers/helper_effects.hps"
+#include "helpers/helper_audio.hps"
+#include "helpers/helper_game.hps"
+#include "helpers/helper_imgui.hps"
+#include "helpers/helper_effects.hps"
+#include "helpers/helper_player.hps"
+#include "helpers/helper_modules.hps"
+
+/////////////////////////////////////////
+// SETTINGS
+/////////////////////////////////////////
+
+//------------------------------------------------------------
+
+///////////////
+// Effects
+const tString gsHealthRestoreTentacleAir = "Player/UI/flower_interact";
+const tString gsHealthRestoreTentacleUnderwater = "Player/UI/flower_interact";
+const tString gsHealthRestoreNoTentacle = "Player/UI/flower_interact";
+
+//------------------------------------------------------------
+
+class cScrPlayerEnergyHandler : iScrUserModule, iScrUserModule_Interface, iScrPlayerEnergyHandler_Interface
+{
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// INIT
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void Init()
+	{
+		@mpGfxWhiteFlash = cGui_CreateGfxFilledRect(cColor(1,1), eGuiMaterial_Additive);
+		
+		Reset();
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// USER SETTINGS
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void LoadUserConfig()
+	{
+	
+	}
+	void SaveUserConfig()
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// MAP
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnMapEnter(cLuxMap @apMap)
+	{
+		mvRechargeObjects.resize(0);
+		cLux_GetCurrentMap().GetEntityArrayID("*", eLuxEntityType_Prop, "cScrPropEnergySource", mvRechargeObjects);
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnMapLeave(cLuxMap @apMap)
+	{
+		if (mBaseObj.Timer_Exists(0)) mBaseObj.Timer_Remove(0);
+	}
+	
+	//------------------------------------------------------------
+	
+	void CreateWorldEntities(cLuxMap @apMap)
+	{
+		apMap.CreateEntity("Tentacle", "energy_tentacle.ent", cMatrixf_Identity,cVector3f(0.125));
+		iLuxEntity@ pEntity = apMap.GetLatestEntity();
+		pEntity.SetActive(false);
+		
+		m_idTentacleEntity = pEntity.GetID();
+	}
+	
+	void DestroyWorldEntities(cLuxMap @apMap)
+	{
+		if(m_idTentacleEntity != tID_Invalid)
+		{
+			iLuxEntity @pEntity = cLux_ID_Entity(m_idTentacleEntity);
+			apMap.DestroyEntity(pEntity);
+		}
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GLOBAL FUNCTIONS
+	// (The reason the following are global instead of interface is because they are used by helper_game.hps
+	//  and it cannot access the module interfaces!)
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void _Global_BeginDrain()
+	{
+		mDrainEntityID = cScript_GetGlobalArgID(0);
+		mfDrainEnergy = cScript_GetGlobalArgFloat(1);
+		
+		mfRechargeTime = 9.0f;
+		mfRechargeZoomInAmount =0;
+		mbDrainCompleted = false;
+		mbFlashStarted=false;
+		mfInfectionaAppearCount=0;
+		
+		////////////////////////////////
+		// Set new pitch & yaw limits
+		cCamera@ pCam = cLux_GetPlayer().GetCamera();
+		
+		mfPitchMinLimit = pCam.GetPitchMinLimit();
+		mfPitchMaxLimit = pCam.GetPitchMaxLimit();
+		
+		pCam.SetYawLimits(	pCam.GetYaw() - cMath_ToRad(15), 
+							pCam.GetYaw() + cMath_ToRad(15));
+		
+		pCam.SetPitchLimits(pCam.GetPitch()-cMath_ToRad(15), 
+							pCam.GetPitch()+cMath_ToRad(15));
+		
+		/////////////////////
+		// Player		
+		Player_SetMoveSpeedMul(0);
+		Player_SetRunSpeedMul(0);
+		Player_SetLookSpeedMul(0.4);
+		Player_SetJumpDisabled(true);
+		Player_SetCrouchActionDisabled(true);
+		
+		cLux_GetPlayer().ChangeState(ePlayerState_Null);
+		cScript_SetGlobalVarBool("UsingWauFlower",true);
+		
+		/////////////////////
+		// Initalized tentacle
+		if(mbShowTentacle)
+		{
+			iLuxEntity@ pTentacle =cLux_ID_Entity(m_idTentacleEntity);
+			if(pTentacle !is null)
+			{
+				iCharacterBody @pCharBody = cLux_GetPlayer().GetCharacterBody();
+				
+				iLuxEntity@ pDrainEntity = cLux_ID_Entity(mDrainEntityID);
+				
+				cVector3f vAngles = cMath_GetAngleFromPoints3D(pCharBody.GetPosition(), pDrainEntity.GetPosition());
+				cMatrixf mtxTransform = cMath_MatrixMul(cMath_MatrixRotateXYZ(vAngles),
+														cMath_MatrixRotateX(-cMath_PiDiv2));	
+				mtxTransform.SetTranslation(pCharBody.GetPosition()+cVector3f(0,0.18f,0));
+				
+				pTentacle.SetMatrix(mtxTransform);
+				pTentacle.SetActive(true);
+				pTentacle.PlayAnimation("extend");
+				
+				mbTentacleStart = true;
+			}
+		}
+		
+		///////////////////////
+		// Play sounds
+		/////////////////////
+		if(mbShowTentacle)
+		{
+			if(Player_GetUnderwater())
+				cLux_PlayGuiSoundData(gsHealthRestoreTentacleAir, eSoundEntryType_Gui, 1, true);
+			else
+				cLux_PlayGuiSoundData(gsHealthRestoreTentacleUnderwater, eSoundEntryType_Gui, 1, true);
+		}
+		else
+		{
+			cLux_PlayGuiSoundData(gsHealthRestoreNoTentacle, eSoundEntryType_Gui, 1, true);
+		}
+			
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GENERAL
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void Reset()
+	{	
+		if (mlEffectID!=-1)
+			Effect_ChromaticAberration_DestroyInstance(mlEffectID);
+		mlEffectID=Effect_ChromaticAberration_CreateInstance(0.0f,0.0f);
+		
+		mDrainEntityID = tID_Invalid;
+		
+		mfEffectT =0;
+		mfEffectCount=0;
+		
+		mfEffectWhenReadingMul =1.0f;
+		
+		mbShowTentacle = true;
+		
+		m_idTentacleEntity = tID_Invalid;
+		
+		float mfFlashAmount=0;
+		float mfFlashDir=1;
+		bool mbFlashStarted=false;
+		
+		mbFirstNonTentacleDrain=true;
+		mbFirstTentacleDrain=true;
+		
+		mvRechargeObjects.resize(0);
+		
+		if(mBaseObj.Timer_Exists(0))
+			mBaseObj.Timer_Remove(0);
+	}
+	
+	//------------------------------------------------------------
+
+	void Update(float afTimeStep)
+	{
+		UpdateRechargeObjects(afTimeStep);
+		UpdateRecharge(afTimeStep);
+		UpdateEffects(afTimeStep);
+	}
+	void VariableUpdate(float afDeltaTime)
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	float mfObjectT=0;
+	
+	void UpdateRechargeObjects(float afTimeStep)
+	{
+		//////////////////////////////////
+		// Energy is full, just reset if needed
+		if(Player_GetHealth()>=1)
+		{
+			if(mbRechargeObjectsPulsing)
+			{
+				mbRechargeObjectsPulsing = false;
+				
+				for(int i=0; i<mvRechargeObjects.size(); ++i)
+				{
+					iLuxEntity@ pEntity = cLux_ID_Entity(mvRechargeObjects[i]);
+					
+					if(pEntity.GetAnimationIsPlaying())					
+						pEntity.FadeEffectBaseColor(cColor(1,1),1);
+				}
+			}
+			return;
+		}
+		
+		mfObjectT += afTimeStep;
+		if(mfObjectT>30000.0f) mfObjectT=0;
+		float fMul = (cMath_Sin(mfObjectT*1.8)+1)*0.5f;
+		
+		//////////////////////////////////
+		// Energy is low, pulse.
+		for(int i=0; i<mvRechargeObjects.size(); ++i)
+		{
+			iLuxEntity@ pEntity = cLux_ID_Entity(mvRechargeObjects[i]);
+			
+			//cLux_AddDebugMessage("Energy Obj: "+pEntity.GetName()+" Anim: "+pEntity.GetAnimationIsPlaying());
+			
+			if(pEntity.GetAnimationIsPlaying())	
+				pEntity.FadeEffectBaseColor(cColor(2+fMul*Player_GetHealth()*9,1),0.1f);
+		}
+		
+		mbRechargeObjectsPulsing = true;
+	}
+	
+	//------------------------------------------------------------
+		
+	void UpdateRecharge(float afTimeStep)
+	{
+		if (mDrainEntityID==tID_Invalid)
+			return;
+			
+		///////////////////////////////
+		// Check if insta-exit needed
+		if(AttackMeter_IsActive())
+		{
+			Effect_Shake_Start(3, 0.5, 0.1, 0.8f, cVector3f(1,0.3f,0));
+			ExitRecharge();
+			
+			return;
+		}
+		
+		///////////////////////////////
+		// Logic update
+		{
+			/////////////////////////////
+			// Check if tentacle is extended
+			if(mbTentacleStart)
+			{
+				iLuxEntity@ pTentacle =cLux_ID_Entity(m_idTentacleEntity);
+				if(pTentacle !is null)
+				{
+					if(pTentacle.GetAnimationIsPlaying())
+						return;
+					else
+					{
+						/////////////////////
+						// Set up variables
+						mbTentacleStart=false;
+						
+						pTentacle.PlayAnimation("idle", 0.3f, true);
+						
+						/////////////////////
+						// Infection patterns appear
+						Infection_CreateBorderTree(1, 30, cVector2f(14,35), 6.0f);
+						Infection_CreateBorderTree(2, 30, cVector2f(14,35), 6.0f);
+						Infection_CreateBorderTree(3, 30, cVector2f(14,35), 6.0f);
+						
+						mfInfectionaAppearCount = 3.5f;
+					}
+				}
+			}
+		
+			////////////////////////////
+			// Infections are appearing
+			if(mfInfectionaAppearCount>0)
+			{
+				mfInfectionaAppearCount-=afTimeStep;
+			}
+			
+			
+			/////////////////////////////
+			// Count down time left
+			mfRechargeTime -= afTimeStep;
+			
+			////////////////////////
+			// Check if drain is completed.
+			if(mbDrainCompleted==false && mfRechargeTime <=1)
+			{
+				mbDrainCompleted = true;
+				DrainCompleted();
+			}
+			
+			////////////////////////
+			// Check if entire thing is over.
+			if (mfRechargeTime <=0)
+			{
+				if(mbFirstTentacleDrain && mbShowTentacle)
+				{
+					mbFirstTentacleDrain = false;
+					Voice_PlayWhenPossible("FirstWauFlower_Tentacle");
+					Emotion_StartBackgroundBreath(eBreathType_Fear,1.0f, 0, 10);
+					Emotion_StartHeartbeat(1.1f, 0.6f, 1, 7);
+				}
+				if(mbFirstNonTentacleDrain && mbShowTentacle==false)
+				{
+					mbFirstNonTentacleDrain = false;
+					Voice_PlayWhenPossible("FirstWauFlower_Human");
+					Emotion_StartBackgroundBreath(eBreathType_Fear,0.5f, 0, 5);
+				}
+				
+				
+				ExitRecharge();
+				return;
+			}
+			
+			////////////////////////
+			// Zoom in update
+			mfRechargeZoomInAmount += afTimeStep*0.35f;
+			if(mfRechargeZoomInAmount>1) mfRechargeZoomInAmount =1;
+						
+			////////////////////////
+			// Start white flash
+			if(mfInfectionaAppearCount<=0 && mbFlashStarted==false && mfRechargeZoomInAmount>0.2)
+			{
+				mbFlashStarted = true;
+				mfFlashAmount=0;
+				mfFlashDir=1;
+			}
+		}
+		
+		///////////////////////////
+		// Update Effect
+		{
+			float fEffectAmount = mfRechargeTime<2 ? mfRechargeTime/2 : mfRechargeZoomInAmount;
+			if(mfRechargeTime<2) fEffectAmount = cMath_Easing(eEasing_QuartOut, fEffectAmount);
+			
+			
+			////////////////////
+			// FOV
+			Player_FadeFOVMulTo(1.0f -  cMath_Easing(eEasing_QuadInOut, fEffectAmount)*0.4f, 1.0f);
+			
+			////////////////////
+			// Sound
+			Sound_FadeGlobalVolume(1.0 - fEffectAmount*0.9f, 0.01f, eSoundEntryType_WorldAll);
+			Music_FadeVolumeMul(1.0 - fEffectAmount*1.0f, 0.01);
+			
+			////////////////////
+			// Radial Blur
+			Effect_RadialBlur_SetDirect(fEffectAmount*0.8f, 
+										cMath_Max(1.0f - fEffectAmount*0.6f, 0.0f), 
+										1.0f);
+										
+			////////////////////
+			// Chromatic
+			Effect_ChromaticAberration_SetDirect(fEffectAmount*0.015, 90);
+		}
+		
+		///////////////////////////
+		// Flash Update
+		if(mbFlashStarted)
+		{
+			const float fMaxFlash=1.0;
+			
+			if(mfFlashDir>0)
+			{
+				mfFlashAmount += afTimeStep*0.5f;
+				if(mfFlashAmount >= fMaxFlash)
+				{
+					Infection_ClearTrees();
+					mfFlashAmount=fMaxFlash;
+				} 
+			}
+			else
+			{
+				mfFlashAmount -= afTimeStep*1.3f;
+				if(mfFlashAmount < 0)
+				{
+					mfFlashAmount=0;
+				}
+			}
+		}
+	}
+	
+	//------------------------------------------------------------
+	
+	void DrainCompleted()
+	{
+		/////////////////////
+		// Pull back tentacle
+		float fAnimTime =0;
+		float fReleasePlayerTime =0;
+		
+		if(mbShowTentacle)
+		{
+			iLuxEntity@ pTentacle =cLux_ID_Entity(m_idTentacleEntity);
+			if(pTentacle !is null)
+			{
+				int lAnim = pTentacle.PlayAnimation("retract");
+				if(lAnim>=0)
+				{
+					cAnimationState@ pState = pTentacle.GetMeshEntity().GetAnimationState(lAnim);
+					fAnimTime = pState.GetLength() / pState.GetSpeed();
+					fAnimTime *= 0.35f;
+					fReleasePlayerTime= fAnimTime*0.25f;
+				}
+			}
+		}
+		
+		//////////////////////////
+		// Report back
+		iLuxEntity@ pEntity = cLux_ID_Entity(mDrainEntityID);
+		cScript_SetGlobalArgFloat(0, 0.0f);//Energy left in source
+		cScript_RunGlobalFunc(pEntity.GetName(), "", "_Global_OnDrainComplete");
+				
+		//////////////////////////
+		// Flash fades out
+		mfFlashDir = -1;
+		
+		//////////////////////////
+		// Get some energy
+		Player_AddHealth(mfDrainEnergy);
+		
+		/////////////////////
+		// Player		
+		Player_FadeMoveSpeedMulTo(0.2,fReleasePlayerTime);
+		
+		//////////////////////////
+		// Release Player
+		mBaseObj.Timer_Add(0, fReleasePlayerTime, "OnReleasePlayer");
+		
+		if(mbShowTentacle)
+			mBaseObj.Timer_Add(0, fAnimTime, "OnTentacleRetracted");
+	}
+	
+	void OnReleasePlayer(uint64 alTimer)
+	{
+		/////////////////////
+		// Player		
+		Player_FadeMoveSpeedMulTo(1.0f, 1.0f);
+		Player_SetRunSpeedMul(1.0f);
+		Player_SetLookSpeedMul(1);
+		Player_SetJumpDisabled(false);
+		Player_SetCrouchActionDisabled(false);
+		
+		cLux_GetPlayer().ChangeState(ePlayerState_Normal);
+		cScript_SetGlobalVarBool("UsingWauFlower",false);
+		
+		//////////////////////////
+		// Camera Limits
+		cLux_GetPlayer().GetCamera().SetPitchLimits(mfPitchMinLimit, mfPitchMaxLimit);
+		cLux_GetPlayer().GetCamera().SetYawLimits(0, 0);
+	}
+	
+	void OnTentacleRetracted(uint64 alTimer)
+	{
+		/////////////////////
+		// Disable tentacle
+		iLuxEntity@ pTentacle =cLux_ID_Entity(m_idTentacleEntity);
+		if(pTentacle !is null)
+		{
+			pTentacle.SetActive(false);
+		}
+	}
+	
+	
+	//------------------------------------------------------------
+	
+	void ExitRecharge()
+	{
+		Effect_RadialBlur_SetDirect(0,0,0);
+		
+		if(mbDrainCompleted==false)
+		{
+			iLuxEntity@ pEntity = cLux_ID_Entity(mDrainEntityID);
+			cScript_SetGlobalArgFloat(0, 0.0f);//Energy left in source
+			cScript_RunGlobalFunc(pEntity.GetName(), "", "_Global_OnDrainComplete");
+		}
+				
+		mDrainEntityID=tID_Invalid;
+		
+		iLuxEntity@ pTentacle =cLux_ID_Entity(m_idTentacleEntity);
+		if(pTentacle !is null) pTentacle.SetActive(false);
+
+		Infection_ClearTrees();
+		
+		mfFlashAmount=0;
+		
+		Player_SetMoveSpeedMul(1);
+		Player_SetRunSpeedMul(1);
+		Player_SetLookSpeedMul(1);
+		Player_SetJumpDisabled(false);
+		Player_SetCrouchActionDisabled(false);
+		
+		cLux_GetPlayer().ChangeState(ePlayerState_Normal);
+		cScript_SetGlobalVarBool("UsingWauFlower",false);
+	}
+	
+	//------------------------------------------------------------
+	
+	void UpdateEffects(float afTimeStep)
+	{
+		if (mlEffectID==-1)	// Map not entered yet
+			return;
+			
+		int lPlayerState = cLux_GetPlayer().GetCurrentStateId();
+		if( lPlayerState == ePlayerState_Terminal || 
+			lPlayerState == ePlayerState_HandheldTerminal ||
+			lPlayerState == ePlayerState_Read ||
+			lPlayerState == ePlayerState_ZoomArea)
+		{
+			mfEffectWhenReadingMul = cMath_IncreaseTo(mfEffectWhenReadingMul, afTimeStep*0.2f, 0.3f);
+		}
+		else
+		{
+			mfEffectWhenReadingMul = cMath_IncreaseTo(mfEffectWhenReadingMul, afTimeStep*0.5f, 1.0f);
+		}
+		
+		mfEffectT += afTimeStep;
+			
+		if(Player_GetHealth()>=1 && mfEffectHealth>=1) return;
+		
+		mfEffectHealth = cMath_IncreaseTo(mfEffectHealth,afTimeStep*2, Player_GetHealth());
+		
+		float fSpeed = Player_GetSpeed();
+		float fAmount = 1.0f- cMath_Max(mfEffectHealth-0.1f, 0.0f)/0.9f;
+		
+		float fPulseReadingMul = 0.5 + mfEffectWhenReadingMul*0.5f;
+		float fCAPulse = cMath_Abs(cMath_Sin(mfEffectT*0.35) + cMath_Cos(mfEffectT*1.5)*0.5f)*fPulseReadingMul;
+		fCAPulse *= fCAPulse*fCAPulse*fCAPulse;
+		Effect_ChromaticAberration_SetInstanceValues(mlEffectID, fAmount*(0.008f + fCAPulse*0.01)*mfEffectWhenReadingMul, mfEffectT);
+		
+		//cLux_AddDebugMessage("EffectCount: "+mfEffectCount);
+		mfEffectCount -= afTimeStep;
+		if(mfEffectCount<=0)
+		{
+			float fDistAmount = 0.1 + cMath_RandRectf(0, 0.3f)*fAmount*mfEffectWhenReadingMul;
+			
+			Effect_VideoDistortion_Start(fDistAmount, 1, 1,1,0.4);
+			mfEffectCount = 2 + cMath_RandRectf(3, 12) - 5*mfEffectHealth;
+		}
+	}
+	
+	//------------------------------------------------------------
+	
+	void PostUpdate(float afTimeStep)
+	{
+	}
+	
+	//------------------------------------------------------------
+		
+	void OnAction(int alAction, bool abPressed)
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnDraw(float afTimeStep)
+	{
+		if(mfFlashAmount<=0) return;
+		
+		float fAmount = mfFlashDir > 0 ? 	cMath_Easing(eEasing_CircIn, mfFlashAmount) :
+											cMath_Easing(eEasing_CubicIn, mfFlashAmount);
+		
+		cLux_GetGameHudSet().DrawGfx(	mpGfxWhiteFlash, 
+										cVector3f(-cLux_GetHudVirtualOffset().x, -cLux_GetHudVirtualOffset().y,10),
+										cLux_GetHudVirtualSize(),
+										cColor(mfFlashAmount, 1));
+	}
+	
+	//------------------------------------------------------------
+
+	void OnPostRender(float){}
+	void OnEnterContainer(const tString&in){}
+	void OnLeaveContainer(const tString&in){}
+	void AppGotInputFocus(){}
+	void AppLostInputFocus(){}	
+	void OnAnalogInput(int alAnalogId, const cVector3f &in avAmount){}
+	void OnExitPressed(){}
+	
+	//------------------------------------------------------------
+	
+	
+	/////////////////////////////////////////
+	// PUBLIC METHODS
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+
+	float GetMoveMul()
+	{
+		return cMath_Easing(eEasing_QuadOut, Player_GetHealth());
+	}
+	
+	//------------------------------------------------------------
+	
+	float GetLookMul()
+	{
+		return 1.0f;
+	}
+	
+	//------------------------------------------------------------
+	
+	void SetShowTentacle(bool abX)
+	{
+		mbShowTentacle = abX;
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GLOBAL METHODS
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	//------------------------------------------------------------
+	
+	
+	/////////////////////////////////////////
+	// DEBUG
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+		
+	float DrawDebugOutput(cGuiSet @apSet,iFontData @apFont,float afStartY)
+	{		
+		return afStartY;
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// PROPERTIES
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+
+	int mlEffectID = -1;
+	float mfEffectWhenReadingMul=1.0f;
+	
+	bool mbShowTentacle=true;
+	
+	bool mbFirstNonTentacleDrain=true;
+	bool mbFirstTentacleDrain=true;
+	
+	float mfInfectionaAppearCount;
+	
+	[nosave] cGuiGfxElement@ mpGfxWhiteFlash;
+	
+	//------------------------------------------------------------
+	
+	tID m_idTentacleEntity = tID_Invalid;
+	
+	//------------------------------------------------------------
+	
+	tID mDrainEntityID = tID_Invalid;
+	float mfDrainEnergy = 0.0f;
+	
+	float mfRechargeTime=0;
+	float mfRechargeZoomInAmount=0;
+	
+	bool mbDrainCompleted=false;
+	
+	float mfPitchMinLimit;
+	float mfPitchMaxLimit;
+	
+	float mfFlashAmount=0;
+	float mfFlashDir=1;
+	bool mbFlashStarted=false;
+	
+	bool mbTentacleStart=false;
+	
+	float mfEffectT=0;
+	float mfEffectCount=0;
+	
+	float mfEffectHealth=1;
+	
+	array <tID> mvRechargeObjects;
+	bool mbRechargeObjectsPulsing=false;
+	
+	//------------------------------------------------------------
+}
+
+//------------------------------------------------------------

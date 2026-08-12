@@ -1,0 +1,416 @@
+#include "interfaces/UserModule_Interface.hps"
+#include "modules/ModuleInterfaces.hps"
+#include "helpers/helper_custom_depth_imgui.hps"
+#include "helpers/helper_imgui.hps"
+#include "helpers/helper_map.hps"
+#include "helpers/helper_game.hps"
+#include "helpers/helper_audio.hps"
+#include "helpers/helper_modules.hps"
+#include "inputhandler_types.hps"
+
+//------------------------------------------------------------
+
+/////////////////////////////////////////
+// SETTINGS
+/////////////////////////////////////////
+
+//------------------------------------------------------------
+
+const float gfInventory_IconScale = 0.1f;
+const float gfInventory_RowSpacing = 0.05f;
+const float gfInventory_ColumnSpacing = 0.1f;
+const int glInventory_NumOfSlots = 5;
+const int glInventory_MaxColumns = 5;
+const float gfInventory_Y = 0.84;
+
+//------------------------------------------------------------
+
+/////////////////////////////////////////
+// HELPER CLASS
+/////////////////////////////////////////
+
+//------------------------------------------------------------
+
+class cScrInventoryHandler : iScrUserModule, iScrUserModule_Interface, iScrInventoryHandler_Interface
+{
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// INIT
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void Init()
+	{
+		//mBaseObj.SetScriptableIsSaved(false);
+		
+		///////////////////////////////
+		// Load Graphics
+		@mpFont = cResources_CreateFontData("default_medium_outline.fnt");
+	}
+		
+	//------------------------------------------------------------
+	
+	void LoadUserConfig()
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	void SaveUserConfig()
+	{
+	}
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// INTERFACE
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------	
+	void SetInventoryActive(bool abX)
+	{
+	
+	}
+
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	//MAP LOADING
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnMapEnter(cLuxMap @apMap)
+	{
+		mfAutoEnableTime=0;
+	}
+
+	//------------------------------------------------------------
+
+	void OnMapLeave(cLuxMap @apMap)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void CreateWorldEntities(cLuxMap @apMap)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void DestroyWorldEntities(cLuxMap @apMap)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GENERAL
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnEnterContainer(const tString&in asOldContainer)
+	{
+	
+	}
+	void OnLeaveContainer(const tString&in asNewContainer)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void Update(float afTimeStep)
+	{
+		///////////////////////////
+		// Input
+		bool bEnabled=false;
+		if(mfAutoEnableTime>0)
+		{
+			bEnabled = true;
+			if(mbInventoryIsDisplayed==false)
+			{
+				mbInventoryIsDisplayed = true;
+				GetInventoryList();
+			}	
+		}
+		
+		if(mbInventoryIsDisplayed==false) return;
+		
+		if(mfAutoEnableTime>0) mfAutoEnableTime-= afTimeStep;
+		
+		///////////////////////////
+		// Update position
+		if(bEnabled)
+		{
+			mfAlpha = cMath_IncreaseTo(mfAlpha, afTimeStep*0.6f, 1);
+		}
+		else
+		{
+			mfAlpha = cMath_IncreaseTo(mfAlpha, afTimeStep*0.6f, 0);
+			if(mfAlpha==0) mbInventoryIsDisplayed= false;
+		}
+
+		if(LoadScreen_IsVisible())
+		{
+			mfAlpha = 0.0;
+			mbInventoryIsDisplayed= false;
+		}
+	}
+	
+	void VariableUpdate(float afDeltaTime)
+	{
+	}
+	//------------------------------------------------------------
+	
+	void PostUpdate(float afTimeStep)
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	
+	void Reset()
+	{
+		mbInventoryIsDisplayed = false;
+		mfAutoEnableTime=0;
+		mfAlpha=0;
+	}
+	
+	/////////////////////////////////////////
+	// PUBLIC
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void AutoEnable(float afTime)
+	{
+		if(LoadScreen_IsVisible()) return;
+
+		mfAutoEnableTime = afTime;
+	}
+
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GUI
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+
+	void OnGui(float afTimeStep)
+	{
+		if (!mbInventoryIsDisplayed) return;
+		
+		cVector3f vPos;
+		vPos.x = -cLux_GetHudVirtualOffset().x;
+		vPos.y = -cLux_GetHudVirtualOffset().y;
+		
+		ImGui_GroupBegin(vPos, ImGui_GetSize());
+		
+		//////////////////////////////
+		// Window data
+		cImGuiWindowData window = StationGui_CreateDefaultWindowData();
+		window.mColorBase = gStationGuiColor_Normal;
+		window.mFont.mvSize = ImGui_NrmSizeKeepRatio(0.03375);
+		
+		ImGui_SetTransCategory("");
+		
+		//////////////////////////////
+		// Slots
+		{
+			float fX = (1.0f - ((glInventory_MaxColumns-1) * (gfInventory_ColumnSpacing) + gfInventory_IconScale) )/2.0f;
+			float fY = gfInventory_Y;
+			
+			////////////////////////////
+			// imgui defs
+			cImGuiTextFrameData textData = ImGui_GetDefaultTextFrame();
+			textData.mbUseBackgroundGfx = false;
+			textData.mFontAlign = eFontAlign_Center;
+			textData.mFont.mvSize = ImGui_NrmSizeKeepRatio(0.0275);
+			
+			cImGuiGfx gfx;
+			
+			int lColumn = 0;
+			float fStartX = fX;
+			tString sText = "";
+			
+			for (uint i = 0; i < glInventory_NumOfSlots; i++)
+			{
+				///////////////////////////////////////
+				// Setup graphics and label per Icon
+				if (i >= mvToolIconList.length())
+				{
+					gfx.SetFile("invempty.tga");
+					sText = "";
+				}
+				else
+				{	
+					if (mvToolIconList[i] != "")
+						gfx.SetFile(mvToolIconList[i]);
+					else
+						gfx.SetFile("invnoicon.tga");
+				}
+				
+				///////////////////////////////////////
+				// Render icon and label
+				ImGui_SetModColorMul(cColor(1, cMath_Easing(eEasing_CubicInOut, mfAlpha)));
+				
+				ImGui_DoImage(gfx,ImGui_NrmPosGroup(cVector3f(fX, fY, 99)),ImGui_NrmSizeKeepRatio(gfInventory_IconScale));	
+				
+				///////////////////////////////////////
+				// Increment along X and drop down a row if we exceed Max Columns
+				fX += gfInventory_ColumnSpacing;
+				lColumn++;
+				if (lColumn >= glInventory_MaxColumns)
+				{
+					lColumn = 0;
+					fX = fStartX;
+					fY += gfInventory_RowSpacing;
+				}
+			}
+		}
+		
+		//////////////////////////////
+		// Group End
+		ImGui_GroupEnd();
+		
+	}
+	
+	//-------------------------------------------------------
+	
+	void OnDraw(float afFrameTime)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnPostRender(float afFrameTime)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// ACTIONS
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnAction(int alAction, bool abPressed)
+	{
+		if(alAction == eAction_OpenInventory && abPressed)
+		{
+			AutoEnable(3);
+		}
+	}
+	
+	//------------------------------------------------------------
+
+	void OnAnalogInput(int alAnalogId, const cVector3f &in avAmount)
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnExitPressed()
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	void AppGotInputFocus()
+	{
+	
+	}
+	void AppLostInputFocus()
+	{
+	
+	}
+	
+	//------------------------------------------------------------
+	
+	////////////////////////////////
+	// INVENTORY
+	////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void GetInventoryList()
+	{
+		int lInventorySize = 0;
+		mvToolIconList.resize(0);
+		
+		/////////////
+		// Get size of inventory
+		cScript_RunGlobalFunc("PlayerToolHandler", "", "_Global_GetToolCount");
+		lInventorySize = cScript_GetGlobalArgInt(0);
+		
+		if (lInventorySize <= 0) return;
+		
+		////////////
+		// Add all the names
+		
+		////////////
+		// Fetch the icons
+		cScript_RunGlobalFunc("PlayerToolHandler", "", "_Global_GetToolIconList");
+		tString lImageName = "";
+		
+		for (uint i = 0; i < lInventorySize; i++)
+		{
+			lImageName = cScript_GetGlobalArgString(i);
+			mvToolIconList.push_back(lImageName);
+		}
+		
+		for (uint i = 0; i < mvToolIconList.length(); i++)
+		{
+			//cLux_AddDebugMessage("Icon list: ["+i+"] " + mvToolIconList[i]);
+		}
+	}
+	
+	
+	//------------------------------------------------------------
+	
+	////////////////////////////////
+	// PROPERTIES
+	////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	[nosave] iFontData@ mpFont;
+	
+	//------------------------------------------------------------
+	
+	cVector2f mvAspectRatio;
+	cVector2f mvSize;
+	cVector2f mvOffset;
+	
+	//------------------------------------------------------------
+	
+	array<tString> mvToolIconList;
+	
+	//------------------------------------------------------------
+	
+	float mfAlpha=0;
+	float mfDisplayTime;
+	bool mbTextDisplayed;	
+	
+	float mfAutoEnableTime=0;
+	
+	//------------------------------------------------------------
+	
+	bool mbInventoryIsDisplayed;
+	
+	//------------------------------------------------------------
+}
