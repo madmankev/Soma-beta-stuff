@@ -827,7 +827,7 @@ class cScrMap : iScrMap
 		// Otherwise make it a bit more frequent.
 		else
 		{
-			Map_AddTimer("timer_loopingvoicerepeat",6.0f,"TimerLoopingVoice");
+			Map_AddTimer("timer_loopingvoicerepeat",6.0f,"TimerLoopingVoiceFirstFloor");
 		}
 	}
 	
@@ -2640,7 +2640,7 @@ class cScrMap : iScrMap
 		StopEscapeAlarms_Small(3.5f);
 		StopEscapeMusic(3.5f);
 		StopFinalChase();
-		Map_AddTimer("EscapeMusicStop", 3.5f, "EscapeMusicStopTimer");
+		Map_AddTimer("EscapeMusicStop", 3.5f, "EscapeMusicStop");
 		Player_FadeRollTo(0.0f,15.0f,3.0f);
 		
 		if (mbCathPluggedIn)

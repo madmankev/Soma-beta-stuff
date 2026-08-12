@@ -6343,7 +6343,7 @@ class cScrMap : iScrMap
 	{
 		Sound_Fade("CommRoomStatic_NoSignal", 1, 3);
 		Sound_Fade("CommRoomStatic_Contact", 0, 3);
-		Terminal_SetImGuiStateInt("CommRoomMonitor", "Online", 0);
+		Terminal_SetImGuiStateBool("CommRoomMonitor", "Online", false);
 	}
 
 	//-------------------------------------------------------
