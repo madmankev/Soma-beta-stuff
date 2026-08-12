@@ -1,0 +1,16 @@
+ 
+//ID of achievements
+shared enum eAchievement
+{
+	eAchievement_CathCall,		// 1.2 Call to Cath is over. (added)
+	eAchievement_ChasedCath,	// 2.1 When you enter Lambda (added)
+	eAchievement_Stranded,		// 2.3 Having exited the escape pod. (added)
+	eAchievement_Dunbat,		// 2.4 When you enter Theta or zeppeline arrives (added)
+	eAchievement_PlanB,			// 2.6 Crawling through maintenance shaft. (added)
+	eAchievement_Dream,			// 3.1 After the flush sequence (added)
+	eAchievement_NewYou,		// 3.2 Changed body at Omicron (added)
+	eAchievement_RockBottom,	// 4.1 Exiting the elevator. (added)
+	eAchievement_LastHuman,		// 4.2 Met the last person left alive (added)
+	eAchievement_DeadHands,		// 5.1 Entering Phi (added)
+	eAchievement_TheEnd,		// Credits Real Credits start (added)
+}

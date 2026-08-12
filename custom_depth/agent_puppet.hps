@@ -1,0 +1,2286 @@
+#include "agents/Agent_Humanoid.hps"
+
+#include "helper/helper_audio.hps"
+#include "helper/helper_player.hps"
+#include "helper/helper_entity.hps"
+#include "helper/helper_effects.hps"
+#include "helpers/helper_modules.hps"
+#include "custom_depth/helper_custom_depth.hps"
+
+/////////////////////////////////////////
+// SETTINGS
+/////////////////////////////////////////
+
+//------------------------------------------------------------
+
+const tString gsPuppetAlertMusic = "NPC_coralpuppet_close02";
+const float gfPuppetAlertMusicVolume = 0.35f;
+
+const tString gsPuppetHuntMusic = "NPC_CoralPuppet_Attack";
+const float gfPuppetHuntMusicVolume = 0.5f;
+
+//-------------------------------------------------------
+//{BARKS
+
+tString gsPuppet_RandomEvent_BarkSound;
+tString gsPuppet_RandomEvent_WalkStepSound;
+
+tString gsPuppetIdleSound;
+cVector2f gfPuppetIdleSoundMinMax;
+
+tString gsPuppetSearchSound;
+cVector2f gfPuppetSearchSoundMinMax;
+
+tString gsPuppetHuntSound;
+cVector2f gfPuppetHuntSoundMinMax;
+
+tString gsPuppetSound_InvestigateStart;
+tString gsPuppetSound_InvestigateExtraSound;
+tString gsPuppetSound_SearchStart;
+tString gsPuppetSound_SearchExtraSound;
+tString gsPuppetSound_LosePlayer;
+tString gsPuppetSound_SpotPlayer;
+
+//}ENDBARKS
+//-------------------------------------------------------
+
+enum ePuppetState
+{
+	ePuppetState_HideAndWait,
+	ePuppetState_Idle,
+	ePuppetState_Patrol,
+	ePuppetState_Wander,
+	ePuppetState_Investigate,
+	ePuppetState_PostInvestigate,
+	ePuppetState_Search,
+	ePuppetState_Hunt,
+	ePuppetState_OpenDoor,
+	ePuppetState_Retreat,
+};
+
+enum ePuppetSpeed
+{
+	ePuppetSpeed_SlowWalk,
+	ePuppetSpeed_Walk,
+	ePuppetSpeed_FastWalk,
+	ePuppetSpeed_SlowRun,
+	ePuppetSpeed_Run,
+}
+
+enum ePuppetBark
+{
+	ePuppetBark_Silent,
+	ePuppetBark_Idle,
+	ePuppetBark_Search,
+	ePuppetBark_Hunt,
+}
+
+//------------------------------------------------------------
+	
+class cScrAgentPuppet : cScrAgentHumanoid
+{
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// INIT
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void Init()
+	{
+		mBaseObj.SetUpdatePlayerDetection(true);
+		mBaseObj.SetCheckForDoors(true);
+		mBaseObj.SetMaxCheckDoorDistance(0.65f);
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// LOADING
+	//{//////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void SetupCharBody()
+	{
+		cScrAgentHumanoid::SetupCharBody();
+		
+		iCharacterBody@ pCharBody = mBaseObj.GetCharBody();
+		
+		pCharBody.SetMass(80);
+		pCharBody.SetMaxPositiveMoveSpeed(eCharDir_Forward,1.0f);
+		pCharBody.SetMoveAcc(eCharDir_Forward,4);
+		pCharBody.SetMoveDeacc(eCharDir_Forward,8);
+		pCharBody.SetAccurateClimbing(true);
+	}
+	
+	//------------------------------------------------------------
+	
+	void SetupAfterLoad(cWorld @apWorld, cResourceVarsObject@ apVars, cResourceVarsObject@ apInstanceVars)
+	{
+		cScrAgentHumanoid::SetupAfterLoad(apWorld, apVars, apInstanceVars);
+		
+		///////////////////////////////
+		//Akers vs Puppet setup
+		mbIsAkers = apVars.GetVarBool("IsAkers", false);
+
+		if(mbIsAkers)
+		{
+			gsPuppet_RandomEvent_BarkSound = "NPC_Creatures/Vocalisations/InWorld/Puppet/idle";
+			gsPuppet_RandomEvent_WalkStepSound = "NPC_Creatures/Foley/InWorld/CoralPuppet_01/walk_step";
+			
+			gsPuppetIdleSound = "NPC_Creatures/Vocalisations/InWorld/Puppet/idle";
+			gfPuppetIdleSoundMinMax = cVector2f(5, 10);
+			gsPuppetSearchSound = "NPC_Creatures/Vocalisations/InWorld/Puppet/search";
+			gfPuppetSearchSoundMinMax = cVector2f(5, 10);
+			gsPuppetHuntSound = "NPC_Creatures/Vocalisations/InWorld/Puppet/hunt";
+			gfPuppetHuntSoundMinMax = cVector2f(2, 6);
+
+			gsPuppetSound_InvestigateStart="NPC_Creatures/Vocalisations/InWorld/Puppet/alert";
+			gsPuppetSound_InvestigateExtraSound="NPC_Creatures/Vocalisations/InWorld/Puppet/alert";
+			gsPuppetSound_SearchStart="NPC_Creatures/Vocalisations/InWorld/Puppet/alert";
+			gsPuppetSound_SearchExtraSound="NPC_Creatures/Vocalisations/InWorld/Puppet/alert";
+			gsPuppetSound_LosePlayer="NPC_Creatures/Vocalisations/InWorld/Puppet/lose";
+			gsPuppetSound_SpotPlayer="NPC_Creatures/Vocalisations/InWorld/Puppet/spot";
+		}
+		else
+		{
+			gsPuppet_RandomEvent_BarkSound = "NPC_Creatures/Vocalisations/InWorld/Puppet/idle";
+			gsPuppet_RandomEvent_WalkStepSound = "NPC_Creatures/Foley/InWorld/CoralPuppet_01/walk_step";
+			
+			gsPuppetIdleSound = "NPC_Creatures/Vocalisations/InWorld/Puppet/idle";
+			gfPuppetIdleSoundMinMax = cVector2f(5, 10);
+			gsPuppetSearchSound = "NPC_Creatures/Vocalisations/InWorld/Puppet/search";
+			gfPuppetSearchSoundMinMax = cVector2f(5, 10);
+			gsPuppetHuntSound = "NPC_Creatures/Vocalisations/InWorld/Puppet/hunt";
+			gfPuppetHuntSoundMinMax = cVector2f(2, 6);
+
+			gsPuppetSound_InvestigateStart="NPC_Creatures/Vocalisations/InWorld/Puppet/alert";
+			gsPuppetSound_InvestigateExtraSound="NPC_Creatures/Vocalisations/InWorld/Puppet/alert";
+			gsPuppetSound_SearchStart="NPC_Creatures/Vocalisations/InWorld/Puppet/alert";
+			gsPuppetSound_SearchExtraSound="NPC_Creatures/Vocalisations/InWorld/Puppet/alert";
+			gsPuppetSound_LosePlayer="NPC_Creatures/Vocalisations/InWorld/Puppet/lose";
+			gsPuppetSound_SpotPlayer="NPC_Creatures/Vocalisations/InWorld/Puppet/spot";
+		}
+		
+		///////////////////////////////
+		//State
+		mbFastNonLookKill = apInstanceVars.GetVarBool("FastNonLookKill", true);
+		mbAttackFatal = apInstanceVars.GetVarBool("AttackFatal", true);
+		mbAttackInstantKnockDown = apInstanceVars.GetVarBool("AttackInstantKnockDown", true);
+		mfAgressionAmount = apInstanceVars.GetVarFloat("AgressionAmount", 0);
+		
+		///////////////////////////////
+		//General
+		mBaseObj.SetAlignEntityWithGroundRay(true);
+		mBaseObj.SetAlignEntityWithGroundRelativeRayStart(-0.0f);
+		mBaseObj.SetAlignEntityWithGroundMaxRayDistance(1.0f);
+		mBaseObj.SetFOV(cMath_ToRad(360));
+		mBaseObj.SetSightRange(15.0f);
+		mBaseObj.SetSightRangeAffectedByModifiers(false);
+		
+		///////////////////////////////
+		//Talk
+		msTalk_WanderSubject = apInstanceVars.GetVarString("Talk_WanderSubject", "");
+		msTalk_HideAndWaitSubject = apInstanceVars.GetVarString("Talk_HideAndWaitSubject", "");
+		
+		///////////////////////////////
+		//Listener
+		@mpSoundListener = cLux_CreateEntityComponent_SoundListener(mBaseObj);
+		mpSoundListener.LoadFromInstanceVariables(apInstanceVars);
+		mpSoundListener.SetHearRadius(1.0f);
+		mpSoundListener.SetIgnoreSoundRadius(2.5f);
+		mpSoundListener.SetMinHearPrio(-2);
+		mpSoundListener.SetSoundRadiusMul(1.5f);
+						
+		///////////////////////////////
+		//Pathfinder setup
+		mpPathfinder.SetMaxHeight(0.8f);
+		
+		///////////////////////////////
+		//Mover setup
+		mpMover.SetupWallAvoidance(0.8f, 5.0f, 4);
+		mpMover.SetupDynamicObjectAvoidance(1.7f, 10, 3);
+		
+		mpMover.SetMaxForwardSpeed(1);
+		mpMover.SetMaxBackwardSpeed(1);
+		
+		mpMover.SetStoppedToWalkSpeed(0.05f);
+		mpMover.SetRunToWalkSpeed(3.0);
+		mpMover.SetWalkToRunSpeed(3.2);
+		
+		/////////////////////////////////
+		// Speed States
+		float fWalkSpeedMul = apInstanceVars.GetVarFloat("WalkSpeedMul", 1);
+		float fRunSpeedMul = apInstanceVars.GetVarFloat("RunSpeedMul", 1);
+		
+		mpMover.AddSpeedState(ePuppetSpeed_SlowWalk);
+		mpMover.SetSpeedState_Forward(0.6*fWalkSpeedMul);
+		
+		mpMover.AddSpeedState(ePuppetSpeed_Walk);
+		mpMover.SetSpeedState_Forward((mbIsAkers ? 0.9 : 0.7)*fWalkSpeedMul);
+		
+		mpMover.AddSpeedState(ePuppetSpeed_FastWalk);
+		mpMover.SetSpeedState_Forward((mbIsAkers ? 2.25f : 1.5f)*fWalkSpeedMul);
+		
+		mpMover.AddSpeedState(ePuppetSpeed_SlowRun);
+		mpMover.SetSpeedState_Forward(3.4*fRunSpeedMul);
+		
+		mpMover.AddSpeedState(ePuppetSpeed_Run);
+		mpMover.SetSpeedState_Forward(6.3*fRunSpeedMul);
+		mpMover.SetSpeedState_TurnMaxSpeed(6);
+		mpMover.SetSpeedState_TurnSpeedMul(10);
+		mpMover.SetSpeedState_TurnBreakMul(0.2);
+		
+		
+		/////////////////////////////////
+		// States
+		@mpStateMachine = cLux_CreateEntityComponent_StateMachine(mBaseObj);
+		
+		mpStateMachine.AddState("HideAndWait", ePuppetState_HideAndWait);
+		mpStateMachine.AddState("Idle", ePuppetState_Idle);
+		mpStateMachine.AddState("Patrol", ePuppetState_Patrol);
+		mpStateMachine.AddState("Wander", ePuppetState_Wander);
+		mpStateMachine.AddState("Investigate", ePuppetState_Investigate);
+		mpStateMachine.AddState("PostInvestigate", ePuppetState_PostInvestigate);
+		mpStateMachine.AddState("Search", ePuppetState_Search);
+		mpStateMachine.AddState("Hunt", ePuppetState_Hunt);
+		mpStateMachine.AddState("OpenDoor", ePuppetState_OpenDoor);
+		mpStateMachine.AddState("Retreat", ePuppetState_Retreat);
+		
+		/////////////////////////////////
+		// Barks
+		@mpBarkMachine = cLux_CreateEntityComponent_BarkMachine(mBaseObj);
+		mpBarkMachine.SetupVoice(apInstanceVars.GetVarString("VoiceCharacter",""), true, 0.5, 20, 20);
+		
+		mpBarkMachine.AddState(ePuppetBark_Silent);
+		
+		mpBarkMachine.AddState(ePuppetBark_Idle);
+		cVector2f vMinMax = apInstanceVars.GetVarVector2f("IdleMinMaxTime",cVector2f(0,0));
+		//mpBarkMachine.SetState_VoiceBark(apInstanceVars.GetVarString("IdleSubject",""), vMinMax.x, vMinMax.y, true);
+		mpBarkMachine.SetState_SoundBark(gsPuppetIdleSound, gfPuppetIdleSoundMinMax.x, gfPuppetIdleSoundMinMax.y, true);
+		
+		mpBarkMachine.AddState(ePuppetBark_Search);
+		vMinMax = apInstanceVars.GetVarVector2f("SearchMinMaxTime",cVector2f(0,0));
+		//mpBarkMachine.SetState_VoiceBark(apInstanceVars.GetVarString("SearchSubject",""), vMinMax.x, vMinMax.y, true);
+		mpBarkMachine.SetState_SoundBark(gsPuppetSearchSound, gfPuppetSearchSoundMinMax.x, gfPuppetSearchSoundMinMax.y, true);
+				
+		mpBarkMachine.AddState(ePuppetBark_Hunt);
+		vMinMax = apInstanceVars.GetVarVector2f("HuntMinMaxTime",cVector2f(0,0));
+		//mpBarkMachine.SetState_VoiceBark(apInstanceVars.GetVarString("HuntSubject",""), vMinMax.x, vMinMax.y, true);
+		mpBarkMachine.SetState_SoundBark(gsPuppetHuntSound, gfPuppetHuntSoundMinMax.x, gfPuppetHuntSoundMinMax.y, true);
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnAfterWorldLoad()
+	{
+		cScrAgentHumanoid::OnAfterWorldLoad();
+		
+		//CoralInfectionHandler_AddEntity(mBaseObj.GetID());
+	}
+	
+	//------------------------------------------------------------
+	
+	//} END LOADING
+	
+	/////////////////////////////////////////
+	// GENERAL
+	//{//////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnUpdate(float afTimeStep)
+	{
+		cScrAgentHumanoid::OnUpdate(afTimeStep);
+		
+		int lState = mpStateMachine.GetCurrentState();
+		
+		/////////////////////////
+		// Talk
+		if(lState == ePuppetState_Wander || lState == ePuppetState_HideAndWait)
+		{
+			if(msTalk_WanderSubject != "" && msTalk_HideAndWaitSubject != "")
+			{	
+				mfTalkCount -= afTimeStep*1.0f;
+				
+				if(mfTalkCount <=0)
+				{
+					if(lState == ePuppetState_Wander)
+					{
+						if(mBaseObj.GetDistanceToPlayer() >10)
+							mpBarkMachine.PlayVoice(msTalk_WanderSubject,1);
+						mfTalkCount = cMath_RandRectf(100, 200);
+					}
+					else
+					{
+						mpBarkMachine.PlayVoice(msTalk_HideAndWaitSubject,1);
+						mfTalkCount = cMath_RandRectf(100, 200);
+					}
+				}
+			}
+		}
+		
+		/////////////////////////
+		// Scream in progress
+		if(mfTimeSinceLastScream<1000)
+			mfTimeSinceLastScream+=afTimeStep;
+		
+		/////////////////////////
+		// Check heighented awareness.
+		if(	lState == ePuppetState_Patrol ||
+			lState == ePuppetState_Wander)
+		{
+			mfHeightenedAwarenessCount -= afTimeStep;
+			
+			if(mfHeightenedAwarenessCount<=0)
+			{
+				if(mbHasHeightenedAwareness)
+				{
+					SetDefaultSoundRadiusMul();
+					mbHasHeightenedAwareness=false;
+					mfHeightenedAwarenessCount=cMath_RandRectf(10, 15);
+				}
+				else
+				{
+					mpSoundListener.SetSoundRadiusMul(2.5f);
+					mbHasHeightenedAwareness=true;
+					mfHeightenedAwarenessCount=cMath_RandRectf(1, 4);
+				}
+			}
+		}
+		else
+		{
+			mfHeightenedAwarenessCount=5;
+			mbHasHeightenedAwareness=false;
+		}
+		
+	}
+
+	//------------------------------------------------------------
+	
+	void ResetProperties()
+	{
+		cScrAgentHumanoid::ResetProperties();
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnRecieveMessage(int alMessageId, cLuxEntityMessageData @apData)
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnSetActive(bool abX)
+	{
+		cScrAgentHumanoid::OnSetActive(abX);
+		
+		if(abX)
+		{
+			if(mpStateMachine.GetCurrentState() == ePuppetState_HideAndWait)
+			{
+				mBaseObj.GetCharBody().SetActive(false);
+				mBaseObj.GetMeshEntity().SetActive(false);
+				mBaseObj.GetMeshEntity().SetVisible(false);	
+			}
+		}
+		else
+		{
+			AttackMeter_RemoveInstance(mBaseObj.GetID());
+		}
+	}
+	
+	//------------------------------------------------------------
+	
+	//} END GENERAL
+	
+	/////////////////////////////////////////
+	// STATES
+	//{//////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+		///////////////////////////////////
+		// State Helpers
+		//{////////////////////////////////
+		
+		//------------------------------------------------------------
+		
+		void SetDefaultSoundRadiusMul()
+		{
+			mpSoundListener.SetSoundRadiusMul(1.5f);
+		}
+		
+		//------------------------------------------------------------
+		
+		bool mbUsingSearchMoveAnimations=false;
+		
+		void SetDefaultMoveAnimations()
+		{
+			if(mbIsAkers==false) return;
+			
+			if(mbUsingSearchMoveAnimations==false) return;
+			mbUsingSearchMoveAnimations=false;
+			
+			mpMover.SetIdleAnimName("idle");
+			mpMover.SetWalkAnimName("walk");
+			mpMover.SetupIdleExtra("idle_extra_", 1, 6, true);
+			
+			mpMover.SetUseMoveStateAnimations(false);
+			mpMover.SetUseMoveStateAnimations(true);
+		}
+		
+		void SetAlertMoveAnimations()
+		{
+			if(mbIsAkers==false) return;
+			
+			if(mbUsingSearchMoveAnimations) return;
+			mbUsingSearchMoveAnimations=true;
+			
+			mpMover.SetIdleAnimName("idle_search");
+			mpMover.SetWalkAnimName("walk_search");
+			mpMover.SetupIdleExtra("idle_search_extra_", 1, 6, true);
+			
+			mpMover.SetUseMoveStateAnimations(false);
+			mpMover.SetUseMoveStateAnimations(true);
+		}
+		
+		void SetDefaultMinHuntDistance()
+		{
+			mfMinStartHuntDistance = 2.5f;
+		}
+		
+		void SetDefaultDistortion()
+		{
+			DistortionEffect_AddInstance(mBaseObj.GetID(), 20, 4, 0.3f, eEasing_QuadIn);
+		}
+
+		void AddAmbientMusic()
+		{
+			//Music_AddDynamicTrack(mBaseObj.GetID(), 0, eMusicPrio_AgentAmb,gsInfectedRobotAmbientMusic, gfInfectedRobotAmbientMusicVolume, 10, 10);
+		}
+		
+		//------------------------------------------------------------
+		
+		//} END State Helpers
+	
+		///////////////////////////////////
+		// Default State
+		//{////////////////////////////////
+	
+		//------------------------------------------------------------
+		
+		bool State_Default_Message(int alMessageId)
+		{
+			//////////////////////
+			// Hit by Prop
+			if(alMessageId == eLuxEntityMessage_HitByProp)
+			{
+				cVector3f vX = mpStateMachine.GetCurrentMessageData().mvX;
+				if(vX.x < 1.25f) return false;//Speed
+				if(cLux_GetPlayer().IsDead()) return false;
+				if(mBaseObj.GetSensesActive()==false) return false;
+				if(cLux_GetPlayer().GetTimeSincePhysicsObjectInteraction()>2.0f) return false;
+				
+				int lState = mpStateMachine.GetCurrentState();
+				
+				if(lState != ePuppetState_Hunt)
+				{
+					if(lState == ePuppetState_Search)
+						mpStateMachine.ChangeState(ePuppetState_Hunt);
+					else
+						mpStateMachine.ChangeState(ePuppetState_Search);
+				}
+					
+					
+				return true;
+			}
+			//////////////////////
+			// Sound heard
+			else if(alMessageId == eLuxEntityMessage_SoundHeard)
+			{
+				int lState = mpStateMachine.GetCurrentState();
+							
+				mvInvestigate_Goal = mpStateMachine.GetCurrentMessageData().mvX;
+				mlInvestigate_SoundPrio = mpStateMachine.GetCurrentMessageData().mlX;
+								
+				mpStateMachine.ChangeState(ePuppetState_Investigate);
+				
+				return true;
+			}
+			//////////////////////
+			// Force to position
+			else if(alMessageId == eLuxEntityMessage_ForceToPosition)
+			{
+				mvRetreat_Position = mpStateMachine.GetCurrentMessageData().mvX;
+				
+				mpStateMachine.ChangeState(ePuppetState_Retreat);
+				
+				return true;
+			}
+			//////////////////////
+			// Near Door
+			else if(alMessageId == eLuxEntityMessage_NearDoor)
+			{
+				tID idDoor = mpStateMachine.GetCurrentMessageData().mID;
+				
+				if(mBaseObj.GetCharBody().GetMoveSpeed(eCharDir_Forward)>0.1f)
+				{
+					cScript_SetGlobalArgID(0, mBaseObj.GetID());
+					cScript_RunGlobalFunc(cLux_ID_Entity(idDoor).GetName(),"","_Global_AgentNear");
+					
+					bool bRet = cScript_GetGlobalReturnBool();
+					if(bRet)
+					{
+						mpStateMachine.ChangeState(ePuppetState_OpenDoor);
+					}
+					else
+					{
+						mBaseObj.SetCheckForDoorsCount(3);
+					}
+				}
+				
+				return true;
+			} 
+			
+			
+			
+			return false;
+		}
+	
+		//------------------------------------------------------------
+		
+		//} END Default State
+	
+		///////////////////////////////////
+		// STATE: HideAndWait
+		//{////////////////////////////////
+	
+		//------------------------------------------------------------
+		
+		bool mbHideAndWait_First=true;
+		float mfHideAndWait_AppearCount=100;
+		
+		bool mbHideAndWait_UseCustomGoalPosition=false;
+		cVector3f mvHideAndWait_CustomGoalPosition;
+		float mfHideAndWait_CustomGoalMinDist=3.0f;
+	
+		//------------------------------------------------------------
+		
+		void State_HideAndWait_Enter()
+		{
+			if(mpPathfinder.GetTrackNodeNum()>0)
+			{
+				mpStateMachine.ChangeState(ePuppetState_Patrol);
+				return;
+			}
+			
+			mpBarkMachine.ChangeState(ePuppetBark_Silent);
+			Music_RemoveDynamicTrack(mBaseObj.GetID());
+			DistortionEffect_RemoveInstance(mBaseObj.GetID());
+			
+			mpStateMachine.AddTimer("UpdateState", 0.25);
+			mpStateMachine.AddTimer("RandomBark", cMath_RandRectf(20, 120 - mfAgressionAmount*70));
+			mpStateMachine.AddTimer("RandomSteps", cMath_RandRectf(30, 120 - mfAgressionAmount*70));
+			
+			mpPathfinder.Stop();
+			
+			mBaseObj.GetCharBody().SetActive(false);
+			mBaseObj.GetMeshEntity().SetActive(false);
+			mBaseObj.GetMeshEntity().SetVisible(false);
+			
+			SetDefaultMinHuntDistance();
+			SetDefaultMoveAnimations();
+			SetDefaultSoundRadiusMul();
+			
+			mfHideAndWait_AppearCount = cMath_RandRectf(30, 140);
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_HideAndWait_Leave()
+		{
+			mBaseObj.GetCharBody().SetActive(true);
+			mBaseObj.GetMeshEntity().SetActive(true);
+			mBaseObj.GetMeshEntity().SetVisible(true);
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_HideAndWait_Update(float afTimeStep)
+		{
+			///////////////////////////////////////
+			// If suddenly get tracks, go out of hiding
+			if(mpPathfinder.GetTrackNodeNum()>0)
+			{
+				mpStateMachine.ChangeState(ePuppetState_Patrol);
+				return;
+			}
+			
+			
+			///////////////////////////////////////
+			// Update counter
+			if(mbHideAndWaitPaused==false)
+				mfHideAndWait_AppearCount -= afTimeStep / cMath_Max(mfComeOutOfHidingTimeMul, 0.0001f);
+			
+			///////////////////////////////////////
+			// CHeck if time to appear
+			if(mfHideAndWait_AppearCount <=0)
+			{
+				float fMinAppearDistFromPlayer = 10 + cMath_RandRectf(5, 15) * (1-mfAgressionAmount);
+				
+				///////////////////////////////////////
+				// Custom Goal position
+				if(mbHideAndWait_UseCustomGoalPosition)
+				{
+					Wander_Begin(mvHideAndWait_CustomGoalPosition, mfHideAndWait_CustomGoalMinDist, fMinAppearDistFromPlayer);
+					mbHideAndWait_UseCustomGoalPosition = false;
+				}
+				///////////////////////////////////////
+				// Random goal position
+				else
+				{
+					float fBaseDist = 13 - mfAgressionAmount*11.0f;
+					float fMinFromPos = cMath_RandRectf(fBaseDist, fBaseDist*1.5f);
+				
+					Wander_Begin(mBaseObj.GetPlayerPos(), fMinFromPos, fMinAppearDistFromPlayer);
+				}
+				
+				mpStateMachine.ChangeState(ePuppetState_Wander);
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		int mlHideAndWait_StepSoundCount;
+		void State_HideAndWait_TimerUp(uint64 alId)
+		{
+			//////////////////////
+			// Update the position
+			if(alId ==H64("UpdateState"))
+			{
+				float fWantedDistance = 30.0f - mfAgressionAmount*20.0f;
+				
+				cVector3f vDir = mBaseObj.GetPosition() - mBaseObj.GetPlayerPos();
+				vDir.Normalize();
+				mBaseObj.SetPosition(mBaseObj.GetPlayerPos() + vDir*fWantedDistance);
+				
+				mpStateMachine.AddTimer("UpdateState", 1.0f);
+			}
+			//////////////////////
+			// RandomBark
+			if(alId ==H64("RandomBark"))
+			{
+				if(mfHideAndWait_AppearCount>20 * mfComeOutOfHidingTimeMul || mbHideAndWaitPaused)
+				{
+					cLux_AddDebugMessage("Random Bark plays");
+					mBaseObj.PlaySound("Bark", gsPuppet_RandomEvent_BarkSound, true, true);
+				}
+				
+				mpStateMachine.AddTimer("RandomBark", cMath_RandRectf(20, 120 - mfAgressionAmount*70));
+			}
+			//////////////////////
+			// Update the positio
+			if(alId ==H64("RandomSteps"))
+			{
+				if(mfHideAndWait_AppearCount>20 * mfComeOutOfHidingTimeMul || mbHideAndWaitPaused)
+				{
+					cLux_AddDebugMessage("Random Step plays");
+					mlHideAndWait_StepSoundCount = cMath_RandRectl(2, 6);
+					mpStateMachine.AddTimer("RandomStep_Sound", cMath_RandRectf(1, 1.5));
+				}
+				
+				mpStateMachine.AddTimer("RandomSteps", cMath_RandRectf(30, 120 - mfAgressionAmount*60));
+			}
+			//////////////////////
+			// Update the positio
+			if(alId ==H64("RandomStep_Sound"))
+			{
+				cLux_AddDebugMessage("Random Step sound. Count: "+mlHideAndWait_StepSoundCount);
+				mBaseObj.PlaySound("Step", gsPuppet_RandomEvent_WalkStepSound, true, true);
+				mlHideAndWait_StepSoundCount--;
+				if(mlHideAndWait_StepSoundCount<=0) return;
+				
+				mpStateMachine.AddTimer("RandomStep_Sound", cMath_RandRectf(1, 1.5));
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		bool State_HideAndWait_Message(int alMessageId)
+		{
+			//////////////////////
+			// Sound heard
+			if(alMessageId == eLuxEntityMessage_SoundHeard)
+			{
+				if(mfAgressionAmount<0.5f) return true;
+				
+				if(mfTimeSinceLastScream>3)
+				{
+					mBaseObj.PlaySound("Alert",gsPuppetSound_InvestigateStart,true, true);
+					mfTimeSinceLastScream = 0.0f;
+				}
+			
+				cVector3f vPos = mpStateMachine.GetCurrentMessageData().mvX;
+				
+				mbHideAndWait_UseCustomGoalPosition=true;
+				mvHideAndWait_CustomGoalPosition = vPos;
+				mfHideAndWait_CustomGoalMinDist = 3.0f;
+				mfHideAndWait_AppearCount=0;
+				
+				return true;
+			}
+			
+			return false;
+		}
+		
+		//------------------------------------------------------------
+		
+		//} END State HideAndWait
+		
+		///////////////////////////////////
+		// STATE: Idle
+		//{////////////////////////////////
+	
+		//------------------------------------------------------------
+		
+		void State_Idle_Enter()
+		{
+			mpStateMachine.AddTimer("CheckState", 0.25);
+			
+			SetDefaultMinHuntDistance();
+			SetDefaultMoveAnimations();
+			SetDefaultSoundRadiusMul();
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_Idle_TimerUp(uint64 alId)
+		{
+			//////////////////////
+			// Update destionation 
+			if(alId ==H64("CheckState"))
+			{
+				if(mpPathfinder.GetTrackNodeNum()>0)
+					mpStateMachine.ChangeState(ePuppetState_Patrol);
+				else
+					mpStateMachine.ChangeState(ePuppetState_Wander);
+					
+				mpStateMachine.AddTimer("CheckState", 0.25);
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		bool State_Idle_Message(int alMessageId)
+		{
+			return false;
+		}
+		
+		//------------------------------------------------------------
+		
+		//} END Idle
+		
+		///////////////////////////////////
+		// STATE: Patrol
+		//{////////////////////////////////
+	
+		//------------------------------------------------------------
+		
+		void State_Patrol_Enter()
+		{
+			SetDefaultDistortion();
+			SetDefaultMinHuntDistance();
+			SetDefaultSoundRadiusMul();
+			
+			mpMover.SetSpeedState(ePuppetSpeed_Walk);
+			mpBarkMachine.ChangeState(ePuppetBark_Idle);
+			
+			
+			mpPathfinder.SetTrackPaused(false);
+			
+			Music_RemoveDynamicTrack(mBaseObj.GetID());
+		}
+		
+		void State_Patrol_Leave()
+		{
+			mpPathfinder.SetTrackPaused(true);
+		}
+			
+		//------------------------------------------------------------
+		
+		void State_Patrol_TimerUp(uint64 alId)
+		{
+		}
+				
+		//------------------------------------------------------------
+		
+		bool State_Patrol_Message(int alMessageId)
+		{
+			///////////////////////////////
+			// End of Track
+			if(alMessageId == eLuxEntityMessage_EndOfTrack)
+			{
+				if(mpPathfinder.GetTrackLoop()==false)
+				{
+					//mpPathfinder.ClearTrackNodes();
+					//mpStateMachine.ChangeState(ePuppetState_Idle);
+				}
+			}
+			
+			
+			return false;
+		}
+		//------------------------------------------------------------
+		
+		//} END Patrol
+		
+		///////////////////////////////////
+		// STATE: Wander
+		//{////////////////////////////////
+		
+		//------------------------------------------------------------
+		
+		cVector3f mvWander_Goal;
+		bool mbWander_GoalHasBeenSet=false;
+		bool mbWander_ReachedGoal=false;
+		float mfWander_SearchAroundPlayerCount=0;
+		bool mbWander_SearchAroundPlayerStopped=false;
+		bool mbWander_MovingHome;
+		int mlWander_MovingHomeOutOfSightCount;
+		
+		//------------------------------------------------------------
+		
+		void State_Wander_Enter()
+		{
+			///////////////////////////
+			// Set basic values
+			SetDefaultDistortion();
+			SetDefaultMinHuntDistance();
+			SetDefaultSoundRadiusMul();
+			
+			///////////////////////////
+			// Setup states
+			mpMover.SetSpeedState(ePuppetSpeed_Walk);
+			mpBarkMachine.ChangeState(ePuppetBark_Idle);
+			Music_RemoveDynamicTrack(mBaseObj.GetID());
+			
+			///////////////////////////
+			// Set up variables
+			mfWander_SearchAroundPlayerCount = cMath_RandRectf(15, 20) * (1.0f + mfAgressionAmount*0.5f);
+			mbWander_SearchAroundPlayerStopped = false;
+			mbWander_MovingHome=false;
+			
+			///////////////////////////
+			// Goal is set
+			if(mbWander_GoalHasBeenSet)
+			{
+				mbWander_ReachedGoal = false;
+				mpPathfinder.MoveTo(mvWander_Goal, 1.0f, false);
+				
+				mpStateMachine.AddTimer("CheckReachedGoal", 1.0f);
+			}
+			///////////////////////////
+			// No Goal set.
+			else
+			{
+				if(mpStateMachine.GetPrevState() == ePuppetState_OpenDoor)
+				{
+					mpPathfinder.MoveTo(mvWander_Goal, 1.0f, false);
+					
+					if(mbWander_ReachedGoal==false)
+						mpStateMachine.AddTimer("CheckReachedGoal", 1.0f);	
+				}
+				else
+				{
+					mbWander_ReachedGoal=true;
+				}
+			}
+			
+			mpStateMachine.AddTimer("CheckMoveUpdates", 1.0f);
+			mpStateMachine.AddTimer("CheckSpeedUpdate", 1.0f);
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_Wander_Leave()
+		{
+			mbWander_GoalHasBeenSet = false;
+		}
+			
+		//------------------------------------------------------------
+		
+		void State_Wander_Update(float afTimeStep)
+		{
+			if(mbWander_ReachedGoal && mfWander_SearchAroundPlayerCount>0)
+			{
+				mfWander_SearchAroundPlayerCount -= afTimeStep;
+			}			
+		}
+		
+		//------------------------------------------------------------
+				
+		void State_Wander_TimerUp(uint64 alId)
+		{
+			//////////////////////////////
+			// Check Reached Goal
+			if(alId == H64("CheckReachedGoal"))
+			{
+				if(cMath_Vector3Dist(mBaseObj.GetCharBody().GetPosition(), mvWander_Goal)<3.0f)
+				{
+					mbWander_ReachedGoal = true;
+					return;
+				}
+				mpStateMachine.AddTimer("CheckReachedGoal", 1.0f);
+			}
+			//////////////////////////////
+			// Check Speed Update
+			if(alId == H64("CheckSpeedUpdate"))
+			{
+				if(mBaseObj.GetDistanceToPlayer() > 25 && mfAgressionAmount>0.5f)
+				{
+					mpMover.SetSpeedState(ePuppetSpeed_SlowRun);
+				}
+				else if(mBaseObj.GetDistanceToPlayer() > 15)
+				{
+					mpMover.SetSpeedState(ePuppetSpeed_FastWalk);
+				}
+				else
+				{
+					mpMover.SetSpeedState(ePuppetSpeed_Walk);
+				}
+				
+				mpStateMachine.AddTimer("CheckSpeedUpdate", 1.0f);
+			}
+			//////////////////////////////
+			// Check Move Update
+			if(alId == H64("CheckMoveUpdates"))
+			{
+				///////////////////////////
+				// Moving Home
+				if(mbWander_MovingHome)
+				{
+					if(mBaseObj.GetDistanceToPlayer()>15 && Wander_InLineOfSight()==false)
+					{
+						mlWander_MovingHomeOutOfSightCount++;
+						if(mlWander_MovingHomeOutOfSightCount>=10)
+						{
+							mpStateMachine.ChangeState(ePuppetState_HideAndWait);
+						}
+						
+						mpStateMachine.AddTimer("CheckMoveUpdates", 0.2f);
+					}
+					else
+					{
+						mlWander_MovingHomeOutOfSightCount=0;
+						
+						mpStateMachine.AddTimer("CheckMoveUpdates", 1.5f);
+					}
+				}
+				///////////////////////////
+				// Search around player
+				else if(mbWander_ReachedGoal && mfWander_SearchAroundPlayerCount>0)
+				{
+					if(mbWander_SearchAroundPlayerStopped==false && cMath_RandRectl(0,2)==0)
+					{
+						mpPathfinder.Stop();
+						mbWander_SearchAroundPlayerStopped=true;
+						
+						mpStateMachine.AddTimer("CheckMoveUpdates", cMath_RandRectf(2, 6));
+					}
+					else if(mpPathfinder.IsMoving())
+					{
+						mpPathfinder.Stop();
+						mpStateMachine.AddTimer("CheckMoveUpdates", cMath_RandRectf(1, 2));
+					}
+					else
+					{
+						cVector3f vCenterPos = mBaseObj.GetPlayerFeetPos();
+						float fMin = 5;
+						float fMax = 9;
+						float fDurationMul =1.0f;
+						
+						if(mBaseObj.GetDistanceToPlayer()<10 && cMath_RandRectl(0,2)==0)
+						{
+							cVector3f vPlayerToPuppet = mBaseObj.GetPosition() - mBaseObj.GetPlayerPos();
+							vPlayerToPuppet.y=0; vPlayerToPuppet.Normalize();
+							vCenterPos = mBaseObj.GetCharBody().GetFeetPosition() + vPlayerToPuppet*3.0f;
+							fDurationMul = 1.5f;
+						}
+						
+						cAINode @pNode = mpPathfinder.GetNodeAtPos(vCenterPos, fMin, fMax, false, false, false, null);
+						if(pNode !is null)
+						{
+							mvWander_Goal = pNode.GetPosition();
+							mpPathfinder.MoveTo(pNode.GetPosition(), 1, false);
+							
+							mbWander_SearchAroundPlayerStopped=false;
+						}
+						
+						mpStateMachine.AddTimer("CheckMoveUpdates", cMath_RandRectf(3, 8)*fDurationMul);
+					}
+				}
+				///////////////////////////
+				// Go Home
+				else if(mfWander_SearchAroundPlayerCount<=0)
+				{
+					cVector3f vPos;
+					cVector3f vPlayerToPuppet = mBaseObj.GetPosition() - mBaseObj.GetPlayerPos();
+					vPlayerToPuppet.y=0; vPlayerToPuppet.Normalize();
+					cVector3f vSpawnPos = mBaseObj.GetPosition() + vPlayerToPuppet*5.0f;
+					
+					if(Wander_GetRandomSpawnPos(vSpawnPos ,17, 27, true, vPos))
+					{
+						mvWander_Goal = vPos;
+						mpPathfinder.MoveTo(vPos, 1, false);
+						mbWander_MovingHome = true;
+						mlWander_MovingHomeOutOfSightCount=0;
+					}
+					else
+					{
+						mfWander_SearchAroundPlayerCount=10;
+					}
+					
+					mpStateMachine.AddTimer("CheckMoveUpdates", 1.0f);
+				}
+				//////////////////////////
+				// Default
+				else
+				{
+					
+					mpStateMachine.AddTimer("CheckMoveUpdates", 1.0f);
+				}
+			}
+			//////////////////////////////
+			// EndMovingHome
+			if(alId == H64("EndMovingHome"))
+			{
+				mbWander_MovingHome=false;
+				mfWander_SearchAroundPlayerCount=10.0f;
+			}
+		}
+				
+		//------------------------------------------------------------
+		
+		bool State_Wander_Message(int alMessageId)
+		{
+			///////////////////////////////
+			// End of Track
+			if(alMessageId == eLuxEntityMessage_EndOfPath)
+			{
+				if(mbWander_ReachedGoal==false)
+				{
+					mbWander_ReachedGoal=true;
+				}
+				
+				if(mbWander_MovingHome)
+				{
+					mpStateMachine.AddTimer("EndMovingHome", 5.0f);
+				}
+				
+				return true;
+			}
+			
+			return false;
+		}
+		
+		//------------------------------------------------------------
+		
+		//} END State Wander
+		
+		///////////////////////////////////
+		// STATE: Investigate
+		//{/////////////////////////////////
+	
+		//------------------------------------------------------------
+		
+		cVector3f mvInvestigate_Goal;
+		int mlInvestigate_SoundPrio;
+		bool mbInvestigate_ReactionPlaying;
+		
+		float mfInvestigate_DistToLastSound;
+		float mfInvestigate_EnterSearchCount;
+		
+		//------------------------------------------------------------
+		
+		void Investigate_OnHearNewSound(bool bCheckPrevState)
+		{
+			bool bOpenedDoor = mpStateMachine.GetPrevState() == ePuppetState_OpenDoor;
+			if(bCheckPrevState==false) bOpenedDoor = false;
+			
+			cLux_AddDebugMessage("time since scream: "+mfTimeSinceLastScream+" bOpenedDoor"+bOpenedDoor);
+			if(mfTimeSinceLastScream>3 && bOpenedDoor==false)
+			{
+				mBaseObj.PlaySound("Alert",gsPuppetSound_InvestigateStart,true, true);
+				mfTimeSinceLastScream = 0;
+			}
+			
+			
+			mfInvestigate_DistToLastSound = mBaseObj.GetDistanceToPos(mvInvestigate_Goal);
+			
+			mpPathfinder.Stop();
+			
+			mbInvestigate_ReactionPlaying = true;
+			mfInvestigate_EnterSearchCount=0;
+			
+			if(bOpenedDoor)
+			{
+				mpStateMachine.AddTimer("StartMoving",0.1f);
+			}
+			else
+			{
+				mpStateMachine.AddTimer("StartMoving", mbIsAkers ? 2.0f : 3.0f); //A slight paused before walking towards the sound.
+				mpMover.PlayAnimation("hears_player");
+			}
+			
+			mpStateMachine.AddTimer("UpdateSpeed", 0.3f); //Update speed	
+			
+			
+			cLux_AddDebugMessage("Investigate, start reaction. Prio: "+mlInvestigate_SoundPrio+" Dist:"+mfInvestigate_DistToLastSound);
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_Investigate_Enter()
+		{
+			SetDefaultMinHuntDistance();
+			SetDefaultDistortion();
+			SetDefaultMoveAnimations();
+			SetDefaultSoundRadiusMul();
+						
+			mpMover.SetSpeedState(ePuppetSpeed_Walk);
+			
+			mpBarkMachine.ChangeState(ePuppetBark_Idle);
+			
+			Music_AddDynamicTrack(mBaseObj.GetID(), 0, eMusicPrio_AgentAlert, gsPuppetAlertMusic, gfPuppetAlertMusicVolume, 10, 10);
+			
+			Investigate_OnHearNewSound(true);
+		}
+		
+		//------------------------------------------------------------
+				
+		void State_Investigate_Leave()
+		{
+			mpMover.SetUseMoveStateAnimations(true);
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_Investigate_Update(float afTimeStep)
+		{
+			if(mfInvestigate_EnterSearchCount>0)
+				mfInvestigate_EnterSearchCount -= afTimeStep*0.25f;
+		}
+			
+		//------------------------------------------------------------
+		
+		void State_Investigate_TimerUp(uint64 alId)
+		{
+			///////////////////////
+			// Walk towards the sound
+			if(alId==H64("StartMoving"))
+			{
+				mpMover.SetSpeedState(ePuppetSpeed_Walk);
+				mbInvestigate_ReactionPlaying = false;
+
+				cAINode@ pNode = mpPathfinder.GetNodeInPosLOS(mvInvestigate_Goal, 0, 10);
+				if(pNode !is null)
+				{
+					mpPathfinder.MoveTo(pNode.GetPosition(), 1, false);
+				}
+				else
+				{
+					mpStateMachine.ChangeState(ePuppetState_Idle);
+				}
+			}
+			///////////////////////
+			// Speed update
+			if(alId==H64("UpdateSpeed"))
+			{
+				float fDistToGoal = cMath_Vector3Dist(mBaseObj.GetPosition(), mvInvestigate_Goal);
+				float fDistToPlayer = mBaseObj.GetDistanceToPlayer();
+				
+				if(fDistToPlayer> 15 && fDistToGoal>5.0f && mfAgressionAmount>0.5f)
+				{
+					mpMover.SetSpeedState(ePuppetSpeed_SlowRun);
+				}
+				else if(fDistToPlayer> 10 && fDistToGoal>5.0f)
+				{
+					mpMover.SetSpeedState(ePuppetSpeed_FastWalk);
+				}
+				else
+				{
+					mpMover.SetSpeedState(ePuppetSpeed_Walk);
+				}
+				
+				mpStateMachine.AddTimer("UpdateSpeed", 0.3f);
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		bool State_Investigate_Message(int alMessageId)
+		{
+			//////////////////////////////////////
+			// End of Path
+			if(alMessageId == eLuxEntityMessage_EndOfPath)
+			{
+				mpStateMachine.ChangeState(ePuppetState_PostInvestigate);		
+				
+				return true;
+			}
+			//////////////////////
+			// Sound heard
+			else if(alMessageId == eLuxEntityMessage_SoundHeard)
+			{
+				int lPrio = mpStateMachine.GetCurrentMessageData().mlX;
+				float fDist  = mBaseObj.GetDistanceToPos(mpStateMachine.GetCurrentMessageData().mvX);
+				
+				if(	mlInvestigate_SoundPrio < lPrio || 
+					((mlInvestigate_SoundPrio>=0 || mlInvestigate_SoundPrio==lPrio) && fDist < mfInvestigate_DistToLastSound-1.5f) )
+				{
+					mvInvestigate_Goal = mpStateMachine.GetCurrentMessageData().mvX;
+					mlInvestigate_SoundPrio = lPrio;
+					mfInvestigate_DistToLastSound = fDist;
+				
+					if (mbInvestigate_ReactionPlaying==false)
+					{
+						mpStateMachine.StopTimer("UpdateSpeed");
+						
+						Investigate_OnHearNewSound(false);
+					}
+				}
+				
+				if(	mlInvestigate_SoundPrio>0 && AttackMeter_GetPlayerIsReovering()==false &&
+					mBaseObj.GetDistanceToPlayer() < 10 && mBaseObj.PlayerIsDetected())
+				{
+					mfInvestigate_EnterSearchCount += 1.0f;
+					if(mfInvestigate_EnterSearchCount>2.0f)
+						mpStateMachine.ChangeState(ePuppetState_Search);
+				}
+				
+				return true;
+			}
+			
+			
+			return false;
+		}
+
+		//------------------------------------------------------------
+		
+		//} END Investigate
+		
+		///////////////////////////////////
+		// STATE: Post Investigate
+		//{/////////////////////////////////
+		
+		//------------------------------------------------------------
+		
+		void State_PostInvestigate_Enter()
+		{
+			SetDefaultMinHuntDistance();
+			SetDefaultDistortion();
+			SetDefaultMoveAnimations();
+			SetDefaultSoundRadiusMul();
+			
+			mlInvestigate_SoundPrio = -100;
+			mfInvestigate_DistToLastSound = 9999.0f;
+									
+			mpMover.SetSpeedState(ePuppetSpeed_Walk);
+			
+			mpPathfinder.Stop();
+			
+			mpBarkMachine.ChangeState(ePuppetBark_Idle);
+			
+			mpStateMachine.AddTimer("ReturnToIdle", cMath_RandRectf(5, 9));
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_PostInvestigate_Leave()
+		{
+			mpMover.SetUseMoveStateAnimations(true);
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_PostInvestigate_TimerUp(uint64 alId)
+		{
+			if(alId == H64("ReturnToIdle"))
+			{
+				mpStateMachine.ChangeState(ePuppetState_Idle);
+			}
+		}
+		
+		bool State_PostInvestigate_Message(int alMessageId)
+		{
+			//////////////////////
+			// Sound heard
+			if(alMessageId == eLuxEntityMessage_SoundHeard)
+			{
+				int lPrio = mpStateMachine.GetCurrentMessageData().mlX;
+				cVector3f vPos = mpStateMachine.GetCurrentMessageData().mvX;
+				
+				float fSoundToPlayerDist = cMath_Vector3Dist(vPos, mBaseObj.GetPlayerPos());
+				
+				if(fSoundToPlayerDist < 10  && AttackMeter_GetPlayerIsReovering()==false &&
+					mBaseObj.GetDistanceToPlayer() < 10 && mBaseObj.PlayerIsDetected())
+				{
+					mpMover.TurnToPos(vPos);
+					mpStateMachine.ChangeState(ePuppetState_Search);
+					return true;	
+				}
+				else
+				{
+					return false;	
+				}
+			}
+			
+			return false;
+		}
+		
+		//------------------------------------------------------------
+		
+		//} END Post Investigate
+		
+		///////////////////////////////////
+		// STATE: Search
+		//{/////////////////////////////////
+	
+		//------------------------------------------------------------
+		
+		cVector3f mvSearch_SoundPos;
+		int mlSearch_SoundPrio;
+		float mfSearch_SoundSensitivity;
+		float mfSearch_TimeSinceLastSound;
+		bool mbSearch_PauseAtStart;
+		bool mbSearch_WalkingTowardsSound=false;
+		
+		//------------------------------------------------------------
+		
+		void State_Search_Enter()
+		{
+			SetDefaultDistortion();
+			SetAlertMoveAnimations();
+			SetDefaultSoundRadiusMul();
+			
+			mpPathfinder.Stop();
+			mpMover.SetSpeedState(ePuppetSpeed_Walk);
+			
+			mpBarkMachine.ChangeState(ePuppetBark_Search);
+			
+			if(mfTimeSinceLastScream>3)
+			{
+				mBaseObj.PlaySound("SearchStart",gsPuppetSound_SearchStart,true, true);
+				mfTimeSinceLastScream = 0.0f;
+			}
+			
+			mfMinStartHuntDistance = 2.5f;
+			
+			mlSearch_SoundPrio=-100;
+			mfSearch_SoundSensitivity=0.0f;
+			mfSearch_TimeSinceLastSound=100.0f;
+			mbSearch_PauseAtStart=true;
+			mbSearch_WalkingTowardsSound =false;
+			
+			DistortionEffect_AddInstance(mBaseObj.GetID(), 20, 4, 0.6f, eEasing_QuadIn);
+			
+			Music_AddDynamicTrack(mBaseObj.GetID(), 0, eMusicPrio_AgentAlert, gsPuppetAlertMusic, gfPuppetAlertMusicVolume, 10, 10);
+			
+			mpStateMachine.AddTimer("SearchOver", cMath_RandRectf(20, 30));
+			mpStateMachine.AddTimer("PauseOver", 2);
+			mpStateMachine.AddTimer("RandomWalkStart", cMath_RandRectf(2, 10));
+			mpStateMachine.AddTimer("CheckHuntStart", 1.0f);
+			mpStateMachine.AddTimer("CheckSpeedUpdate", 1.0f);
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_Search_Leave()
+		{
+			SetDefaultSoundRadiusMul();
+			mpPathfinder.Stop();
+			
+			mpMover.SetUseMoveStateAnimations(true);
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_Search_Update(float afTimeStep)
+		{
+			mfSearch_TimeSinceLastSound += afTimeStep;
+			
+			mfSearch_SoundSensitivity -= afTimeStep*0.35f;
+			if(mfSearch_SoundSensitivity<0) mfSearch_SoundSensitivity=0;
+			
+			mpSoundListener.SetSoundRadiusMul(2.0f + mfSearch_SoundSensitivity*0.5f);
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_Search_TimerUp(uint64 alId)
+		{
+			//////////////////////
+			// Reset Sound Properties
+			if(alId == H64("TurnTowardsOver"))
+			{
+				mlSearch_SoundPrio = -100;
+				mpPathfinder.Stop();
+			}
+			//////////////////////////////
+			// Check Speed Update
+			if(alId == H64("CheckSpeedUpdate"))
+			{
+				if(	mBaseObj.GetDistanceToPlayer() > 10 ||
+					(mbIsAkers==false && mBaseObj.GetDistanceToPlayer()>5 ))
+				{
+					mpMover.SetSpeedState(ePuppetSpeed_FastWalk);
+				}
+				else
+				{
+					mpMover.SetSpeedState(ePuppetSpeed_Walk);
+				}
+				
+				mpStateMachine.AddTimer("CheckSpeedUpdate", 1.0f);
+			}
+			//////////////////////
+			// Search Over
+			if(alId == H64("SearchOver"))
+			{
+				mpStateMachine.ChangeState(ePuppetState_Idle);
+			}
+			//////////////////////
+			// Search Over
+			if(alId == H64("PauseOver"))
+			{
+				mbSearch_PauseAtStart=false;
+			}
+			//////////////////////
+			// Check Hunt Start
+			if(alId == H64("CheckHuntStart"))
+			{
+				float fDist = mBaseObj.GetDistanceToPlayer();
+				float fSpeed = cLux_GetPlayer().GetAverageMoveSpeed();
+			
+				if(mBaseObj.PlayerIsDetected())
+				{
+					if(	fDist < mfMinStartHuntDistance*0.8f ||
+						(fDist < 9 && fSpeed> 1.95f) ||
+						(fDist < 16 && fSpeed> 5.1f) ||
+						(fDist < 5.5f && fSpeed>1.6f) ||
+						(fDist < 4.0f && fSpeed>1.1f))
+					{
+						mpStateMachine.ChangeState(ePuppetState_Hunt);
+					}
+				}
+				
+				mpStateMachine.AddTimer("CheckHuntStart", 1.0f);
+			}
+			//////////////////////
+			// RandomWalkStart
+			if(alId == H64("RandomWalkStart"))
+			{
+				if(mbSearch_WalkingTowardsSound==false)
+				{
+					float fDist = mBaseObj.GetDistanceToPlayer();
+					float fMaxDist = cMath_Max(fDist*0.5f, 7.0f);
+					
+					cAINode @pNode = mpPathfinder.GetNodeAtPos(mBaseObj.GetPlayerFeetPos(), 5, fMaxDist, false, false, false, null);
+					if(pNode !is null)
+					{
+						mpPathfinder.MoveTo(pNode.GetPosition(), 1, false);
+					}
+					
+					if(mbIsAkers)
+						mpStateMachine.AddTimer("RandomWalkStop", cMath_RandRectf(2, 4));
+					else
+						mpStateMachine.AddTimer("RandomWalkStop", cMath_RandRectf(2, 5));
+				}
+				else
+				{
+					mpStateMachine.AddTimer("RandomWalkStart", cMath_RandRectf(2, 10));
+				}
+			}
+			//////////////////////
+			// RandomWalkEnd
+			if(alId == H64("RandomWalkStop"))
+			{
+				if(mbSearch_WalkingTowardsSound==false)
+					mpPathfinder.Stop();
+				
+				if(mbIsAkers)
+					mpStateMachine.AddTimer("RandomWalkStart", cMath_RandRectf(2, 10));
+				else
+					mpStateMachine.AddTimer("RandomWalkStart", cMath_RandRectf(2, 5));
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		bool State_Search_Message(int alMessageId)
+		{
+			//////////////////////////////////////
+			// End of Path
+			if(alMessageId == eLuxEntityMessage_EndOfPath)
+			{
+				mlSearch_SoundPrio=-100;
+				mbSearch_WalkingTowardsSound=false;
+				
+				return true;
+			}
+			//////////////////////
+			// Sound heard
+			else if(alMessageId == eLuxEntityMessage_SoundHeard)
+			{
+				if(mbSearch_PauseAtStart) return  true;
+				
+				int lPrio = mpStateMachine.GetCurrentMessageData().mlX;
+				cVector3f vPos = mpStateMachine.GetCurrentMessageData().mvX;
+				
+				////////////////////////////////
+				// Sound is more important than current
+				if(mlSearch_SoundPrio < lPrio)
+				{
+					mfSearch_SoundSensitivity = cMath_IncreaseTo(mfSearch_SoundSensitivity, 1.0f, 3.0f);
+					
+					mvSearch_SoundPos = vPos;
+					mlSearch_SoundPrio = lPrio;
+					
+					if(	mfSearch_TimeSinceLastSound>3.0f || 
+						mBaseObj.GetDistanceToPlayer()>5.0f ||
+						mbIsAkers==false) 
+					{
+						cAINode @pNode = mpPathfinder.GetNodeInPosLOS(mvSearch_SoundPos, 0, 6);
+						
+						if(pNode !is null)
+							mpPathfinder.MoveTo(pNode.GetPosition(),1, false);
+						else
+							mpMover.TurnToPos(mvSearch_SoundPos);
+					}
+					else
+					{
+						mpMover.TurnToPos(mvSearch_SoundPos);
+						mpStateMachine.AddTimer("TurnTowardsOver", 1.0f);
+					}
+					
+					if(mfTimeSinceLastScream>3)
+					{
+						mBaseObj.PlaySound("SearchExtra",gsPuppetSound_SearchExtraSound,true, true);
+						mfTimeSinceLastScream = 0;
+					}
+					
+					mfSearch_TimeSinceLastSound=0;
+					mbSearch_WalkingTowardsSound=true;
+					
+					mpStateMachine.StopTimer("SearchOver");
+					mpStateMachine.AddTimer("SearchOver", cMath_RandRectf(10, 20));
+				}
+				////////////////////////////////
+				// Sound is of less or equal importance
+				else
+				{
+					if(lPrio>=1 && cMath_Vector3Dist(mBaseObj.GetPlayerPos(), vPos) < 3.0f)
+					{
+						mfSearch_SoundSensitivity = cMath_IncreaseTo(mfSearch_SoundSensitivity, 0.5f, 3.0f);
+						
+						mpStateMachine.StopTimer("SearchOver");
+						mpStateMachine.AddTimer("SearchOver", cMath_RandRectf(10, 20));
+					}
+				}
+				
+				return true;
+			}
+			
+			
+			return false;
+		}
+
+		//------------------------------------------------------------
+		
+		//} END Search
+		
+		///////////////////////////////////
+		// STATE: Hunt
+		//{////////////////////////////////
+	
+		//------------------------------------------------------------
+		
+		cVector3f mvHunt_LastKnownPostion;
+		float mfHunt_SenseLastKnownPosCount;
+		bool mbHunt_Ending=false;
+	
+		//------------------------------------------------------------
+		
+		void State_Hunt_Enter()
+		{
+			mpBarkMachine.ChangeState(ePuppetBark_Hunt);
+			
+			if(mfTimeSinceLastScream>3)
+			{
+				mBaseObj.PlaySound("SpotPlayer",gsPuppetSound_SearchStart,true, true);
+				mfTimeSinceLastScream = 0.0f;
+			}
+			
+			mpPathfinder.Stop();
+			mpMover.TurnToPos(mBaseObj.GetPlayerPos());
+			mpMover.SetSpeedState(ePuppetSpeed_Run);
+			
+			mpStateMachine.AddTimer("MoveTowardsPlayer", 0.25f);
+			mpStateMachine.AddTimer("SpeedUpdate", 0.75f);
+			
+			mvHunt_LastKnownPostion = mBaseObj.GetPlayerFeetPos();
+			mfHunt_SenseLastKnownPosCount=0.0f;
+			mbHunt_Ending = false;
+			
+			Music_AddDynamicTrack(mBaseObj.GetID(), 0, eMusicPrio_AgentHunt, gsPuppetHuntMusic, gfPuppetHuntMusicVolume, 3, 3);
+			
+			AttackMeter_AddInstance(mBaseObj.GetID(), 7.5f, 1.75f, 0.3f, mbAttackFatal, mbFastNonLookKill);
+		}	
+
+		//------------------------------------------------------------
+		
+		void State_Hunt_Leave()
+		{
+			AttackMeter_RemoveInstance(mBaseObj.GetID());
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_Hunt_Update(float afTimeStep)
+		{
+			if(mbHunt_Ending) return;
+			
+			float fDist = mBaseObj.GetDistanceToPlayer();
+			float fSpeed = cLux_GetPlayer().GetAverageMoveSpeed();
+			
+			////////////////////////////////
+			// Reveal player if running
+			if( mBaseObj.PlayerIsDetected()
+				&&
+				((fDist < 7 && fSpeed>2.1f) ||
+				(fDist < 12 && fSpeed>4.2f) ||
+				fDist<3.2f))
+			{
+				mfHunt_SenseLastKnownPosCount = cMath_IncreaseTo(mfHunt_SenseLastKnownPosCount, afTimeStep,1.5f);
+			}
+			else
+			{
+				mfHunt_SenseLastKnownPosCount = cMath_IncreaseTo(mfHunt_SenseLastKnownPosCount, afTimeStep,0);
+			}
+			
+			if(mfHunt_SenseLastKnownPosCount>0)
+				mvHunt_LastKnownPostion = mBaseObj.GetPlayerFeetPos();
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_Hunt_TimerUp(uint64 alId)
+		{
+			//////////////////////
+			// Update destionation 
+			if(alId == H64("MoveTowardsPlayer"))
+			{
+				mpPathfinder.MoveTo(mvHunt_LastKnownPostion, 1, false);
+				mpStateMachine.AddTimer("MoveTowardsPlayer",0.3f);
+			}
+			//////////////////////
+			// Move speed update
+			else if(alId==H64("SpeedUpdate"))
+			{
+				float fDist = mBaseObj.GetDistanceToPlayer();
+				float fSpeed = cLux_GetPlayer().GetAverageMoveSpeed();
+				//if(fSpeed>2.4 || fDist>6.5f)
+				{
+					mpMover.SetSpeedState(ePuppetSpeed_Run);
+				}
+				//else
+				//{
+				//	mpMover.SetSpeedState(ePuppetSpeed_FastWalk);
+				//}
+				
+				mpStateMachine.AddTimer("SpeedUpdate", 1.0f); //update move speed
+			}
+			//////////////////////
+			// Update destionation 
+			else if(alId == H64("EndHunt"))
+			{
+				mpStateMachine.ChangeState(ePuppetState_Search);
+				
+				if(mfTimeSinceLastScream>3)
+				{
+					mBaseObj.PlaySound("LosePlayer",gsPuppetSound_SearchStart,true, true);
+					mfTimeSinceLastScream = 0.0f;
+				}
+			}
+		}
+
+		//------------------------------------------------------------
+		
+		bool State_Hunt_Message(int alMessageId)
+		{
+			/////////////////////////
+			// End of Path
+			if(alMessageId == eLuxEntityMessage_EndOfPath)
+			{
+				mbHunt_Ending = true;
+				mpStateMachine.AddTimer("EndHunt", 1.0f); //update move speed
+							
+				return true;
+			}
+			////////////////////////
+			// Sound Heard
+			else if(alMessageId == eLuxEntityMessage_SoundHeard)
+			{
+				//Override default!	
+				return true;
+			}
+			
+			return false;
+		}
+
+		//------------------------------------------------------------
+		
+		//} END Hunt
+		
+		///////////////////////////////////
+		// STATE: Open Door
+		//{////////////////////////////////
+		
+		//------------------------------------------------------------
+		
+		void State_OpenDoor_Enter()
+		{
+			if(mpPathfinder.GetTrackActive())
+				mpPathfinder.SetTrackPaused(true);
+				
+			mpPathfinder.Stop();
+			
+			mpStateMachine.AddTimer(0, 2);
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_OpenDoor_Leave()
+		{
+			if(mpPathfinder.GetTrackActive())
+				mpPathfinder.SetTrackPaused(false);
+		}
+		
+		
+		//------------------------------------------------------------
+		
+		void State_OpenDoor_TimerUp(uint64 alId)
+		{
+			if(alId == 0)
+			{
+				mpStateMachine.ChangeState(mpStateMachine.GetPrevState());	
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		bool State_OpenDoor_Message(int alMessageId)
+		{
+			if(alMessageId==eLuxEntityMessage_NearDoor)
+			{
+				return true;
+			}
+			
+			return false;
+		}
+		
+		//------------------------------------------------------------
+		
+		//} END STATE Open Door
+	
+		///////////////////////////////////
+		// STATE: Retreat
+		//{////////////////////////////////
+		
+		//------------------------------------------------------------
+		
+		cVector3f mvRetreat_Position;
+		float mfRetreat_InsideRepelAreaCount=0;
+		
+		//------------------------------------------------------------
+		
+		void State_Retreat_Enter()
+		{
+			mpMover.SetSpeedState(ePuppetSpeed_Walk);
+			
+			mpPathfinder.MoveTo(mvRetreat_Position, 1, false);
+			
+			mfRetreat_InsideRepelAreaCount = 0.5f;
+		}
+
+		//------------------------------------------------------------
+		
+		void State_Retreat_Update(float afTimeStep)
+		{	
+			if(mfRetreat_InsideRepelAreaCount>0)
+				mfRetreat_InsideRepelAreaCount -= afTimeStep;
+		}
+		
+		//------------------------------------------------------------
+		
+		bool State_Retreat_Message(int alMessageId)
+		{
+			//////////////////////
+			// Hit By Prop
+			if(alMessageId == eLuxEntityMessage_HitByProp)
+			{
+				return mfRetreat_InsideRepelAreaCount>0;
+			}
+			//////////////////////
+			// Sound Heard
+			if(alMessageId == eLuxEntityMessage_SoundHeard)
+			{
+				return mfRetreat_InsideRepelAreaCount>0;
+			}
+			//////////////////////
+			// ForceToPosition
+			if(alMessageId == eLuxEntityMessage_ForceToPosition)
+			{
+				mfRetreat_InsideRepelAreaCount=1.0f;
+				return true;
+			}
+			/////////////////////////
+			// End of Path
+			if(alMessageId == eLuxEntityMessage_EndOfPath)
+			{
+				mpStateMachine.ChangeState(ePuppetState_Idle);
+				
+				return true;
+			}
+			
+			return false;
+		}
+		
+		//------------------------------------------------------------
+		
+		//} END Retreat
+	//------------------------------------------------------------
+	
+	//} END STATES
+	
+	/////////////////////////////////////////
+	// PLAYER DEATH
+	//{//////////////////////////////////////
+		
+	//------------------------------------------------------------
+		
+	void _Global_PlayerStartDamageCallback()
+	{
+		AttackMeter_RemoveInstance(mBaseObj.GetID());
+		
+	}
+	
+	//------------------------------------------------------------
+	
+	void _Global_PlayerAfterDamageCallback()
+	{
+		bool bKnockedOut = cScript_GetGlobalArgBool(0);
+			
+		if(bKnockedOut)
+		{
+			Music_RemoveDynamicTrack(mBaseObj.GetID());
+		
+			if(mpPathfinder.GetTrackNodeNum()>0)
+				mpStateMachine.ChangeState(ePuppetState_Idle);
+			else
+				mpStateMachine.ChangeState(ePuppetState_HideAndWait);
+		}
+		else
+		{
+			mpStateMachine.ChangeState(ePuppetState_Search);
+		}
+	}
+	
+	//------------------------------------------------------------
+	
+	//} END PLAYER DEATH
+	
+	/////////////////////////////////////////
+	// HELPER
+	//{//////////////////////////////////////
+	
+	bool Wander_InLineOfSight()
+	{
+		if(mBaseObj.GetEntityIsInPlayerLineOfSight(false)) return true;
+		if(mBaseObj.GetPlayerIsInLineOfSight()) return true;
+		
+		return false;
+	}
+	
+	//------------------------------------------------------------
+	
+	bool Wander_Begin(const cVector3f& in avPos, float afMinDistanceFromPos, float afMinDistanceFromPlayer)
+	{
+		///////////////////////////////////
+		//Setup properties
+		iCharacterBody@ pCharBody = mBaseObj.GetCharBody();
+		float fMaxDistanceFromPos = afMinDistanceFromPos + 10.0f;
+		float fMaxDistanceFromPlayer = afMinDistanceFromPlayer + 20.0f;
+		
+		///////////////////////////////////
+		//Get entities
+		tString sBasePosName = AttackMeter_GetAttackerTeleportPosition();
+		if(sBasePosName=="")
+		{
+			Error("AttackerTeleportPosition not set, could not make puppet wander state work!");
+			return false;
+		}
+		array<iLuxEntity@> vEntities;
+		mBaseObj.GetMap().GetEntityArray(sBasePosName, eLuxEntityType_Area,"", vEntities);
+		if(vEntities.size()==0)
+		{
+			Error("Could not find any teleport postions with name '"+sBasePosName+"'! Pupper wander state will not function properly!");
+			return false;
+		}
+		
+		///////////////////////////////////
+		//Get the goal postion
+		if(afMinDistanceFromPos>0)
+		{
+			////////////////////////////////////////
+			// Iterate available nodes and find the closest one
+			float fMinDist = 99999.0f;
+			iLuxEntity @pClosestEnt = null;
+			for(int i=0; i<vEntities.size(); ++i)
+			{
+				iLuxEntity @pEntity = vEntities[i];
+				
+				float fDistSqr = cMath_Vector3DistSqr(avPos, pEntity.GetPosition());
+				if(fDistSqr > fMaxDistanceFromPos*fMaxDistanceFromPos)
+					continue;
+				if(fDistSqr < afMinDistanceFromPos*afMinDistanceFromPos)
+					continue;
+				
+				float fDist = cMath_Sqrt(fDistSqr);
+				if(fMinDist > fDist)
+				{
+					fMinDist = fDist;
+					@pClosestEnt = pEntity;
+				}
+			}
+			
+			////////////////////////////////////////
+			// Set the goal position
+			if(pClosestEnt !is null)
+			{
+				mvWander_Goal = pClosestEnt.GetPosition();
+				mbWander_GoalHasBeenSet = true;
+			}
+			else
+			{
+				Error("Puppet Wander could not find a goal position!");
+				return false;
+			}
+		}
+		else
+		{
+			mvWander_Goal = avPos;
+			mbWander_GoalHasBeenSet = true;
+		}
+		
+		///////////////////////////////////
+		//Get the teleport position
+		{
+			////////////////////////////////////////
+			// Iterate available nodes and find the closest one
+			float fMinDist = 99999.0f;
+			iLuxEntity @pClosestEnt = null;
+			for(int i=0; i<vEntities.size(); ++i)
+			{
+				iLuxEntity @pEntity = vEntities[i];
+				
+				///////////////////////////////
+				// Within min and max?
+				float fDistSqr = cMath_Vector3DistSqr(mBaseObj.GetPlayerPos(), pEntity.GetPosition());
+				if(fDistSqr > fMaxDistanceFromPlayer*fMaxDistanceFromPlayer)
+					continue;
+				if(fDistSqr < afMinDistanceFromPlayer*afMinDistanceFromPlayer)
+					continue;
+				
+				///////////////////////////////
+				// Distance 
+				float fDist = cMath_Sqrt(fDistSqr);
+				if(fMinDist < fDist)
+					continue;
+					
+				///////////////////////////////
+				// Line of sight check
+				pCharBody.SetFeetPosition(pEntity.GetPosition(),false);
+				if(Wander_InLineOfSight()) continue;
+				
+				fMinDist = fDist;
+				@pClosestEnt = pEntity;
+			}
+			
+			////////////////////////////////////////
+			// Set the goal position
+			if(pClosestEnt !is null)
+			{
+				pCharBody.SetFeetPosition(pClosestEnt.GetPosition(),false);
+				return true;
+			}
+			else
+			{
+				Error("Puppet Wander could not find a start postion! Skipping setup.");
+				return false;
+			}
+		}
+	}
+	
+	//------------------------------------------------------------
+	
+	bool Wander_GetRandomSpawnPos(const cVector3f& in avCenterPos, float afMinDistance, float afMaxDistance, bool abCheckLOS, cVector3f &out avPosition)
+	{
+		///////////////////////////////////
+		//Setup properties
+		iCharacterBody@ pCharBody = mBaseObj.GetCharBody();
+		
+		///////////////////////////////////
+		//Get entities
+		tString sBasePosName = AttackMeter_GetAttackerTeleportPosition();
+		array<iLuxEntity@> vEntities;
+		mBaseObj.GetMap().GetEntityArray(sBasePosName, eLuxEntityType_Area,"", vEntities);
+		if(vEntities.size()==0) return false;
+		
+		///////////////////////////////////
+		//Interate entities
+		int lRandStart = cMath_RandRectl(0, vEntities.size()-1);
+		for(int i=0; i<vEntities.size(); ++i)
+		{
+			int lIdx = (i+lRandStart) % vEntities.size();
+			iLuxEntity @pEntity = vEntities[i];	
+
+			///////////////////////////////
+			// Within min and max?
+			float fDistSqr = cMath_Vector3DistSqr(avCenterPos, pEntity.GetPosition());
+			if(fDistSqr < afMinDistance*afMinDistance)
+				continue;
+			if(fDistSqr > afMaxDistance*afMaxDistance)
+				continue;
+				
+			///////////////////////////////
+			// Check Line of sight
+			if(abCheckLOS)
+			{
+				cVector3f vFeetPos = pCharBody.GetFeetPosition();
+				pCharBody.SetFeetPosition(pEntity.GetPosition(),false);
+				bool bLOS = Wander_InLineOfSight();
+					
+				pCharBody.SetFeetPosition(vFeetPos,false);
+				
+				if(bLOS) continue;
+			}
+			
+			/////////////////////////////
+			// Return answer
+			avPosition = pEntity.GetPosition();
+			return true;
+		}
+		
+		return false;
+	}
+		
+	//------------------------------------------------------------
+	
+	//} END HELPER
+	
+	/////////////////////////////////////////
+	// GLOBAL
+	//{//////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void _Global_ChangeState_Patrol()
+	{
+		int lState = mpStateMachine.GetCurrentState();
+		
+		mpStateMachine.ChangeState(ePuppetState_Patrol);
+	}
+	
+	//------------------------------------------------------------
+	
+	void _Global_ChangeState_Hunt()
+	{
+		int lState = mpStateMachine.GetCurrentState();
+		
+		mpStateMachine.ChangeState(ePuppetState_Hunt);
+	}
+	
+	//------------------------------------------------------------
+	
+	void _Global_SetAttackFatal()
+	{
+		mbAttackFatal = cScript_GetGlobalArgBool(0);
+	}
+	
+	//------------------------------------------------------------
+	
+	void _Global_SetAgressionAmount()
+	{
+		mfAgressionAmount = cScript_GetGlobalArgFloat(0);
+	}
+	
+	//------------------------------------------------------------
+	
+	void _Global_SetComeOutOfHidingTimeMul()
+	{
+		mfComeOutOfHidingTimeMul = cScript_GetGlobalArgFloat(0);
+	}
+	
+	//------------------------------------------------------------
+	
+	void _Global_SetHideAndWaitPaused()
+	{
+		mbHideAndWaitPaused = cScript_GetGlobalArgBool(0);
+	}
+	
+	//------------------------------------------------------------
+	
+	void _Global_ForceHideAndWaitAppearance()
+	{
+		mbHideAndWait_UseCustomGoalPosition = cScript_GetGlobalArgBool(0);
+		if(mbHideAndWait_UseCustomGoalPosition)
+		{
+			mvHideAndWait_CustomGoalPosition = cScript_GetGlobalArgVector3f(1);
+			mfHideAndWait_CustomGoalMinDist = 0.0f;
+		}
+				
+		mfHideAndWait_AppearCount =0;
+	}
+	
+	//------------------------------------------------------------
+	
+	void _Global_Hunt_RevealCurrentPlayerPos()
+	{
+		mfHunt_SenseLastKnownPosCount=1;
+		mvHunt_LastKnownPostion = mBaseObj.GetPlayerFeetPos();	
+	}
+		
+	//------------------------------------------------------------
+	
+	void _Global_IsHidingAndWaiting()
+	{
+		int lState = mpStateMachine.GetCurrentState();
+		cScript_SetGlobalReturnBool(lState == ePuppetState_HideAndWait);
+	}
+		
+	//------------------------------------------------------------
+	
+	//} END GLOBAL
+	
+	/////////////////////////////////////////
+	// INTERACT
+	//{//////////////////////////////////////
+	
+	//------------------------------------------------------------
+		
+	bool CanInteract(int alType, iPhysicsBody@ apBody)
+	{
+		return false;
+	}
+	
+	//------------------------------------------------------------
+		
+	bool OnInteract(int alType, iPhysicsBody@ apBody, const cVector3f &in avFocusPos, const tString&in asData)
+	{
+		return false;
+	}
+	
+	//------------------------------------------------------------
+	
+	int GetInteractIconId(int alType, iPhysicsBody@ apBody)
+	{
+		return eCrossHairState_Default;
+	}
+		
+	//------------------------------------------------------------
+	
+	//} END INTERACT
+	
+	
+	
+	/////////////////////////////////////////
+	// DEBUG
+	//{//////////////////////////////////////
+	
+	//------------------------------------------------------------
+		
+	float DrawDebugOutput(cGuiSet @apSet,iFontData @apFont,float afStartY)
+	{
+		afStartY = cLux_DrawDebugText("PlayerDetected: "+mBaseObj.PlayerIsDetected(),afStartY);
+		afStartY = cLux_DrawDebugText("DistToPlayer: "+mBaseObj.GetDistanceToPlayer(),afStartY);
+		afStartY = cLux_DrawDebugText("SoundSensitivity: "+mfSearch_SoundSensitivity,afStartY);
+		//afStartY = cLux_DrawDebugText("TimeSinceLastSound: "+mfSearch_TimeSinceLastSound,afStartY);
+		afStartY = cLux_DrawDebugText("GetSoundRadiusMul: "+mpSoundListener.GetSoundRadiusMul(),afStartY);
+		afStartY = cLux_DrawDebugText("EnterSearchCount: "+mfInvestigate_EnterSearchCount,afStartY);
+		afStartY = cLux_DrawDebugText("SearchAroundPlayerCount: "+mfWander_SearchAroundPlayerCount,afStartY);
+		afStartY = cLux_DrawDebugText("MovingHome: "+mbWander_MovingHome,afStartY);
+		afStartY = cLux_DrawDebugText("AppearCount: "+mfHideAndWait_AppearCount,afStartY);
+		afStartY = cLux_DrawDebugText("ReachedGoal: "+mbWander_ReachedGoal,afStartY);
+		afStartY = cLux_DrawDebugText("HasHeightenedAwareness: "+mbHasHeightenedAwareness,afStartY);
+		afStartY = cLux_DrawDebugText("HeightenedAwarenessCount: "+mfHeightenedAwarenessCount,afStartY);
+		afStartY = cLux_DrawDebugText("TalkCount: "+mfTalkCount,afStartY);
+		afStartY = cLux_DrawDebugText("AgressionAmount: "+mfAgressionAmount,afStartY);
+		afStartY = cLux_DrawDebugText("ComeOutOfHidingTimeMul: "+mfComeOutOfHidingTimeMul,afStartY);
+		
+				
+		
+		return afStartY;
+	}
+	
+	void OnRenderSolid(cRendererCallbackFunctions@ apFunctions)
+	{
+		apFunctions.GetLowLevelGfx().DrawSphere(mvWander_Goal, 0.3, cColor(1,0,1,1));
+		
+		apFunctions.GetLowLevelGfx().DrawSphere(mvInvestigate_Goal, 0.3, cColor(1,1,0,1));
+	}
+	
+	//------------------------------------------------------------
+	
+	//} END DEBUG
+	
+	/////////////////////////////////////////
+	// PROPERTIES
+	//{//////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	cLuxStateMachine@ mpStateMachine;
+	cLuxSoundListener@ mpSoundListener;
+	cLuxBarkMachine@ mpBarkMachine;
+	
+	//------------------------------------------------------------
+	
+	bool mbIsAkers;
+	
+	bool mbFastNonLookKill = true;
+	bool mbAttackFatal = true;
+	bool mbAttackInstantKnockDown=false;
+	
+	float mfTalkCount=100;
+	
+	float mfMinStartHuntDistance=2.5f;
+	float mfHeightenedAwarenessCount=0;
+	bool mbHasHeightenedAwareness=false;
+	
+	float mfAgressionAmount=0;
+	float mfComeOutOfHidingTimeMul=1.0f;
+	bool mbHideAndWaitPaused=false;
+	
+	float mfTimeSinceLastScream=100;
+	
+	tString msTalk_WanderSubject;
+	tString msTalk_HideAndWaitSubject;
+	
+	//------------------------------------------------------------
+	
+	//} END PROPERTIRES
+		
+}	

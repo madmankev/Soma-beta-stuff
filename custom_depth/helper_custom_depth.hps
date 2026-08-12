@@ -1,0 +1,1821 @@
+#include "helper_props.hps"
+#include "helper_imgui.hps"
+#include "helper_custom_depth_audio.hps"
+#include "helper_custom_depth_imgui.hps"
+
+//-------------------------------------------------------
+
+
+/////////////////////////////////////////
+// SWARM
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+void Swarm_SetPlayerIsInBuilding(const tString&in asName, bool abX)
+{
+	cScript_SetGlobalArgBool(0, abX);
+	cScript_RunGlobalFunc(asName, "cScrAgentSwarm", "_Global_SetPlayerIsInBuilding");
+}
+
+//-------------------------------------------------------
+
+void Swarm_SetBuildUpSpeedMul(const tString&in asName, float afMul)
+{
+	cScript_SetGlobalArgFloat(0, afMul);
+	cScript_RunGlobalFunc(asName, "cScrAgentSwarm", "_Global_SetBuildUpSpeedMul");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// CONSTRUCT WORKER
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+void ConstructWorker_StartFeed(	const tString &in asConstruct, const tString &in asFoodEntity, 
+								const tString &in asStopAtPathNode,
+								float afFeedTime, array<tString> &in avAttachAreas)
+{
+	/////////////////////////////
+	// Get Food Entity
+	iLuxEntity @pFood = cLux_GetCurrentMap().GetEntityByName(asFoodEntity);
+	if(pFood is null)
+	{
+		Error("Could not find food entity '"+asFoodEntity+"' for '"+asConstruct+"' feeding");
+		return;
+	}
+	
+	/////////////////////////////
+	// Get attach areas
+	array<cVector3f> vAttachPos;
+	vAttachPos.resize(avAttachAreas.size());
+	for(uint i=0; i<avAttachAreas.size(); ++i)
+	{
+		iLuxEntity @pArea = cLux_GetCurrentMap().GetEntityByName(avAttachAreas[i]);
+		if(pArea is null)
+		{
+			Error("Could not find attach area '"+avAttachAreas[i]+"' for '"+asConstruct+"' feeding");
+			return;
+		}
+		vAttachPos[i] = pArea.GetPosition();
+	}
+	
+	/////////////////////////////
+	// Call function
+	cScript_SetGlobalArgID(0, pFood.GetID());
+	cScript_SetGlobalArgString(1, asStopAtPathNode);
+	cScript_SetGlobalArgFloat(2, afFeedTime);
+	cScript_SetGlobalArgBool(3, true); //Setting that this IS a scripted feed.
+	
+	cScript_SetGlobalArgInt(4, vAttachPos.size());
+	for(uint i=0; i<vAttachPos.size(); ++i)
+	{
+		cScript_SetGlobalArgVector3f(5+i, vAttachPos[i]);
+	}
+	
+	cScript_RunGlobalFunc(asConstruct, "", "_Global_StartFeed");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// FLESHER
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+void Flesher_SetupPatrol(const tString &in asEntityName, bool abLoop, const tString&in asCallback)
+{
+	cScript_SetGlobalArgBool(0, abLoop);
+	cScript_SetGlobalArgString(1, asCallback);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_SetupPatrol");
+}
+
+//-------------------------------------------------------
+
+void Flesher_StartPatrol(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_StartPatrol");
+}
+
+//-------------------------------------------------------
+
+void Flesher_SetEffectsEnabled(const tString &in asEntityName, bool abEnabled)
+{
+	cScript_SetGlobalArgBool(0, abEnabled);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_SetEffectsEnabled");
+}
+
+//-------------------------------------------------------
+
+void Flesher_HuntPlayer(const tString &in asEntityName)
+{
+	//Agent_RevealPlayerPosition(asEntityName);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_ForceHuntState");
+}
+
+//-------------------------------------------------------
+
+void Flesher_SetHuntOnlyAttackWhenLooking(const tString &in asEntityName, bool abX)
+{
+	cScript_SetGlobalArgBool(0, abX);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_SetHuntOnlyAttackWhenLooking");
+}
+
+//-------------------------------------------------------
+
+void Flesher_ForceIdleState(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_ForceIdleState");
+}
+
+//-------------------------------------------------------
+
+void Flesher_StopAttackMusic(float afFadeTime)
+{
+	//cLux_GetMusicHandler().SustainEvent(1289, 10, 8, "02_02_flesherattacks.ogg", 0.75f, 0, 0, afFadeTime);
+}
+
+//-------------------------------------------------------
+
+void Flesher_ForceSustainAttackMusic(float afSustainTime)
+{
+	//cLux_GetMusicHandler().SustainEvent(1289, 10, 8, "02_02_flesherattacks.ogg", 0.75f, afSustainTime, 3, 5);
+}
+
+//-------------------------------------------------------
+
+void Flesher_SetDeathAnimation(const tString &in asEntityName, const tString &in asAnimation)
+{
+	cScript_SetGlobalArgString(0, asAnimation);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_SetDeathAnimation");
+}
+
+//-------------------------------------------------------
+
+void Flesher_Die(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_Die");
+}
+
+//-------------------------------------------------------
+
+void Flesher_SetProximityEffectsActive(const tString &in asEntityName, bool abActive)
+{
+	cScript_SetGlobalArgBool(0, abActive);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_SetProximityEffectsActive");
+}
+
+//-------------------------------------------------------
+
+void Flesher_DoBrightFlash(const tString &in asEntityName, float afTime)
+{
+	cScript_SetGlobalArgFloat(0,afTime);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_DoBrightFlash");
+}
+
+//-------------------------------------------------------
+
+void Flesher_SetPositionAndFacing(const tString &in asEntityName, const cVector3f& in avPosition, const cVector3f& in avTarget)
+{
+	cScript_SetGlobalArgVector3f(0, avPosition);
+	cScript_SetGlobalArgVector3f(1, avTarget);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_SetPositionAndFacing");
+}
+
+//-------------------------------------------------------
+
+/**
+ * @param asEntityName, The flesher
+ * @param asSpeed, One of the predefined Flesher speeds: "Walk", "FastWalk" or "Run"
+ */
+void Flesher_SetPatrolSpeed(const tString &in asEntityName, const tString& in asSpeed)
+{
+	cScript_SetGlobalArgString(0,asSpeed);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_SetPatrolSpeed");
+}
+
+
+//-------------------------------------------------------
+
+/**
+ * @param asEntityName, The flesher
+ * @param afMul, Multiplier for the distortion effect. Setting above 1 is not recommended.
+ */
+void Flesher_SetDistortionEffectMul(const tString &in asEntityName, float afMul)
+{
+	cScript_SetGlobalArgFloat(0,afMul);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_SetDistortionEffectMul");
+}
+
+//-------------------------------------------------------
+
+bool Flesher_IsHunting(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesher", "_Global_IsHunting");
+	return cScript_GetGlobalReturnBool();
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// ROSS FLESHER
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+/**
+ * Deactivates the flesher. If the player looks at him when this happens, glitch effects are activated to better disguise it.
+ * @param asEntityName, name of the entity, wildcards supported.
+ */
+void RossFlesher_Disappear(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesherRoss", "Disappear");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Makes the flesher visible for the specified amount of time.
+ * @param asEntityName, name of the entity, wildcards supported.
+ * @param afTime, time for the flesher to be visible. Use -1 to make it visible indefinitely.
+ */
+void RossFlesher_ForceVisible(const tString &in asEntityName, float afTime)
+{
+	cScript_SetGlobalArgFloat(0, afTime);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentFlesherRoss", "_Global_ForceVisible");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// INFECTED ROBOT
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+/**
+ * Forces the specified infected robot in to an idle state
+ * @param asEntityName Name of the entity
+ */
+void InfectedRobot_ForceIdleState(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentInfectedRobot", "_Global_ForceIdleState");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Forces the specified infected robot in to a disabled state
+ * @param asEntityName Name of the entity
+ */
+void InfectedRobot_ForceDisabledState(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentInfectedRobot", "_Global_ForceDisabledState");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Forces the specified infected robot in to an idle state
+ * @param asEntityName Name of the entity
+ */
+void InfectedRobot_ForceHuntState(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentInfectedRobot", "_Global_ForceHuntState");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Returns true if the infected robot meets conditions where it should be allowed to teleport
+ * @param asEntityName Name of the entity
+ */
+bool InfectedRobot_TeleportAllowed(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName,"cScrAgentInfectedRobot","_Global_GetTeleportAllowed");
+	return cScript_GetGlobalArgBool(0);
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// WAU INFECTION
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+/**
+ * Disable the growth for these entities
+ * This is because most infection is being removed from the game,
+ * but we still want to preserve the tentacles in-level.
+ * @param asEntityName, name of the entity, wildcards supported.
+ */
+ 
+void Infection_Disable(const tString &in asEntityName)
+{
+	array<iLuxEntity@> vEntities;
+	cLux_GetCurrentMap().GetEntityArray(asEntityName, eLuxEntityType_Prop, "", vEntities);
+	if(vEntities.length() == 0)
+	{
+		Error("Could not find any entities with name '"+asEntityName+"' for Infection_Disable");
+		return;
+	}
+		
+	/////////////////////////////
+	// Iterate Props
+	for(uint i=0; i<vEntities.length(); ++i)
+	{
+		cLuxProp@ pProp = cLux_ToProp(vEntities[i]);
+		cScript_RunGlobalFunc(pProp.GetName(), "cScrPropInfection", "_Global_DisableInfection");
+	}
+}
+
+//-------------------------------------------------------
+
+/**
+ * Setups an infection path. This is called automatically by both Infection_Begin and Infection_ConnectPaths and is only needed if you for example want a 
+ * path that can start on any node.
+ * 
+ * @param asInfectionPathName, name of the path to set up. The names of the entities need to be PathName_X where X is the order in which the entities are activated.
+ **/
+void Infection_Setup(const tString &in asInfectionPathName)
+{
+	for(int i = 2; Entity_Exists(asInfectionPathName + "_" + i); i++)
+	{
+		Infection_ConnectNodes(asInfectionPathName + "_" + (i-1), asInfectionPathName + "_" + i);
+	}
+}
+
+//-------------------------------------------------------
+
+/**
+ * Starts an infection path by setting up the connnections between entities and activating the first one.
+ * 
+ * @param asInfectionPathName, name of the path to start. The names of the entities need to be PathName_X where X is the order in which the entities are activated.
+ **/
+void Infection_Begin(const tString &in asInfectionPathName)
+{
+	Infection_Setup(asInfectionPathName);
+	Infection_GrowNode(asInfectionPathName + "_1");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Grows a specific infection node. If it is a part of a path, its children will start growing afterwards. Used automatically by Infection_Begin().
+ * 
+ * @param asNode, name of the node to grow.
+ **/
+void Infection_GrowNode(const tString &in asNode)
+{
+	cScript_RunGlobalFunc(asNode, "cScrPropInfection", "_Global_StartGrowth");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Connects two nodes together. This is handled automatically for nodes in a path, but is good to have for short branches to a path.
+ * 
+ * @param asParent, name of parent node, can use wildcards (*).
+ * @param asChild, name of child node.
+ **/
+void Infection_ConnectNodes(const tString &in asParent, const tString &in asChild)
+{	
+	cScript_SetGlobalArgString(0, asChild);
+	cScript_RunGlobalFunc(asParent, "cScrPropInfection", "_Global_AddChild");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Connects an entire path to an infection entity. Use this to branch a path.
+ * 
+ * @param asParent, name of parent node.
+ * @param asChildPath, name of child path.
+ **/
+void Infection_ConnectPaths(const tString &in asParent, const tString &in asChildPath)
+{
+	Infection_Setup(asChildPath);
+	cScript_SetGlobalArgString(0, asChildPath + "_1");
+	cScript_RunGlobalFunc(asParent, "cScrPropInfection", "_Global_AddChild");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Sets the time it takes for an infection entity to grow to its full size.
+ * 
+ * @param asNode, name of entity.
+ * @param afTime, time to grow.
+ **/
+void Infection_SetNodeGrowthTime(const tString &in asEntity, float afTime)
+{
+	cScript_SetGlobalArgFloat(0, afTime);
+	cScript_RunGlobalFunc(asEntity, "cScrPropInfection", "_Global_SetGrowthTime");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Sets the time to wait between the parent's and the specified node's start time.
+ * 
+ * @param asNode, name of entity.
+ * @param afDelay, delay in seconds.
+ **/
+void Infection_SetNodeGrowthDelay(const tString &in asNode, float afDelay)
+{
+	cScript_SetGlobalArgFloat(0, afDelay);
+	cScript_RunGlobalFunc(asNode, "cScrPropInfection", "_Global_SetDelay");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Sets a callback for the specified infection entity. Called both when it starts and stops growing
+ * 
+ * @param asNode, name of entity.
+ * @param asCallback, callback function.
+ * 
+ * @syntax void FuncName(const tString &in asEntity, bool abStartOfGrowth)
+ **/
+void Infection_SetNodeCallback(const tString &in asNode, const tString &in asCallback)
+{
+	cScript_SetGlobalArgString(0, asCallback);
+	cScript_RunGlobalFunc(asNode, "cScrPropInfection", "_Global_SetCallback");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// SWIMBOT WORKER
+/////////////////////////////////////////
+
+
+void Worker_SetIdleMode_Scavenger(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentWorker", "_Global_SetIdleMode_Scavenger");
+}
+
+void Worker_SetIdleMode_Wanderer(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentWorker", "_Global_SetIdleMode_Wanderer");
+}
+
+void Worker_SetIdleMode_HeadBanger(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentWorker", "_Global_SetIdleMode_HeadBanger");
+}
+
+void Worker_SetIdleMode_DoNothing(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentWorker", "_Global_SetIdleMode_DoNothing");
+}
+
+void Worker_SetSpeedState(const tString &in asEntityName, int alState)
+{
+	cScript_SetGlobalArgInt(0,alState);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentWorker", "_Global_SetSpeedState");
+}
+
+void Worker_SetMood_Avoid(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentWorker", "_Global_SetMood_Avoid");
+}
+
+void Worker_SetMood_Attack(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentWorker", "_Global_SetMood_Attack");
+}
+
+bool Worker_IsAttacking(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentWorker", "_Global_IsAttacking");
+	return cScript_GetGlobalReturnBool();
+}
+
+void Worker_SetOnAttackCallback(const tString &in asEntityName, const tString &in asCallback)
+{
+	cScript_SetGlobalArgString(0, asCallback);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentWorker", "_Global_SetOnAttackCallback");
+}
+
+//-------------------------------------------------------
+
+
+/////////////////////////////////////////
+// SWIMBOT KATE
+/////////////////////////////////////////
+
+
+//-------------------------------------------------------
+
+void Kate_LookAt(const tString &in asEntityName, const tString &in asLookAtEntity)
+{
+	iLuxEntity@ pLookAtEntity = cLux_GetCurrentMap().GetEntityByName(asLookAtEntity, eLuxEntityType_LastEnum, "");
+	if(pLookAtEntity !is null)
+		Kate_LookAt(asEntityName, pLookAtEntity.GetPosition());
+	else
+		Error("Could not find entity '"+asLookAtEntity+"' for Kate_LookAt");
+}
+
+//-------------------------------------------------------
+
+void Kate_LookAt(const tString &in asEntityName, const cVector3f &in avLookAt)
+{
+	cScript_SetGlobalArgVector3f(0, avLookAt);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_LookAt");
+}
+
+//-------------------------------------------------------
+
+
+/**
+ * Makes Kate investage a certain object
+ * 
+ * @param asEntityName, Name of Kate robot
+ * @param asPathNodeName, The pathnode to move to
+ * @param asLookAtEntityName, entity to shine flashlight on.
+ * @param afTimeToReturn, time after getting to the target position before going back to normal. -1 means it stays in investigation state until the script tells it otherwise.
+ * @param asCallbackFunction, Callback for when Kate is in position. Syntax: void Func(const tString&in asEntityName).
+ * @param abLookWithFlashlight, if the flashlight should be pointed directly at the object.
+ **/
+void Kate_Investigate(	const tString &in asEntityName,
+						const tString &in asPathNodeName, const tString &in asLookAtEntityName,
+						float afTimeToReturn = 2.f, const tString &in asCallbackFunction="", bool abLookWithFlashlight = true)
+{
+	cScript_SetGlobalArgString(0, asPathNodeName);
+	cScript_SetGlobalArgString(1, asLookAtEntityName);
+	cScript_SetGlobalArgString(2, asCallbackFunction);
+	cScript_SetGlobalArgFloat(3, afTimeToReturn);
+	cScript_SetGlobalArgBool(4, abLookWithFlashlight);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_Investigate");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Adds an investigate target to Kate's InvestigateMultiple state.
+ * 
+ * @param asEntityName, Name of Kate robot
+ * @param asPathNodeName, The pathnode to move to
+ * @param asLookAtEntityName, entity to shine flashlight on.
+ **/
+void Kate_AddInvestigateTarget(	const tString &in asEntityName, const tString &in asPathNodeName, const tString &in asLookAtEntityName)
+{
+	cScript_SetGlobalArgString(0, asPathNodeName);
+	cScript_SetGlobalArgString(1, asLookAtEntityName);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_AddInvestigateTarget");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Makes Kate move between multiple nodes and entities as if investigating them. Set what entities with Kate_AddInvestigateTarget.
+ * 
+ * @param asEntityName, Name of Kate robot
+ **/
+void Kate_InvestigateMultiple(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_InvestigateMultiple");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Makes Kate follow the player.
+ * 
+ * @param asEntityName, Name of Kate robot
+ **/
+void Kate_FollowPlayer(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_FollowPlayer");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Sets the distance at which Kate will try to get away from the player.
+ * 
+ * @param asEntityName, Name of Kate robot
+ * @param afFleeDist, distance to set.
+ * @param asHomeEntity, entity to not stray too far from.
+ * @param afMaxDistFromHome, max distance to stray from home entity.
+ **/
+void Kate_FleeFromPlayer(const tString &in asEntityName, float afFleeDist, const tString &in asHomeEntity, float afMaxDistFromHome)
+{
+	cScript_SetGlobalArgFloat(0, afFleeDist);
+	cScript_SetGlobalArgString(1, asHomeEntity);
+	cScript_SetGlobalArgFloat(2, afMaxDistFromHome);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_FleeFromPlayer");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Slows down the flee speed of Kate
+ * 
+ * @param asEntityName, Name of Kate robot
+ **/
+void Kate_SlowDownFleeSpeed(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_SlowDownFleeSpeed");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Set Kate to move at Flee speed.
+ * 
+ * @param asEntityName, Name of Kate robot
+ **/
+void Kate_SetMoveSpeedToFleeForLife(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_SetMoveSpeedToFleeForLife");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Reduces the health of Kate.
+ * 
+ * @param asEntityName, Name of Kate robot
+ * @param afAmount, amount to reduce health by. Max health is 1.0
+ **/
+void Kate_ReduceHealth(const tString &in asEntityName, float afAmount)
+{
+	cScript_SetGlobalArgFloat(0, afAmount);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_ReduceHealth");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Activates the scare effects of Kate.
+ * 
+ * @param asEntityName, Name of Kate robot
+ **/
+void Kate_Scare(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_Scare");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Crashes Kate
+ * 
+ * @param asEntityName, Name of Kate robot
+ * @param asCrashTarget, entity to crash towards.
+ * @param asCallback, callback when the robot has reached its target. Syntax: void Func(const tString& in asEntityName, bool abReachedEnd)
+ **/
+void Kate_Crash(const tString &in asEntityName, const tString &in asCrashTarget, const tString &in asCallback)
+{
+	cScript_SetGlobalArgString(0, asCrashTarget);
+	cScript_SetGlobalArgString(1, asCallback);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_Crash");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Add an entity for Kate to chase.
+ * 
+ * @param asEntityName, Name of Kate robot
+ * @param asChaseEntity, Name of the entity to chase
+ **/
+void Kate_AddChaseEntity(const tString &in asEntityName, const tString &in asChaseEntity)
+{
+	cScript_SetGlobalArgString(0, asChaseEntity);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_AddChaseEntity");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Removes an entity for Kate to chase.
+ * 
+ * @param asEntityName, Name of Kate robot
+ * @param asChaseEntity, Name of the entity to stop chasing
+ **/
+void Kate_RemoveChaseEntity(const tString &in asEntityName, const tString &in asChaseEntity)
+{
+	cScript_SetGlobalArgString(0, asChaseEntity);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_RemoveChaseEntity");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Makes the kate robot chase a specific entity until she's told to do something else.
+ * 
+ * @param asEntityName, Name of Kate robot
+ * @param asChaseEntity, Name of the entity to chase
+ **/
+void Kate_ChaseEntity(const tString &in asEntityName, const tString &in asChaseEntity)
+{
+	cScript_SetGlobalArgString(0, asChaseEntity);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKate", "_Global_ChaseEntity");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// SWIMBOT GOYA
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+void Goya_Wander(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentGoya", "_Global_Wander");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Sets the distance at which Goya will try to get away from the player.
+ * 
+ * @param asEntityName, Name of Goya robot
+ * @param afFleeDist, distance to set.
+ * @param asHomeEntity, entity to not stray too far from.
+ * @param afMaxDistFromHome, max distance to stray from home entity.
+ **/
+void Goya_FleeFromPlayer(const tString &in asEntityName, float afFleeDist, const tString &in asHomeEntity, float afMaxDistFromHome)
+{
+	cScript_SetGlobalArgFloat(0, afFleeDist);
+	cScript_SetGlobalArgString(1, asHomeEntity);
+	cScript_SetGlobalArgFloat(2, afMaxDistFromHome);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentGoya", "_Global_FleeFromPlayer");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Slows down the flee speed of Goya
+ * 
+ * @param asEntityName, Name of Goya robot
+ **/
+void Goya_SlowDownFleeSpeed(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentGoya", "_Global_SlowDownFleeSpeed");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Reduces the health of Goya.
+ * 
+ * @param asEntityName, Name of Goya robot
+ * @param afAmount, amount to reduce health by. Max health is 1.0
+ **/
+void Goya_ReduceHealth(const tString &in asEntityName, float afAmount)
+{
+	cScript_SetGlobalArgFloat(0, afAmount);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentGoya", "_Global_ReduceHealth");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Crashes Goya
+ * 
+ * @param asEntityName, Name of Goya robot
+ * @param asCrashTarget, entity to crash towards.
+ * @param asCallback, callback when the robot has reached its target. Syntax: void Func(const tString& in asEntityName, bool abReachedEnd)
+ **/
+void Goya_Crash(const tString &in asEntityName, const tString &in asCrashTarget, const tString &in asCallback)
+{
+	cScript_SetGlobalArgString(0, asCrashTarget);
+	cScript_SetGlobalArgString(1, asCallback);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentGoya", "_Global_Crash");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// SWIMBOT KATE COPY
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+/**
+ * Makes the kate copy refuel at this point.
+ * 
+ * @param asEntityName, Name of Kate Copy robot
+ * @param asRefuelAtEntity, The entity to refuel at. The positive z-axis must point where the robot will come to rest.
+ * @param asRefuelDoneCallback, Called when refueling is done. Syntax: void Func(const tString&in asEntity);
+ **/
+void KateCopy_RefuelAt(const tString &in asEntityName, const tString &in asRefuelAtEntity, const tString &in asRefuelDoneCallback)
+{
+	cScript_SetGlobalArgString(0, asRefuelAtEntity);
+	cScript_SetGlobalArgString(1, asRefuelDoneCallback);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKateCopy", "_Global_RefuelAt");
+}
+
+//-------------------------------------------------------
+/**
+ * Callback Syntax: void Func(const tString& in asEntityName, bool abReachedEnd)
+ *  movement speed. 0 = slower, 1 = faster.
+ **/
+void KateCopy_MoveTo(const tString &in asEntityName,const tString &in asNodeName,const tString &in asCallbackFunc, int alState)
+{
+	cScript_SetGlobalArgString(0, asNodeName);
+	cScript_SetGlobalArgString(1, asCallbackFunc);
+	cScript_SetGlobalArgInt(2, alState);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKateCopy", "_Global_MoveTo");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Sets the movement speed. 0 = slower, 1 = faster.
+ **/
+void KateCopy_SetSpeedState(const tString &in asEntityName, int alState)
+{
+	cScript_SetGlobalArgInt(0, alState);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKateCopy", "_Global_SetSpeedState");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Makes the kate copy investigate the current areas. Needs pathnodes to find points of interest.
+ **/
+void KateCopy_Investigate(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentKateCopy", "_Global_Investigate");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// CONSTRUCT WORKER
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+void ConstructWorker_SetMoodDocile(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentConstructWorker", "_Global_SetMoodDocile");
+}
+
+void ConstructWorker_SetMoodAgressive(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentConstructWorker", "_Global_SetMoodAgressive");
+}
+
+//-------------------------------------------------------
+
+void ConstructWorker_SetIdleMode_HeadPound(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentConstructWorker", "_Global_SetIdleMode_HeadPound");
+}
+
+void ConstructWorker_SetIdleMode_Normal(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentConstructWorker", "_Global_SetIdleMode_Normal");
+}
+
+void ConstructWorker_SetIdleMode_Stalk(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentConstructWorker", "_Global_SetIdleMode_Stalk");
+}
+
+void ConstructWorker_SetIdleMode_Scavenge(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentConstructWorker", "_Global_SetIdleMode_Scavenge");
+}
+
+void ConstructWorker_SetSpeedState_Dash(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentConstructWorker", "_Global_SpeedState_Dash");
+}
+
+void ConstructWorker_SetMoveSoundsActive(const tString &in asEntityName, bool abActive)
+{
+	cScript_SetGlobalArgBool(0,abActive);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentConstructWorker", "_Global_SetMoveSoundsActive");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// SWIMBOT CUTE BOT
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+void CuteBot_SetSwarmPoint(const tString &in asEntityName, const tString &in asHomeEntity)
+{
+	cScript_SetGlobalArgString(0, asHomeEntity);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentCuteBot", "_Global_SetSwarmPoint");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// LEVIATHAN
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+/**
+ * Disables all sounds for the specified Leviathan. Useful for custom events. Cannot reactivate. Use at the start of the map.
+ **/
+void Leviathan_InitSilent(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentLeviathan", "_Global_InitSilent");
+}
+
+//-------------------------------------------------------
+
+void Leviathan_SetIsHunting(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentLeviathan", "_Global_SetIsHunting");
+}
+
+void Leviathan_HuntDashAtPlayer(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentLeviathan", "_Global_HuntDashAtPlayer");
+}
+
+//-------------------------------------------------------
+
+void Leviathan_SetFollowTrackDeathMeter(const tString &in asEntityName, bool abX, float afDamage)
+{
+	cScript_SetGlobalArgBool(0, abX);
+	cScript_SetGlobalArgFloat(1, afDamage);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentLeviathan", "_Global_SetFollowTrackDeathMeter");
+}
+
+//-------------------------------------------------------
+
+void Leviathan_SetState_FollowTrack(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentLeviathan", "_Global_SetState_FollowTrack");
+}
+
+void Leviathan_SetState_CirclePlayer(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentLeviathan", "_Global_SetState_CirclePlayer");
+}
+
+//-------------------------------------------------------
+
+void Leviathan_SetSpeed_Normal(const tString &in asEntityName) {
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentLeviathan", "_Global_SetSpeed_Normal");
+}
+
+void Leviathan_SetSpeed_Hunt(const tString &in asEntityName) {
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentLeviathan", "_Global_SetSpeed_Hunt");
+}
+
+void Leviathan_SetSpeed_HuntDash(const tString &in asEntityName) {
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentLeviathan", "_Global_SetSpeed_HuntDash");
+}
+
+//-------------------------------------------------------
+
+void Leviathan_SetLightBrightness(const tString &in asEntityName, float afX) {
+	cScript_SetGlobalArgFloat(0, afX);
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentLeviathan", "_Global_SetLightBrightness");
+}
+
+//-------------------------------------------------------
+
+
+/////////////////////////////////////////
+// ROOMBA
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+/**
+ * Moves the Roomba to a position
+ * 
+ * @param asName, name of the Roomba. Wildcard supported.
+ **/
+void Roomba_StartMoving(const tString &in asName)
+{
+	if(cScript_RunGlobalFunc(asName, "cScrRoomba", "_Global_StartMoving")==false)
+	{
+		Error("Could not find prop with name '"+asName+"' for Roomba_StartMoving");
+		return;
+	}
+}
+
+//-------------------------------------------------------
+
+/**
+ * Stops the Roomba
+ * 
+ * @param asName, name of the Roomba. Wildcard supported.
+ **/
+void Roomba_StopMoving(const tString &in asName)
+{
+	if(cScript_RunGlobalFunc(asName, "cScrRoomba", "_Global_StopMoving")==false)
+	{
+		Error("Could not find prop with name '"+asName+"' for Roomba_StopMoving");
+		return;
+	}
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// VIPERFISH
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+void Viperfish_SetIdle(const tString &in asEntityName)
+{
+	array<iLuxEntity@> vEntities;
+	cLux_GetCurrentMap().GetEntityArray(asEntityName, eLuxEntityType_Agent, "", vEntities);
+	if(vEntities.length() == 0)
+	{
+		Error("Could not find any entities with name '"+asEntityName+"' for Viperfish_SetIdle");
+		return;
+	}
+	
+	for (uint i=0;i<vEntities.size();++i)
+	{
+		cScript_RunGlobalFunc(vEntities[i].GetName(), "cScrViperfish", "_Global_SetIdle");
+	}
+}
+
+//-------------------------------------------------------
+
+void Viperfish_SetIdleCallback(const tString &in asEntityName, const tString& in asCallback)
+{
+	array<iLuxEntity@> vEntities;
+	cLux_GetCurrentMap().GetEntityArray(asEntityName, eLuxEntityType_Agent, "", vEntities);
+	if(vEntities.length() == 0)
+	{
+		Error("Could not find any entities with name '"+asEntityName+"' for Viperfish_SetIdleCallback");
+		return;
+	}
+	
+	for (uint i=0;i<vEntities.size();++i)
+	{
+		cScript_SetGlobalArgString(0, asCallback);
+		cScript_RunGlobalFunc(vEntities[i].GetName(), "cScrViperfish", "_Global_SetIdleCallback");
+	}
+}
+//-------------------------------------------------------
+
+void Viperfish_SetAttackCallback(const tString &in asEntityName, const tString& in asCallback)
+{
+	array<iLuxEntity@> vEntities;
+	cLux_GetCurrentMap().GetEntityArray(asEntityName, eLuxEntityType_Agent, "", vEntities);
+	if(vEntities.length() == 0)
+	{
+		Error("Could not find any entities with name '"+asEntityName+"' for Viperfish_SetAttackCallback");
+		return;
+	}
+	
+	for (uint i=0;i<vEntities.size();++i)
+	{
+		cScript_SetGlobalArgString(0, asCallback);
+		cScript_RunGlobalFunc(vEntities[i].GetName(), "cScrViperfish", "_Global_SetAttackCallback");
+	}
+}
+
+//-------------------------------------------------------
+
+void Viperfish_SetCircling(const tString &in asEntityName, bool abShouldReposition=false)
+{
+	array<iLuxEntity@> vEntities;
+	cLux_GetCurrentMap().GetEntityArray(asEntityName, eLuxEntityType_Agent, "", vEntities);
+	if(vEntities.length() == 0)
+	{
+		Error("Could not find any entities with name '"+asEntityName+"' for Viperfish_SetCircle");
+		return;
+	}
+	
+	for (uint i=0;i<vEntities.size();++i)
+	{
+		cScript_SetGlobalArgBool(0, abShouldReposition);
+		cScript_RunGlobalFunc(vEntities[i].GetName(), "cScrViperfish", "_Global_SetCircling");
+	}
+}
+
+//-------------------------------------------------------
+
+void Viperfish_SetPatrol(const tString &in asEntityName)
+{
+	array<iLuxEntity@> vEntities;
+	cLux_GetCurrentMap().GetEntityArray(asEntityName, eLuxEntityType_Agent, "", vEntities);
+	if(vEntities.length() == 0)
+	{
+		Error("Could not find any entities with name '"+asEntityName+"' for Viperfish_SetPatrol");
+		return;
+	}
+	
+	for (uint i=0;i<vEntities.size();++i)
+	{
+		cScript_RunGlobalFunc(vEntities[i].GetName(), "cScrViperfish", "_Global_SetPatrol");
+	}
+}
+
+//-------------------------------------------------------
+
+void Viperfish_SetConverge(const tString &in asEntityName, const tString& in asTargetEntity)
+{
+	array<iLuxEntity@> vEntities;
+	cLux_GetCurrentMap().GetEntityArray(asEntityName, eLuxEntityType_Agent, "", vEntities);
+	if(vEntities.length() == 0)
+	{
+		Error("Could not find any entities with name '"+asEntityName+"' for Viperfish_SetConverge");
+		return;
+	}
+	
+	for (uint i=0;i<vEntities.size();++i)
+	{
+		cScript_SetGlobalArgString(0, asTargetEntity);
+		cScript_RunGlobalFunc(vEntities[i].GetName(), "cScrViperfish", "_Global_SetConverge");
+	}
+}
+
+//-------------------------------------------------------
+
+void Viperfish_SetGoToPos(const tString &in asEntityName, const cVector3f &in vPos)
+{
+	array<iLuxEntity@> vEntities;
+	cLux_GetCurrentMap().GetEntityArray(asEntityName, eLuxEntityType_Agent, "", vEntities);
+	if(vEntities.length() == 0)
+	{
+		Error("Could not find any entities with name '"+asEntityName+"' for Viperfish_SetConverge");
+		return;
+	}
+	
+	for (uint i=0;i<vEntities.size();++i)
+	{
+		cScript_SetGlobalArgVector3f(0, vPos);
+		cScript_RunGlobalFunc(vEntities[i].GetName(), "cScrViperfish", "_Global_SetGoToPos");
+	}
+}
+
+//-------------------------------------------------------
+
+void Viperfish_SetSlowAttack(const tString &in asEntityName, bool abSlow)
+{
+	array<iLuxEntity@> vEntities;
+	cLux_GetCurrentMap().GetEntityArray(asEntityName, eLuxEntityType_Agent, "", vEntities);
+	if(vEntities.length() == 0)
+	{
+		Error("Could not find any entities with name '"+asEntityName+"' for Viperfish_SetSlowAttack");
+		return;
+	}
+	
+	for (uint i=0;i<vEntities.size();++i)
+	{
+		cScript_SetGlobalArgBool(0, abSlow);
+		cScript_RunGlobalFunc(vEntities[i].GetName(), "cScrViperfish", "_Global_SetSlowAttack");
+	}
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// ANGLERFISH
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+void Anglerfish_SetIdle(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAnglerfish", "_Global_SetIdle");
+}
+
+//-------------------------------------------------------
+
+void Anglerfish_SetIdleCallback(const tString &in asEntityName, const tString& in asCallback)
+{
+	cScript_SetGlobalArgString(0, asCallback);
+	cScript_RunGlobalFunc(asEntityName, "cScrAnglerfish", "_Global_SetIdleCallback");
+}
+//-------------------------------------------------------
+
+void Anglerfish_SetAttackCallback(const tString &in asEntityName, const tString& in asCallback)
+{
+	cScript_SetGlobalArgString(0, asCallback);
+	cScript_RunGlobalFunc(asEntityName, "cScrAnglerfish", "_Global_SetAttackCallback");
+}
+
+//-------------------------------------------------------
+
+void Anglerfish_SetGoToPos(const tString &in asEntityName, const cVector3f &in vPos)
+{
+	cScript_SetGlobalArgVector3f(0, vPos);
+	cScript_RunGlobalFunc(asEntityName, "cScrAnglerfish", "_Global_SetGoToPos");
+}
+
+//-------------------------------------------------------
+
+void Anglerfish_SetActivateCallback(const tString &in asEntityName, const tString& in asCallback)
+{
+	cScript_SetGlobalArgString(0, asCallback);
+	cScript_RunGlobalFunc(asEntityName, "cScrAnglerfish", "_Global_SetActivateCallback");
+}
+
+//-------------------------------------------------------
+
+void Anglerfish_ActivateAtPosAwayFromPlayer(const tString &in asEntityName, float afDist)
+{
+	cScript_SetGlobalArgFloat(0, afDist);
+	cScript_RunGlobalFunc(asEntityName, "cScrAnglerfish", "_Global_ActivateAtPosAwayFromPlayer");
+}
+
+//-------------------------------------------------------
+
+void Anglerfish_AttackPlayer(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAnglerfish", "_Global_AttackPlayer");
+}
+
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// MEGAMOUTH
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+void MegaMouth_SetAttackCallback(const tString &in asEntityName, const tString& in asCallback)
+{
+	array<iLuxEntity@> vEntities;
+	cLux_GetCurrentMap().GetEntityArray(asEntityName, eLuxEntityType_Agent, "", vEntities);
+	if(vEntities.length() == 0)
+	{
+		Error("Could not find any entities with name '"+asEntityName+"' for MegaMouth_SetAttackCallback");
+		return;
+	}
+	
+	for (uint i=0;i<vEntities.size();++i)
+	{
+		cScript_SetGlobalArgString(0, asCallback);
+		cScript_RunGlobalFunc(vEntities[i].GetName(), "cScrMegaMouth", "_Global_SetAttackCallback");
+	}
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// PUPPET
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+void Puppet_ChangeState_Patrol(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentPuppet", "_Global_ChangeState_Patrol");
+}
+
+//-------------------------------------------------------
+
+void Puppet_ChangeState_Hunt(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAgentPuppet", "_Global_ChangeState_Hunt");
+}
+
+//-------------------------------------------------------
+
+void Puppet_SetAttackFatal(const tString &in asEntityName, bool abState)
+{
+	cScript_SetGlobalArgBool(0,abState);
+	cScript_RunGlobalFunc(asEntityName,"cScrAgentPuppet","_Global_SetAttackFatal");
+}
+
+//------------------------------------------------------------
+
+void Puppet_SetAgressionAmount(const tString &in asEntityName, float afX)
+{
+	cScript_SetGlobalArgFloat(0,afX);
+	cScript_RunGlobalFunc(asEntityName,"cScrAgentPuppet","_Global_SetAgressionAmount");
+}
+	
+//------------------------------------------------------------
+
+void Puppet_SetComeOutOfHidingTimeMul(const tString &in asEntityName, float afMul)
+{
+	cScript_SetGlobalArgFloat(0,afMul);
+	cScript_RunGlobalFunc(asEntityName,"cScrAgentPuppet","_Global_SetComeOutOfHidingTimeMul");
+}
+
+//------------------------------------------------------------
+
+void Puppet_SetHideAndWaitPaused(const tString &in asEntityName, bool abPaused)
+{
+	cScript_SetGlobalArgBool(0,abPaused);
+	cScript_RunGlobalFunc(asEntityName,"cScrAgentPuppet","_Global_SetHideAndWaitPaused");
+}
+
+//-------------------------------------------------------
+
+bool Puppet_IsHidingAndWaiting(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName,"cScrAgentPuppet","_Global_IsHidingAndWaiting");
+	return cScript_GetGlobalReturnBool();
+}
+
+//-------------------------------------------------------
+
+void Puppet_Hunt_RevealCurrentPlayerPos(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName,"cScrAgentPuppet","_Global_Hunt_RevealCurrentPlayerPos");
+}
+
+//-------------------------------------------------------
+
+void Puppet_ForceHideAndWaitAppearance(const tString &in asEntityName, bool abUseCustomGoalPos=false, const tString& in asCustomGoalPosEntity="")
+{
+	cVector3f vPos=0;
+	if(asCustomGoalPosEntity!="")
+	{
+		iLuxEntity @pEntity = cLux_GetCurrentMap().GetEntityByName(asCustomGoalPosEntity);
+		if(pEntity is null)
+		{
+			Error("Could not find entity '"+asCustomGoalPosEntity+"' to be used  as custom goal pos for Puppet_ForceHideAndWaitAppearance");
+			return;
+		}
+	}
+	
+	
+	cScript_SetGlobalArgBool(0,abUseCustomGoalPos);
+	cScript_SetGlobalArgVector3f(1,vPos);
+	cScript_RunGlobalFunc(asEntityName,"cScrAgentPuppet","_Global_ForceHideAndWaitAppearance");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// CONSTRUCT LURE
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+void ConstructLure_SetEnabled(const tString &in asEntityName,bool abEnabled, bool abUseEffects)
+{
+	cScript_SetGlobalArgBool(0, abEnabled);	
+	cScript_SetGlobalArgBool(1, abUseEffects);
+	cScript_RunGlobalFunc(asEntityName, "cScrPropConstructLure", "_Global_SetEnabled");
+}
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// DATAMINE
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+/**
+ *  Sets the glow to active or inactive on a datamine entity.
+ *
+ * @param asEntityName, entity to set the glow active on.
+ * @param abX, if the glow should be active.
+ **/
+void Datamine_SetGlowActive(const tString &in asEntityName, bool abX)
+{
+	cScript_SetGlobalArgBool(0, abX);
+	cScript_RunGlobalFunc(asEntityName, "cScrPropDatamine", "_Global_SetGlowActive");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Returns true if the player has mined the datamine
+ *
+ * @param asEntityName, name of datamine.
+ * @return if the datamine is mined.
+ **/
+bool Datamine_HasBeenMined(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrPropDatamine", "_Global_HasBeenMined");
+	return cScript_GetGlobalReturnBool();
+}
+
+//-------------------------------------------------------
+
+/**
+ * Returns true if the player has mined the datamine
+ *
+ * @param asEntityName, name of datamine.
+ * @return if the datamine is mined.
+ **/
+void Datamine_SetFinalSubjectCallback(const tString &in asEntityName, const tString &in asCallback)
+{
+	cScript_SetGlobalArgString(0, asCallback);
+	cScript_RunGlobalFunc(asEntityName, "cScrPropDatamine", "_Global_SetFinalSubjectCallback");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// DATAMINE AREAS
+/////////////////////////////////////////
+
+//-------------------------------------------------------
+
+/**
+ *  Sets the glow to active or inactive on a datamine entity.
+ *
+ * @param asEntityName, entity to set the glow active on.
+ * @param abX, if the glow should be active.
+ **/
+void DatamineArea_SetGlowActive(const tString &in asEntityName, bool abX)
+{
+	cScript_SetGlobalArgBool(0, abX);
+	cScript_RunGlobalFunc(asEntityName, "cScrAreaDatamine", "_Global_SetGlowActive");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Returns true if the player has mined the datamine
+ *
+ * @param asEntityName, name of datamine.
+ * @return if the datamine is mined.
+ **/
+bool DatamineArea_HasBeenMined(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrAreaDatamine", "_Global_HasBeenMined");
+	return cScript_GetGlobalReturnBool();
+}
+
+//-------------------------------------------------------
+
+/**
+ * Returns true if the player has mined the datamine
+ *
+ * @param asEntityName, name of datamine.
+ * @return if the datamine is mined.
+ **/
+void DatamineArea_SetFinalSubjectCallback(const tString &in asEntityName, const tString &in asCallback)
+{
+	cScript_SetGlobalArgString(0, asCallback);
+	cScript_RunGlobalFunc(asEntityName, "cScrAreaDatamine", "_Global_SetFinalSubjectCallback");
+}
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// CONSTRUCT LURE
+//{///////////////////////////////////////
+
+//-------------------------------------------------------
+
+/**
+ * Flash the panel as if it's powered off.
+ *
+ * @param asEntityName, name of panel
+ **/
+void StationPanel_FlashPoweredOff(const tString &in asEntityName)
+{
+	cScript_RunGlobalFunc(asEntityName, "cScrPropButton_Panel", "_Global_FlashPoweredOff");
+}
+
+//} END CONSTRUCT LURE
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// CATHERINE TOOL
+//{///////////////////////////////////////
+
+//-------------------------------------------------------
+
+/**
+ * Default CanUse callback for the OmniTool.
+ *
+ * @param asTool, the cath tool entity.
+ * @param asEntity, the entity the player is aiming at.
+ **/
+bool CathTool_CanUse(const tString &in asTool, const tString &in asEntity)
+{
+	return (Entity_GetVarBool(asEntity, "IsOmniSlot") && 
+		   OmniSlot_GetAttachAllowed(asEntity)) ||
+		   (Entity_GetVarBool(asEntity, "IsOmniPanel") &&
+		   Button_IsDisabled(asEntity)==false && 
+		   Button_IsSwitchedOn(asEntity)==false &&
+		   Entity_GetVarBool(asEntity, "InUse")==false);
+}
+
+//-------------------------------------------------------
+
+/**
+ * Insert CathTool in a Cath panel
+ *
+ * @param asCathTool, the cath tool entity to place at the target position.
+ * @param asTargetSlot, the OmniSlot to plug the tool into.
+ * @param abEffects, if false, insert will happen instantly without any effects.
+ **/
+void CathTool_Insert(const tString &in asCathTool, const tString &in asTargetSlot, bool abEffects=true)
+{
+	cScript_SetGlobalArgString(0, asCathTool);
+	cScript_SetGlobalArgBool(1, abEffects);
+	cScript_RunGlobalFunc(asTargetSlot, "cScrPropOmniSlot", "_Global_Insert");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Allow picking up CathTool
+ *
+ * @param asCathTool, the CathTool entity.
+ * @param abEffects, if effects and fading should be done or if it should happen immediately.
+ **/
+void CathTool_AllowDetach(const tString &in asCathTool, bool abEffects = true)
+{	
+	tString sSlot = CathTool_GetOmniSlot(asCathTool);
+	if (sSlot == "") return;
+	
+	cScript_SetGlobalArgString(0, asCathTool);
+	cScript_SetGlobalArgBool(1, abEffects);
+	cScript_RunGlobalFunc(sSlot, "cScrPropOmniSlot", "_Global_AllowDetach");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Allow picking up CathTool
+ *
+ * @param asCathTool, the CathTool entity.
+ * 
+ * @return bool, if the tool is currently inserted
+ **/
+bool CathTool_IsInserted(const tString &in asCathTool)
+{	
+	cScript_RunGlobalFunc(asCathTool, "cScrPropCatherineTool", "_Global_IsInserted");
+	
+	return cScript_GetGlobalReturnBool();
+}
+
+//-------------------------------------------------------
+
+/**
+ * Returns the name of the OmniSlot that the tool is attached to. 
+ *
+ * @param asCathTool, the CathTool entity.
+ * 
+ * @return tString, the name of the OmniSlot. An empty string if not inserted.
+ **/
+tString CathTool_GetOmniSlot(const tString &in asCathTool)
+{
+	cScript_RunGlobalFunc(asCathTool, "cScrPropCatherineTool", "_Global_GetSlot");
+	
+	return cScript_GetGlobalReturnString();
+}
+
+//-------------------------------------------------------
+
+/**
+ * Handles using the tool on an OmniPanel. 
+ *
+ * @param asCathTool, the CathTool entity.
+ * @param asOmniPanel, the OmniPanel entity.
+ * 
+ **/
+void CathTool_UseOnPanel(const tString &in asCathTool, const tString &in asOmniPanel)
+{
+	if (Entity_GetVarBool(asOmniPanel, "InUse"))
+		return;
+
+	Entity_SetVarBool(asOmniPanel, "InUse", true);
+	Player_PlayCustomToolAnimation("tool_omnitool_use_panel", false, "");
+	Player_FadeMoveSpeedMulTo(0.3, 0.5);
+	Player_FadeLookSpeedMulTo(0.3, 0.5);
+	Player_SetRunSpeedMul(0);
+	Player_StartLookAt(asOmniPanel, 5, 2, 3);
+	Map_AddTimer(asOmniPanel, 2, "$_CathTool_UseOnPanel_Timer");
+}
+
+void _CathTool_UseOnPanel_Timer(const tString &in asTimer)
+{
+	Player_FadeMoveSpeedMulTo(1, 1);
+	Player_FadeLookSpeedMulTo(1, 1);
+	Player_SetRunSpeedMul(1);
+	Player_StopLookAt(1);
+	Entity_CallEntityInteract(asTimer);
+	
+	Entity_SetVarBool(asTimer, "InUse", false);
+}
+
+//-------------------------------------------------------
+
+/**
+ * Set hint callback for this map - will be called to see
+ * if Cath wants to give a hint when she's not doing anything else and when CathTool_SetHintsActive(true)
+ * was called.
+ *
+ * @param asCathTool, the CathTool entity.
+ * @param asHintsCallback, a callback which will be called to work out which line to respond with. 
+ * Return the name of a line _without_ numeric extension i.e. if your line variants are SomeHint_1, SomeHint_2, reply with SomeHint
+ * If the line has already played, it'll play the next variant, until it runs out.
+ *  Syntax: tString Func(const tString& in asEntityName)
+ **/
+void CathTool_SetHintsCallback(const tString &in asCathTool, const tString &in asHintsCallback)
+{	
+	cScript_SetGlobalArgString(0,asHintsCallback);
+	cScript_RunGlobalFunc(asCathTool, "cScrPropCatherineTool", "_Global_SetHintsCallback");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Enable/disable Cath hints.
+ *
+ * @param asCathTool, the CathTool entity.
+ * @param abEnable
+ **/
+void CathTool_SetHintsEnabled(const tString &in asCathTool, bool abEnable)
+{	
+	cScript_SetGlobalArgBool(0,abEnable);
+	cScript_RunGlobalFunc(asCathTool, "cScrPropCatherineTool", "_Global_SetHintsEnabled");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Set the voice character used for the tool
+ *
+ * @param asCathTool, the CathTool entity.
+ * @param asCharacter
+ **/
+void CathTool_SetVoiceCharacter(const tString &in asCathTool, const tString &in asCharacter)
+{	
+	cScript_SetGlobalArgString(0,asCharacter);
+	cScript_RunGlobalFunc(asCathTool, "cScrPropCatherineTool", "_Global_SetVoiceCharacter");
+}
+
+//-------------------------------------------------------
+
+
+
+
+//} END CATHERINE TOOL
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// OMNISLOT
+//{///////////////////////////////////////
+
+//-------------------------------------------------------
+
+/**
+ * Sets if the OmniSlot allows insertion of the OmniTool or not.
+ *
+ * @param asOmniSlot, the slot.
+ * @param abAllowed, state to set.
+ * @param abEffects, if lights should fade on/off or switch instantly.
+ **/
+void OmniSlot_SetAttachAllowed(const tString &in asOmniSlot, bool abAllowed, bool abEffects=true)
+{
+	cScript_SetGlobalArgBool(0, abAllowed);
+	cScript_SetGlobalArgBool(1, abEffects);
+	cScript_RunGlobalFunc(asOmniSlot, "cScrPropOmniSlot", "_Global_SetAttachAllowed");
+}
+
+//-------------------------------------------------------
+
+/**
+ * Checks if the OmniSlot allows insertion of the OmniTool or not.
+ *
+ * @param asOmniSlot, the slot.
+ * 
+ * @return bool, true if attach is allowed.
+ **/
+bool OmniSlot_GetAttachAllowed(const tString &in asOmniSlot)
+{
+	cScript_RunGlobalFunc(asOmniSlot, "cScrPropOmniSlot", "_Global_GetAttachAllowed");
+	return cScript_GetGlobalReturnBool();
+}
+
+//-------------------------------------------------------
+
+//} OMNISLOT
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// OMNIPANEL
+//{///////////////////////////////////////
+
+//-------------------------------------------------------
+
+void _OmniPanel_OnGui(const tString&in asEntityName, float afTimeStep)
+{
+	StationGuiBG_Scanlines();
+	if (Button_IsDisabled(asEntityName))
+		return;
+	
+	tString sLangCat = "StationGUI";
+	tString sLangEntry = "";
+	cColor col = cColor_White;
+	float fSizeMul = 1;
+	
+	cStationGui_BigStatusMessageSettings settings;
+	settings.mvEdgeSpacing = ImGui_NrmSize(0, 0);
+	
+	if (Entity_GetVarBool(asEntityName, "DisplayAccessDeniedText"))
+	{
+		tString sCustomLangCat = Entity_GetVarString(asEntityName, "CustomLangCategory");
+		tString sCustomLangEntry = Entity_GetVarString(asEntityName, "CustomLangEntry");
+		
+		if (sCustomLangCat != "")
+			sLangCat = sCustomLangCat;
+		
+		sLangEntry = sCustomLangEntry != "" ? sCustomLangEntry : "Panel_AccessDenied";
+		
+		col = gStationGuiColor_Warning;
+		fSizeMul = 2;
+	}
+	else if (Button_IsLocked(asEntityName))
+	{
+		col = gStationGuiColor_Warning;
+		sLangEntry = "Panel_Locked";
+		fSizeMul = 2;
+	}
+	else if (Button_IsSwitchedOn(asEntityName))
+	{
+		col = gStationGuiColor_Highlight;
+		sLangEntry = "Panel_On";
+		fSizeMul = 2;
+	}
+	else
+	{
+		col = gStationGuiColor_Highlight2;
+		sLangEntry = "Panel_Off";
+		fSizeMul = 1.75;
+	}
+	
+	ImGui_SetTransCategory(sLangCat);
+	StationGui_BigStatusMessage(sLangEntry, col, fSizeMul, false, 0.5, eEasing_Linear, settings);
+}
+
+//-------------------------------------------------------
+
+/**
+ * Call this before calling CathTool_UseOnPanel to disable access to the panel. 
+ * This state is reset automatically and has to be called every time the panel is used.
+ *
+ * @param asEntityName, name of the panel.
+ * @param asLangCat, lang category for the error message. If left empty, a default category will be used.
+ * @param asLangEntry, lang entry for the error message. If left empty, a default entry will be used.
+ * 
+ **/
+void OmniPanel_AccessDenied(const tString&in asEntityName, const tString&in asLangCat="", const tString&in asLangEntry="")
+{	
+	cScript_SetGlobalArgString(0, asLangCat);
+	cScript_SetGlobalArgString(1, asLangEntry);
+	cScript_RunGlobalFunc(asEntityName, "cScrPropOmniPanel", "_Global_SetAccessDenied");
+}
+
+//-------------------------------------------------------
+
+//} OMNIPANEL
+
+//-------------------------------------------------------
+
+/////////////////////////////////////////
+// ANIMATION DOOR
+//{///////////////////////////////////////
+
+//-------------------------------------------------------
+
+void AnimationDoor_SetOpen(const tString &in asClosedDoor, const tString &in asOpenDoor, bool abOpen, bool abPlayAnim=true,
+						   const tString &in asCloseAnim="door_closing", const tString &in asOpenAnim="door_open")
+{
+	if (abOpen)
+	{
+		Entity_SetVarString(asClosedDoor, "AnimationDoor_SetOpen_OpenDoor", asOpenDoor);
+		
+		if(abPlayAnim)
+			Entity_PlayAnimation(asClosedDoor, asOpenAnim, 0, false, true, "$AnimationDoor_SetOpen_AnimCallback");
+		else
+			AnimationDoor_SetOpen_AnimCallback(asClosedDoor, "");				
+	}
+	else
+	{
+		Entity_SetActive(asOpenDoor, false);
+		Entity_SetActive(asClosedDoor, true);
+		
+		if(abPlayAnim)
+			Entity_PlayAnimation(asClosedDoor, asCloseAnim, 0, false, true);
+	}
+}
+
+//-------------------------------------------------------
+
+void AnimationDoor_SetOpen_AnimCallback(const tString &in asEntity, const tString &in asAnimName)
+{
+	Entity_SetActive(asEntity, false);
+	Entity_SetActive(Entity_GetVarString(asEntity, "AnimationDoor_SetOpen_OpenDoor"), true);
+}
+
+//-------------------------------------------------------

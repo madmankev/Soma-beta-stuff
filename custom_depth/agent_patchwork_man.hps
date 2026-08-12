@@ -1,0 +1,787 @@
+#include "agents/Agent_Humanoid.hps"
+
+#include "helper/helper_audio.hps"
+#include "helper/helper_modules.hps"
+
+/////////////////////////////////////////
+// SETTINGS
+//{///////////////////////////////////////
+
+//------------------------------------------------------------
+
+const float gfEffectsDist = 9.0f;
+const float gfHostileDist = 6.5f;
+const float gfAttackDist = 2.5f;
+const float gfKeyTurnHostileDist = 3.f;
+
+const tString gsVoiceName = "Yoshida";
+
+enum ePatchworkManState
+{
+	ePatchworkManState_Idle,
+	ePatchworkManState_NoKeys,
+	ePatchworkManState_Wander,
+	ePatchworkManState_Hostile,
+	ePatchworkManState_Attacking,
+	ePatchworkManState_TurningKey,
+}
+
+enum ePatchworkManBark
+{
+	ePatchworkManBark_Silent,
+	ePatchworkManBark_NoKeys,
+	ePatchworkManBark_Wander_Normal,
+	ePatchworkManBark_Wander_ReactorOff,
+	ePatchworkManBark_Hostile,
+	ePatchworkManBark_Attacking,
+}
+
+//} END SETTINGS
+
+//------------------------------------------------------------
+	
+class cScrAgentPatchworkMan : cScrAgentHumanoid
+{
+
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// INIT
+	//{///////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void Init()
+	{
+		mBaseObj.SetUpdatePlayerDetection(true);
+	}
+	
+	//} END INIT
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// LOADING
+	//{///////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void SetupCharBody()
+	{
+		cScrAgentHumanoid::SetupCharBody();
+	}
+	
+	//------------------------------------------------------------
+		
+	void SetupAfterLoad(cWorld @apWorld, cResourceVarsObject@ apVars, cResourceVarsObject@ apInstanceVars)
+	{
+		cScrAgentHumanoid::SetupAfterLoad(apWorld, apVars, apInstanceVars);
+		
+		
+		///////////////////////////////
+		//General
+		mBaseObj.SetAlignEntityWithGroundRay(true);
+		mBaseObj.SetFOV(cMath_ToRad(100));
+		mBaseObj.SetSightRange(gfHostileDist);
+	
+		///////////////////////////////
+		//Head Tracker
+		@mpHeadTracker = cLux_CreateEntityComponent_HeadTracker(mBaseObj);
+		mpHeadTracker.LoadFromVariables(apVars);
+		
+		iCharacterBody@ pCharBody = mBaseObj.GetCharBody();
+		
+		pCharBody.SetMaxPositiveMoveSpeed(eCharDir_Forward, 1);
+		pCharBody.SetMaxNegativeMoveSpeed(eCharDir_Forward, -1);
+		pCharBody.SetMaxPositiveMoveSpeed(eCharDir_Right, 1);
+		pCharBody.SetMaxNegativeMoveSpeed(eCharDir_Right,-1);
+		pCharBody.SetMoveAcc(eCharDir_Forward, 1);
+		pCharBody.SetMoveAcc(eCharDir_Right, 1);
+		pCharBody.SetMoveDeacc(eCharDir_Forward, 1);
+		pCharBody.SetMoveDeacc(eCharDir_Right, 1);
+		pCharBody.SetMaxPushMass(17);
+		
+		
+		///////////////////////////////
+		//Mover setup
+		mpMover.SetMaxForwardSpeed(1);
+		mpMover.SetMaxBackwardSpeed(1);
+		mpMover.SetupWallAvoidance(0.8f, 7.0f, 4);
+		mpMover.SetupDynamicObjectAvoidance(1.7f, 5, 3);
+		
+		///////////////////////////////
+		//State Machine
+		@mpStateMachine = cLux_CreateEntityComponent_StateMachine(mBaseObj);
+		
+		mpStateMachine.AddState("Idle", ePatchworkManState_Idle);
+		mpStateMachine.AddState("NoKeys", ePatchworkManState_NoKeys);
+		mpStateMachine.AddState("Wander", ePatchworkManState_Wander);
+		mpStateMachine.AddState("Hostile", ePatchworkManState_Hostile);
+		mpStateMachine.AddState("Attacking", ePatchworkManState_Attacking);
+		mpStateMachine.AddState("TurningKey", ePatchworkManState_TurningKey);
+		mpStateMachine.ChangeState(ePatchworkManState_NoKeys);
+		
+		@mpBarkMachine = cLux_CreateEntityComponent_BarkMachine(mBaseObj);
+		mpBarkMachine.SetupVoice("Yoshida", true, 3, 15, 15);
+		
+		mpBarkMachine.AddState(ePatchworkManBark_Silent);
+		
+		mpBarkMachine.AddState(ePatchworkManBark_NoKeys);
+		mpBarkMachine.SetState_VoiceBark("2_YoshidaRamblings_NoKeys",  2,  5,  true, 0);
+		
+		mpBarkMachine.AddState(ePatchworkManBark_Wander_Normal);
+		mpBarkMachine.SetState_VoiceBark("2_YoshidaRamblings",  2,  5,  true, 0);
+		
+		mpBarkMachine.AddState(ePatchworkManBark_Wander_ReactorOff);
+		mpBarkMachine.SetState_VoiceBark("2_YoshidaRamblings_AfterShutDown",  2,  5,  true, 0);
+		
+		mpBarkMachine.AddState(ePatchworkManBark_Hostile);
+		mpBarkMachine.SetState_VoiceBark("2_YoshidaRamblings_Close",  2,  5,  true, 0);
+		
+		mpBarkMachine.AddState(ePatchworkManBark_Attacking);
+		mpBarkMachine.SetState_VoiceBark("2_YoshidaRamblings_Attack",  2,  3,  true, 0);
+		
+		///////////////////////////////
+		//Instance vars		
+		mpMover.SetWallAvoidanceActive(true);
+		mpMover.SetDynamicObjectAvoidanceActive(false);
+				
+		mpHeadTracker.SetActive(false);
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnAfterWorldLoad()
+	{
+		cScrAgentHumanoid::OnAfterWorldLoad();
+		
+		iLuxEntity @pEntity = mBaseObj.GetMap().GetEntityByName("Player");
+		mpHeadTracker.SetTrackEntity(pEntity);
+	}
+
+	//} END LOADING
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GENERAL
+	//{///////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnUpdate(float afTimeStep)
+	{
+		cScrAgentHumanoid::OnUpdate(afTimeStep);
+	}
+	
+	//------------------------------------------------------------
+	
+	void ResetProperties()
+	{
+		cScrAgentHumanoid::ResetProperties();
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnRecieveMessage(int alMessageId, cLuxEntityMessageData @apData)
+	{
+	}
+	
+	//------------------------------------------------------------
+		
+	bool CanInteract(int alType, iPhysicsBody@ apBody)
+	{
+		return false;
+	}
+	
+	//} END GENERAL
+		
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// CUSTOM
+	//{///////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	bool IsTalking()
+	{
+		return 	Voice_CharacterIsSpeaking(gsVoiceName) || Dialog_CharacterIsActive(gsVoiceName);
+	}
+	
+	void _Global_IsTalking()
+	{
+		cScript_SetGlobalReturnBool(IsTalking());
+	}
+	
+	//} END CUSTOM
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// STATES
+	//{///////////////////////////////////////
+		
+	//------------------------------------------------------------
+	
+		///////////////////////////////////
+		// Default State
+		//{/////////////////////////////////
+	
+		//------------------------------------------------------------
+	
+		//
+	
+		//} END STATE
+					
+		//------------------------------------------------------------
+		
+		///////////////////////////////////
+		// STATE: Idle
+		//{/////////////////////////////////
+		
+		//------------------------------------------------------------
+		
+		void ForceIdle()
+		{
+			mpStateMachine.ChangeState(ePatchworkManState_Idle);
+		}
+		
+		void State_Idle_Enter()
+		{
+			mBaseObj.SetFOVMul(1);
+			mpBarkMachine.ChangeState(ePatchworkManBark_Silent);
+		}
+	
+		//} END STATE
+					
+		//------------------------------------------------------------
+		
+		///////////////////////////////////
+		// STATE: NoKeys
+		//{/////////////////////////////////
+		
+		//------------------------------------------------------------
+		
+		void State_NoKeys_Enter()
+		{
+			mBaseObj.SetFOVMul(1);
+
+			mpHeadTracker.SetActive(false);
+			
+			mpStateMachine.AddTimer(0, 0.2);
+			
+			AttackMeter_AddInstance(mBaseObj.GetID(), gfEffectsDist, 0, 0.2f);
+			
+			mpBarkMachine.ChangeState(ePatchworkManBark_NoKeys);
+		}
+					
+		//------------------------------------------------------------
+		
+		void State_NoKeys_TimerUp(uint64 alId) 
+		{
+			//////////////////////////////////
+			// Check if player too close
+			if (alId == 0)
+			{
+				if (mBaseObj.GetDistanceToPlayer2D() > 3)
+				{
+					mpStateMachine.AddTimer(0, 0.2);
+					return;
+				}
+				
+				mpHeadTracker.SetActive(true);
+				//mpMover.SetTurnSpeedMul(4000);
+				//mpMover.SetTurnMaxSpeed(4000);
+				mpMover.TurnToPos(mBaseObj.GetPlayerPos());
+				
+				mpBarkMachine.PlayVoice("2_YoshidaNoKeysScream", 1);
+				
+				mpStateMachine.AddTimer(1, 3);
+			}
+			
+			if (alId == 1)
+			{
+				//mpMover.SetTurnMaxSpeed(4);
+				
+				if (mBaseObj.GetDistanceToPlayer2D() > 5)
+				{
+					AttackMeter_AddInstance(mBaseObj.GetID(), gfEffectsDist, 0, 0.3f);
+					iLuxEntity @pTurnToEntity = Map_GetEntity("ReactorRoomIllum_20");
+					mpMover.TurnToPos(pTurnToEntity.GetPosition());
+					mpStateMachine.AddTimer(0, 0.2);
+					return;
+				}
+				
+				AttackMeter_AddInstance(mBaseObj.GetID(), 10, 2.5, 0.3f);
+				mpStateMachine.AddTimer(1, 0.5);
+			}
+		}
+	
+		//} END STATE
+					
+		//------------------------------------------------------------
+		
+		///////////////////////////////////
+		// STATE: Wander
+		//{/////////////////////////////////
+		
+		//------------------------------------------------------------
+		
+		array<tString> mvWanderNodes;
+		bool mbPostReactorShutdown = false;
+		
+		//------------------------------------------------------------
+		
+		void _Global_AddWanderNode()
+		{
+			tString sNode = cScript_GetGlobalArgString(0);
+			mvWanderNodes.push_back(sNode);
+		}
+		
+		//------------------------------------------------------------
+		
+		void _Global_Wander()
+		{
+			mbPostReactorShutdown = cScript_GetGlobalArgBool(0);
+			mpStateMachine.ChangeState(ePatchworkManState_Wander);
+		}
+		
+		//------------------------------------------------------------
+		
+		void MoveToRandomWanderNode()
+		{
+			if (mvWanderNodes.length()==0)
+			{
+				cLux_AddDebugMessage("lKeys");
+				mpStateMachine.ChangeState(ePatchworkManState_Idle);
+				return;
+			}
+			int lNodeIndex = cMath_RandRectl(0, mvWanderNodes.length()-1);
+			mpPathfinder.MoveToNode(mvWanderNodes[lNodeIndex], 0, true);
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_Wander_Enter()
+		{
+			mBaseObj.SetFOVMul(1);
+			mbKeyTurningActive =false;
+		
+			MoveToRandomWanderNode();
+			mpHeadTracker.SetActive(false);
+			
+			mpStateMachine.AddTimer(1, 0.2);
+			
+			AttackMeter_AddInstance(mBaseObj.GetID(), gfEffectsDist, 0,0.3f);
+			
+			mpBarkMachine.ChangeState(mbPostReactorShutdown ? ePatchworkManBark_Wander_ReactorOff 
+															: ePatchworkManBark_Wander_Normal);
+		}
+		
+		//------------------------------------------------------------
+		
+		bool State_Wander_Message(int alMessageId)
+		{
+			if(alMessageId == eLuxEntityMessage_EndOfPath)
+			{
+				mpStateMachine.AddTimer(0, cMath_RandRectf(0.5, 4));
+				return true;
+			}
+			if(alMessageId == eLuxEntityMessage_PlayerDetected)
+			{
+				cLux_AddDebugMessage("eLuxEntityMessage_PlayerDetected");
+				mpStateMachine.ChangeState(ePatchworkManState_Hostile);
+				return true;
+			}
+			return false;
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_Wander_TimerUp(uint64 alId) 
+		{
+			///////////////////////////
+			// Waiting at node done
+			if (alId == 0)
+			{
+				MoveToRandomWanderNode();
+			}
+			
+			///////////////////////////
+			// Check distance to player
+			if (alId == 1)
+			{
+				float fPlayerDist = mBaseObj.GetDistanceToPlayer2D();
+				//cLux_AddDebugMessage("mBaseObj.GetSensesActrive "+mBaseObj.GetSightRange());
+				if (fPlayerDist < gfAttackDist)
+				{
+					mpStateMachine.ChangeState(ePatchworkManState_Attacking);
+					return;
+				}
+				
+				mpStateMachine.AddTimer(1, 0.2);
+			}
+		}
+	
+		//} END STATE
+					
+		//------------------------------------------------------------
+		
+		///////////////////////////////////
+		// STATE: Hostile
+		//{/////////////////////////////////
+		
+		//------------------------------------------------------------
+		
+		void State_Hostile_Enter()
+		{
+			mBaseObj.SetFOVMul(3);
+			mpHeadTracker.SetActive(true);
+			mpPathfinder.Stop();
+			mpMover.TurnToPos(mBaseObj.GetPlayerHeadPos());
+			
+			mpStateMachine.AddTimer(0, 0.5);
+			mpStateMachine.AddTimer(1, mbKeyTurningActive ? 2 : 0.2);
+			
+			mpBarkMachine.ChangeState(ePatchworkManBark_Hostile);
+			
+			AttackMeter_AddInstance(mBaseObj.GetID(), gfEffectsDist, 0, 0.3f);
+		}
+		
+		//------------------------------------------------------------
+		
+		bool State_Hostile_Message(int alMessageId)
+		{
+			if(alMessageId == eLuxEntityMessage_PlayerUndetected)
+			{
+				mpStateMachine.AddTimer(2, 0.2);
+				return true;
+			}
+			if(alMessageId == eLuxEntityMessage_PlayerUndetected)
+			{
+				if (mpStateMachine.TimerExists(2))
+				{
+					mpStateMachine.StopTimer(2);
+					return true;
+				}
+			}
+			return false;
+		}
+					
+		//------------------------------------------------------------
+		
+		void State_Hostile_TimerUp(uint64 alID)
+		{
+			if (alID == 0)
+			{
+				if (mBaseObj.GetAngleToPlayer2D() > cMath_PiDiv4)
+				{
+					mpMover.TurnToPos(mBaseObj.GetPlayerHeadPos());
+				}
+				mpStateMachine.AddTimer(0, 0.5);
+			}
+			
+			//////////////////////////////
+			// Check distance to player
+			else if (alID == 1)
+			{
+				float fPlayerDist = mBaseObj.GetDistanceToPlayer2D();
+				if (fPlayerDist < gfAttackDist)
+				{
+					mpStateMachine.ChangeState(ePatchworkManState_Attacking);
+					return;
+				}
+				else if (mbKeyTurningActive && fPlayerDist > gfKeyTurnHostileDist)
+				{
+					mpStateMachine.ChangeState(ePatchworkManState_TurningKey);
+					return;
+				}
+				else if (fPlayerDist > gfHostileDist)
+				{
+					mpStateMachine.ChangeState(ePatchworkManState_Wander);
+					return;
+				}
+				
+				mpStateMachine.AddTimer(1, 0.2);
+			}
+			
+			//////////////////////////////
+			// Player undetected
+			else if (alID == 2)
+			{
+				if (mbKeyTurningActive)
+					mpStateMachine.ChangeState(ePatchworkManState_TurningKey);
+				else
+					mpStateMachine.ChangeState(ePatchworkManState_Wander);
+			}
+		}
+	
+		//} END STATE
+					
+		//------------------------------------------------------------
+		
+		///////////////////////////////////
+		// STATE: Attacking
+		//{/////////////////////////////////
+		
+		//------------------------------------------------------------
+		
+		void State_Attacking_Enter()
+		{			
+			mBaseObj.SetFOVMul(3);
+			mpHeadTracker.SetActive(true);
+			mpStateMachine.AddTimer(0, 0.2);
+			mpStateMachine.AddTimer(1, 0.4);
+			
+			AttackMeter_AddInstance(mBaseObj.GetID(), gfEffectsDist, 2, 0.3);
+			
+			mpBarkMachine.ChangeState(ePatchworkManBark_Attacking);
+		}
+					
+		//------------------------------------------------------------
+		
+		void State_Attacking_TimerUp(uint64 alID)
+		{
+			if (alID == 0)
+			{
+				float fPlayerDist = mBaseObj.GetDistanceToPlayer2D();
+				if (mbKeyTurningActive && fPlayerDist > gfKeyTurnHostileDist)
+				{
+					mpStateMachine.ChangeState(ePatchworkManState_TurningKey);
+					return;
+				}
+				else if (fPlayerDist > gfHostileDist)
+				{
+					mpStateMachine.ChangeState(ePatchworkManState_Wander);
+					return;
+				}
+				
+				mpStateMachine.AddTimer(0, 0.2);
+			}
+			if (alID == 1)
+			{
+				mpPathfinder.MoveTo(mBaseObj.GetPlayerPos(), 0, false);
+				mpStateMachine.AddTimer(1, 0.4);
+			}
+		}
+	
+		//} END STATE
+					
+		//------------------------------------------------------------
+		
+		///////////////////////////////////
+		// STATE: TurningKey
+		//{/////////////////////////////////
+		
+		//------------------------------------------------------------
+		
+		tID[] mvKeyIDs = {tID_Invalid, tID_Invalid};
+		cVector3f[] mvKeyOffsets = {0, 0};
+		float[] mvKeyAngles = {0, 0};
+		int mlKeyIndex = 0;
+		bool mbWaitingForTurn = false;
+		bool mbPlayingTurnAnimation = false;
+		
+		//------------------------------------------------------------
+		
+		void _Global_TurnKey()
+		{
+			
+			mvKeyIDs[0] = Map_GetEntityID(cScript_GetGlobalArgString(0), eLuxEntityType_Prop);
+			mvKeyOffsets[0] = cScript_GetGlobalArgVector3f(1);
+			mvKeyAngles[0] = cScript_GetGlobalArgFloat(2);
+			mvKeyIDs[1] = Map_GetEntityID(cScript_GetGlobalArgString(3), eLuxEntityType_Prop);
+			mvKeyOffsets[1] = cScript_GetGlobalArgVector3f(4);
+			mvKeyAngles[1] = cScript_GetGlobalArgFloat(5);
+			mpStateMachine.ChangeState(ePatchworkManState_TurningKey);
+			
+			if (mpStateMachine.GetCurrentState() != ePatchworkManState_TurningKey)
+			{
+				mpBarkMachine.PlayVoice("2_YoshidaKeyTurnReady", 2);
+				mbKeyTurningActive = true;
+			}
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_TurningKey_Enter()
+		{
+			AttackMeter_RemoveInstance(mBaseObj.GetID());
+			
+			State_TurningKey_TimerUp(1);		
+			mpBarkMachine.ChangeState(ePatchworkManBark_Silent);
+		}
+		
+		
+		//------------------------------------------------------------
+		
+		void State_TurningKey_Leave()
+		{
+			mpMover.SetUseMoveStateAnimations(true);
+			mBaseObj.SetStaticCollider(false);
+		}
+		
+		//------------------------------------------------------------
+		
+		bool State_TurningKey_Message(int alMessageId)
+		{
+			if(alMessageId == eLuxEntityMessage_EndOfPath)
+			{
+				mpMover.TurnToAngle(mvKeyAngles[mlKeyIndex]);
+				mbWaitingForTurn=true;
+				mpStateMachine.StopTimer(1);
+				
+				cLux_GetCurrentMap().GetEntityByID(mvKeyIDs[mlKeyIndex]).SetInteractionDisabled(true);
+				mBaseObj.SetStaticCollider(true);
+				
+				return true;
+			}
+			if(alMessageId == eLuxEntityMessage_TurningDone)
+			{
+				if (mbWaitingForTurn==false) return true;
+				
+				mbWaitingForTurn=false;
+				mpStateMachine.AddTimer(0, cMath_RandRectf(1, 2));
+				
+				cVector3f vKeyPos = cLux_GetCurrentMap().GetEntityByID(mvKeyIDs[mlKeyIndex]).GetPosition();
+				
+				mpStateMachine.AddTimer(2, 0.3);
+				
+				return true;
+			}
+			if(alMessageId == eLuxEntityMessage_AnimationOver)
+			{
+				if (mbPlayingTurnAnimation==false) return false;
+				
+				mbPlayingTurnAnimation = false;
+				mpStateMachine.AddTimer(0, cMath_RandRectf(1, 5));
+				mpStateMachine.AddTimer(2, 0.3);
+				
+				mBaseObj.PlayAnimation("idle", 0.25, false, true, "");
+				mpMover.SetUseMoveStateAnimations(true);
+				
+				return true;
+			}
+			if(alMessageId == eLuxEntityMessage_AnimationMessageEvent)
+			{
+				if (mbPlayingTurnAnimation==false) return false;
+				
+				iLuxEntity@ pKey = cLux_GetCurrentMap().GetEntityByID(mvKeyIDs[mlKeyIndex]);
+				pKey.PlayAnimation("key_turn", 0, false, false, "AnimationKeyTurned");
+			}
+			return false;
+		}
+		
+		//------------------------------------------------------------
+		
+		void State_TurningKey_TimerUp(uint64 alId) 
+		{
+			///////////////////////////
+			// Delay for turning key done
+			if (alId == 0)
+			{
+				mBaseObj.PlayAnimation("turn_key", 0.25, false, true, "");
+				mpMover.SetUseMoveStateAnimations(false);
+				mbPlayingTurnAnimation = true;
+				
+				mpBarkMachine.PlayVoice("2_YoshidaKeyTurning", 2);
+				
+				mpStateMachine.StopTimer(2);
+			}
+			
+			///////////////////////////////////////////////////
+			// Check that he's heading to the correct key
+			if (alId == 1)
+			{								
+				if (GetPlayerSqrDistToKey(0) < GetPlayerSqrDistToKey(1))
+					mlKeyIndex = 1;
+				else
+					mlKeyIndex = 0;
+					
+				cVector3f vKeyPos = cLux_GetCurrentMap().GetEntityByID(mvKeyIDs[mlKeyIndex]).GetPosition();
+				vKeyPos.y = mBaseObj.GetCharBody().GetFeetPosition().y;
+				vKeyPos += mvKeyOffsets[mlKeyIndex];
+				mpPathfinder.MoveTo(vKeyPos, 1, true);
+				
+				mpStateMachine.AddTimer(1, 0.5);
+			}
+			
+			///////////////////////////////////////////////////
+			// Check if player is getting to close
+			if (alId == 2)
+			{	
+				float fPlayerDist = mBaseObj.GetDistanceToPlayer2D();
+				cLux_AddDebugMessage("fPlayerDist "+fPlayerDist);
+				if (fPlayerDist < gfKeyTurnHostileDist)
+				{
+					mpStateMachine.ChangeState(ePatchworkManState_Hostile);
+					return;
+				}
+				
+				mpStateMachine.AddTimer(2, 0.3);
+			}
+		}
+		
+		float GetPlayerSqrDistToKey(int i)
+		{
+			cVector3f vKeyPos = cLux_GetCurrentMap().GetEntityByID(mvKeyIDs[i]).GetPosition();
+			return cMath_Vector3DistSqr(mBaseObj.GetPlayerPos(), vKeyPos);
+		}
+	
+		//} END STATE
+	
+	//} END STATES
+		
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// PLAYER DEATH
+	//{///////////////////////////////////////
+		
+	//------------------------------------------------------------
+	
+	void _Global_PlayerStartDamageCallback()
+	{
+	}
+	
+	//------------------------------------------------------------
+	
+	void _Global_PlayerAfterDamageCallback()
+	{
+	}
+	
+	//} END PLAYER DEATH
+	
+	//------------------------------------------------------------
+		
+	/////////////////////////////////////////
+	// DEBUG
+	//{///////////////////////////////////////
+	
+	//------------------------------------------------------------
+		
+	float DrawDebugOutput(cGuiSet @apSet,iFontData @apFont,float afStartY)
+	{
+		return afStartY;
+	}
+	
+	//} END DEBUG
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// PROPERTIES
+	//{///////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	cLuxHeadTracker @mpHeadTracker;
+	cLuxStateMachine @mpStateMachine;
+	cLuxBarkMachine@ mpBarkMachine;
+	
+	bool mbKeyTurningActive = false;
+	
+	//} END PROPERTIES
+	
+}	

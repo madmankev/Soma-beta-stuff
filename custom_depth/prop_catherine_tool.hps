@@ -1,0 +1,325 @@
+#include "Prop_Tool.hps"
+#include "helpers/helper_player.hps"
+#include "helpers/helper_audio.hps"
+
+const tString gsCathInteractUnderwaterSound = "Entities_OceanBottom/objects/cathtool/remove";
+const tString gsCathInteractNonUnderwaterSound = "Entities_Station/object/cathtool/remove_cathtool_nonunderwater";
+
+class cScrPropCatherineTool : cScrPropTool
+{
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GENERAL
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void OnUpdate(float afTimeStep)
+	{
+		cScrPropTool::OnUpdate(afTimeStep);
+	}
+	
+	//------------------------------------------------------------
+	
+	void OnSetActive(bool abX)
+	{
+		cScrPropTool::OnSetActive(abX);
+		
+		if (abX==false && msSlot != "")
+		{
+			cScript_SetGlobalArgBool(0, false);
+			cScript_RunGlobalFunc(msSlot, "cScrPropOmniSlot", "_Global_SetAttachAllowed");
+			msSlot = "";
+		}
+	}
+	
+	//------------------------------------------------------------
+	
+	void SetupAfterLoad(cWorld @apWorld, cResourceVarsObject@ apVars, cResourceVarsObject@ apInstanceVars)
+	{
+		cScrPropTool::SetupAfterLoad(apWorld, apVars, apInstanceVars);
+		
+		//Unless another callback has been set, use a default one
+		if (msCanBeUsedCallback=="") msCanBeUsedCallback = "$CathTool_CanUse";
+		
+		mBaseObj.SetVariableUpdateRate(0.2f); //call variable update no faster than once per 0.3 sec
+		mBaseObj.SetAutoSleep(false);
+		
+		// Clear out hints after moving to new map (potential if streaming)
+		ResetHints();
+	}
+	
+	//------------------------------------------------------------
+	
+	bool CanInteract(int alType, iPhysicsBody@ apBody)
+	{
+		if(cScrPropTool::CanInteract(alType, apBody)==false) return false;
+		
+		if (mbInserted)
+		{
+			if(mBaseObj.Timer_Exists(0)) return false; //Do so do not get the crossed over icon straight after.
+			
+			if (CanGiveHint())
+				return true;
+			return false;
+		}
+		return true;
+	}
+	
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// GLOBAL
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	void _Global_SetVoiceCharacter()
+	{
+		msVoiceCharacter = cScript_GetGlobalArgString(0);
+	}
+	
+	//------------------------------------------------------------
+	
+	void Insert()
+	{
+		msSlot = cScript_GetGlobalArgString(0);
+		mbInserted = true;
+		
+		mBaseObj.SetStaticPhysics(true);
+		mBaseObj.SetActive(true);
+		mBaseObj.SetEffectBaseColor(cColor(0));
+		mBaseObj.FadeEffectBaseColor(cColor_White, 0.5);
+
+		mBaseObj.GetMeshEntity().ProcPlayFadeToName("Insert", 0.5, false, 0);
+	}
+
+	//-------------------------------------------------------
+	
+	void Detach()
+	{
+		mBaseObj.SetInteractionDisabled(false);
+		
+		mBaseObj.WakeUp();
+		mBaseObj.SetAutoSleep(false);
+		mBaseObj.FadeEffectBaseColor(cColor(0), 0.5);
+
+		mbInserted = false;
+	}
+
+	//-------------------------------------------------------
+	
+	void _Global_IsInserted()
+	{
+		cScript_SetGlobalReturnBool(IsInserted());
+	}
+
+	//-------------------------------------------------------
+	
+	void _Global_GetSlot()
+	{
+		cScript_SetGlobalReturnString(msSlot);
+	}
+		
+	//------------------------------------------------------------
+	
+	bool IsInserted()
+	{
+		return mBaseObj.IsActive() && mbInserted;
+	}
+		
+	//------------------------------------------------------------
+	
+	bool OnInteract(int alType, iPhysicsBody@ apBody, const cVector3f &in avFocusPos, const tString&in asData)
+	{
+		if (mbInserted&&CanGiveHint())
+		{
+			mBaseObj.Timer_Add(0, 3); //Do so do not get the crossed over icon straight after.
+			
+			 PlayHint();
+			 return true;
+		}
+		 
+		if (cScrPropTool::OnInteract(alType, apBody, avFocusPos, asData)==false)
+		   return false;
+
+		tString sSound = "";
+		if (Player_GetUnderwater())
+		{
+			cLux_AddTodoMessage("Sound: Underwater cath tool interact");
+			sSound = gsCathInteractUnderwaterSound;
+		}
+		else
+		{
+			sSound = gsCathInteractNonUnderwaterSound;
+			Sound_PlayGui("Entities_Station/object/cathtool/remove_cathtool_nonunderwater", 1.0f, eSoundEntryType_GuiWorld);
+		}
+	  
+		return true;
+	}
+	
+	//------------------------------------------------------------
+	
+	int GetInteractIconId(int alType, iPhysicsBody@ apBody)
+	{
+		if (mbInserted&&CanGiveHint())
+		{
+			if (Voice_SceneInvolvingCharacterIsActive(msVoiceCharacter))
+				return eCrossHairState_TalkBusy;
+			return eCrossHairState_Talk;
+		}
+		return cScrPropTool::GetInteractIconId(alType, apBody);
+	}
+	 
+	//------------------------------------------------------------
+	// Hints
+	//------------------------------------------------------------
+
+	bool mbHintsEnabled = false;
+	tString msHintsCallback = "";
+
+	void ResetHints()
+	{
+		mbHintsEnabled = false;
+		msHintsCallback = "";
+	}
+
+	//------------------------------------------------------------
+
+	void _Global_SetHintsCallback()
+	{
+		SetHintsCallback(cScript_GetGlobalArgString(0));
+	}
+
+	//------------------------------------------------------------
+
+	void SetHintsCallback(const tString& in asHintsCallback)
+	{
+		msHintsCallback = asHintsCallback;
+	}
+
+	//------------------------------------------------------------
+
+	void _Global_SetHintsEnabled()
+	{
+		SetHintsEnabled(cScript_GetGlobalArgBool(0));
+	}
+	
+	//------------------------------------------------------------
+
+	void SetHintsEnabled(bool abEnabled)
+	{
+		mbHintsEnabled = abEnabled;
+	}
+	
+	//------------------------------------------------------------
+
+	bool CanGiveHint()
+	{		
+		if (!mbHintsEnabled)
+			return false;
+			
+		tString sHintPrefix = GetHintStringPrefix();
+		if (sHintPrefix=="")
+			return false;
+			
+		tString sHint = GetValidHintStringVariant(sHintPrefix, false);
+		if (sHint=="")
+			return false;
+			
+		return true;
+	}
+
+	//------------------------------------------------------------
+
+	tString GetHintStringPrefix()
+	{
+		if (msHintsCallback!="")
+		{
+			cLuxMap @pMap = mBaseObj.GetMap();
+			if(pMap.ScriptPrepare("tString " + msHintsCallback + "(const tString &in asEntityName)" ) )
+			{
+				tString sName = mBaseObj.GetName();
+				pMap.SetArgString(0, sName);
+				pMap.ScriptExecute();
+				tString sHint = pMap.GetReturnString();
+				return sHint;
+			}
+		}
+		return "";
+	} 
+	
+	//------------------------------------------------------------
+	
+	tString GetValidHintStringVariant(const tString& in asHintPrefix, bool abUseTheHint)
+	{
+		int lPlayedTimes = GetHintPlayedTimes(asHintPrefix);
+		lPlayedTimes++;
+		tString sHint=asHintPrefix+"_"+lPlayedTimes;
+		if (Voice_SubjectExists(sHint)==false)
+		{
+			//Check if we can go back to previous line?
+			lPlayedTimes--;
+			sHint=asHintPrefix+"_"+lPlayedTimes;
+			if(Voice_SubjectExists(sHint)==false) return "";
+		}
+		else if(abUseTheHint)
+		{
+			IncHintPlayedTimes(asHintPrefix);
+		}
+		
+		return sHint;
+	}
+	
+	//------------------------------------------------------------
+	
+	void PlayHint()
+	{
+		if (!mbHintsEnabled)
+			return;
+		
+		tString sHintPrefix = GetHintStringPrefix();
+		if (sHintPrefix=="")
+			return;
+			
+		tString sHint = GetValidHintStringVariant(sHintPrefix, true);
+		if (sHint=="")
+			return;
+			
+		if (Voice_SceneInvolvingCharacterIsActive(msVoiceCharacter))
+			return;
+			
+		Voice_Play(sHint, -1,"", 10);
+	}
+	
+	//------------------------------------------------------------
+	
+	void IncHintPlayedTimes(const tString& in asHint)
+	{
+		tString sHintVar = "Hint_"+cLux_GetCurrentMap().GetName()+"_"+asHint;
+		cScript_SetGlobalVarInt(sHintVar, GetHintPlayedTimes(asHint)+1);
+	}
+	
+	//------------------------------------------------------------
+	
+	int GetHintPlayedTimes(const tString& in asHint)
+	{
+		tString sHintVar = "Hint_"+cLux_GetCurrentMap().GetName()+"_"+asHint;
+		return cScript_GetGlobalVarInt(sHintVar);
+	}
+
+	//------------------------------------------------------------
+	
+	/////////////////////////////////////////
+	// PROPERTIES
+	/////////////////////////////////////////
+	
+	//------------------------------------------------------------
+	
+	bool mbInserted = false;
+	tString msSlot = "";
+	
+	tString msVoiceCharacter="Catherine";
+}
