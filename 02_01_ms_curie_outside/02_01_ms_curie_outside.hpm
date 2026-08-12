@@ -1,0 +1,26 @@
+<HPLMap ID="3566F54B852274EE6FF53124B191E1B8E888134D" Version="1.00">
+    <GlobalSettings>
+        <Fog Active="true" Culling="true" Color="0.00865173 0.0276466 0.0351563 1" Brightness="1" FadeStart="2" FadeEnd="30" FalloffExp="0.4" Underwater="true" UseSkybox="true" NoiseStrength="0" NoiseSize="7.1" NoiseTurbulence="0.1 0.3 0.9" SecondaryActive="true" SecondaryColor="0.00196078 0.00196078 0.00196078 0.00392157" SecondaryFadeStart="0" SecondaryFadeEnd="70" SecondaryFalloffExp="0.15" />
+        <SkyBox Active="true" Color="0.0856323 0.293002 0.359375 1" Texture="D:/Work/studio/Frictional Games/PROJECT SVN REPOSITORY/redist/textures/environment/grayscale_gradient_1_3.dds" Brightness="1.25" />
+        <DirLight Active="false" ShadowCasterDist="40" DiffuseColor="0.137863 0.50499 0.542969 0" Brightness="0.2 0.2 0.2 1" Gobo="" GoboAnimMode="None" GoboAnimStartTime="0" GoboAnimFrameTime="0" GoboScale="1 1" Direction="0.139 -0.926 -0.35" CastShadows="true" SkyCol="0.229614 0.51694 0.59375 0.964844" GroundCol="0.371933 0.462522 0.488281 0" ShadowMapBiasMul="3" ShadowMapSlopeScaleBiasMul="2.5" AutoShadowSliceSettings="true" AutoShadowSliceLogTerm="0.9" />
+        <SSAO NormalMap="false" NumOfDirections="0" NumOfSteps="0" AngleBias="0" Power="8" Radius="1.5" BufferSizeDiv="2" />
+        <EnvParticles Color="0.332031 0.796478 1 0.46875" Brightness="1" BoxDistance="0.1" GravityVelocity="0 0.01 0" GravitySpeedRandomAmount="0" WindVelocity="0 0 0" WindSpeedRandomAmount="0" WindDirRandomAmount="0" RotateVelocity="0.01 0.01 0.01" RotateSpeedRandomAmount="1" RotateBothDirs="true" NumIterations="2" FadeInStart="0.1" FadeInEnd="1" FadeOutStart="2.3" FadeOutEnd="8.7" BoxSize="10" NumParticles="3000" ParticleSize="0.04 0.04" SubDivUV="3 3" AffectedByLight="false" Texture="particles/underwater/materials/waterdust_tiny_3x3.dds" Active="true" />
+        <PostEffects ToneMappingKey="0.5" ToneMappingExposure="1.5" ToneMappingWhiteCut="3.5" ColorGradingTexture="textures/colorgrading/grading_default.dds" />
+        <DistanceCulling Active="true" MinRange="45" ScreenSize="0.05" RandomSize="0.25" />
+    </GlobalSettings>
+    <RegisteredUsers>
+        <User ID="jens@JW" RegistrationTimestamp="0" />
+        <User ID="marcus@HADEX" RegistrationTimestamp="0" />
+        <User ID="jens@JW2" RegistrationTimestamp="0" />
+        <User ID="Samuel@SAMUEL-PC" RegistrationTimestamp="0" />
+        <User ID="Thomas@THOMAS-PC" RegistrationTimestamp="0" />
+        <User ID="Rasmus@FYRKANTEN" RegistrationTimestamp="0" />
+        <User ID="Ian@IANSWORKLAPTOP" RegistrationTimestamp="1394788596" />
+        <User ID="Patrik@POMPERIPOSSA" RegistrationTimestamp="1394804149" />
+        <User ID="Snafu@SNAFU-LAPTOP" RegistrationTimestamp="1395212278" />
+        <User ID="Rasmus Gunnarsson@KLOSSENR" RegistrationTimestamp="1412067730" />
+        <User ID="Aaron@AARON-PC" RegistrationTimestamp="1415611551" />
+        <User ID="Samuel@SAMUELS-PC" RegistrationTimestamp="1416918366" />
+        <User ID="Ian@IAN-DESKTOP" RegistrationTimestamp="1420715084" />
+    </RegisteredUsers>
+</HPLMap>

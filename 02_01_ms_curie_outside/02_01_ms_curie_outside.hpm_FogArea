@@ -1,0 +1,46 @@
+<HPLMapTrack_FogArea ID="3566F54B852274EE6FF53124B191E1B8E888134D" Version="1.00">
+    <Section Name="jens@JW">
+        <Objects />
+    </Section>
+    <Section Name="marcus@HADEX">
+        <Objects />
+    </Section>
+    <Section Name="jens@JW2">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUEL-PC">
+        <Objects />
+    </Section>
+    <Section Name="Thomas@THOMAS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Rasmus@FYRKANTEN">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IANSWORKLAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="Patrik@POMPERIPOSSA">
+        <Objects />
+    </Section>
+    <Section Name="Snafu@SNAFU-LAPTOP">
+        <Objects />
+    </Section>
+    <Section Name="Rasmus Gunnarsson@KLOSSENR">
+        <Objects>
+            <FogArea ID="419432469" Name="FogArea_1" CreStamp="1414584677" ModStamp="1415870043" WorldPos="38.5 8 248" Rotation="0 0 0" Scale="2.5 2.5 2.5" Color="0.0146484 0.0462339 0.0585935 1" Brightness="0.3" Start="2" End="30" FalloffExp="0.4" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="true" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="true" CulledByDistance="false" CulledByFog="true" UID="25 7364 419432469" />
+            <FogArea ID="419432470" Name="FogArea_2_(Conflict1)" CreStamp="1414584808" ModStamp="1418314109" WorldPos="37 8 287.25" Rotation="0 0 0" Scale="16.9692 4.83589 3.2543" Color="0.0146484 0.0462339 0.0585935 1" Brightness="0.3" Start="2" End="30" FalloffExp="0.4" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="true" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="true" CulledByDistance="false" CulledByFog="true" UID="25 7363 419432470" />
+            <FogArea ID="419432471" Name="FogArea_3" CreStamp="1414584863" ModStamp="1415880961" WorldPos="15.5 8 280.75" Rotation="0 -0.523599 0" Scale="5.25 3.5 2.5" Color="0.0146484 0.0462339 0.0585935 1" Brightness="0.3" Start="2" End="30" FalloffExp="0.4" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="true" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="true" CulledByDistance="false" CulledByFog="true" UID="25 7361 419432471" />
+            <FogArea ID="419432472" Name="FogArea_4" CreStamp="1414584937" ModStamp="1415870066" WorldPos="12.75 8 255.25" Rotation="0 0 0" Scale="2.5 2.5 2.5" Color="0.0146484 0.0462339 0.0585935 1" Brightness="0.3" Start="2" End="30" FalloffExp="0.4" ShownBacksideWhenOutside="false" ShownBacksideWhenInside="true" Underwater="true" NoiseStrength="0" NoiseSize="8" NoiseTurbulence="0.5 0.5 0.5" Skybox="true" CulledByDistance="false" CulledByFog="true" UID="25 7362 419432472" />
+        </Objects>
+    </Section>
+    <Section Name="Aaron@AARON-PC">
+        <Objects />
+    </Section>
+    <Section Name="Samuel@SAMUELS-PC">
+        <Objects />
+    </Section>
+    <Section Name="Ian@IAN-DESKTOP">
+        <Objects />
+    </Section>
+</HPLMapTrack_FogArea>
